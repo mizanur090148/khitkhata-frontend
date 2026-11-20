@@ -1,7 +1,17 @@
 import { RoleDefinition, UserRoleKey } from '@/types/domain.types';
 
-export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || '/api/v1';
+const normalizeApiBase = (url?: string): string => {
+  if (!url) return '/api/v1';
+  const clean = url.trim().replace(/\/+$/, '');
+  if (clean.endsWith('/api/v1')) return clean;
+  if (clean.endsWith('/api')) return `${clean}/v1`;
+  if (clean.startsWith('http://') || clean.startsWith('https://')) {
+    return `${clean}/api/v1`;
+  }
+  return clean.startsWith('/') ? clean : `/${clean}`;
+};
+
+export const API_BASE_URL = normalizeApiBase(import.meta.env.VITE_API_BASE_URL);
 
 export const ROLES_MAP: Record<UserRoleKey, RoleDefinition> = {
   owner: {
