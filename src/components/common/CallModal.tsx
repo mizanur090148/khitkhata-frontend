@@ -75,7 +75,6 @@ export const CallModal: React.FC<CallModalProps> = ({
             <MessageCircle size={18} />
             <span>হোয়াটসঅ্যাপে চ্যাট করুন</span>
           </a>
-
           <button onClick={onClose} className="btn btn-secondary" style={{ padding: '10px' }}>
             বন্ধ করুন
           </button>
