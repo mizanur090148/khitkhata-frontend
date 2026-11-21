@@ -25,9 +25,10 @@
   --c-sup: #D97706;
   --c-par: #16A34A;
   --shadow: 0 1px 2px rgba(15,23,42,.05), 0 10px 30px rgba(15,23,42,.08);
-  --f-body: "Hind Siliguri", "Noto Sans Bengali", system-ui, sans-serif;
-  --f-display: "Tiro Bangla", "Hind Siliguri", serif;
-  --f-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --f-sans: "Inter", "Hind Siliguri", "Noto Sans Bengali", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --f-body: var(--f-sans);
+  --f-display: var(--f-sans);
+  --f-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 * {
@@ -40,16 +41,19 @@ html, body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--f-body);
-  font-size: 16px;
-  line-height: 1.6;
+  font-size: 15px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 h1, h2, h3 {
   font-family: var(--f-display);
-  font-weight: 400;
+  font-weight: 600;
   margin: 0;
   line-height: 1.3;
+  letter-spacing: -0.015em;
 }
 
 a {
@@ -218,8 +222,9 @@ header.site-header .wrap {
 .brand b {
   font-family: var(--f-display);
   font-size: 1.45rem;
-  font-weight: 400;
+  font-weight: 700;
   color: var(--ink);
+  letter-spacing: -0.02em;
 }
 
 nav.main {
@@ -319,7 +324,7 @@ nav.main a.on {
   display: block;
   font-family: var(--f-display);
   font-size: 1.35rem;
-  font-weight: 400;
+  font-weight: 600;
   color: #FFFFFF;
 }
 
@@ -702,7 +707,7 @@ nav.main a.on {
 
 .node.hub b {
   font-family: var(--f-display);
-  font-weight: 400;
+  font-weight: 600;
   font-size: 1.5rem;
 }
 
@@ -1370,9 +1375,10 @@ footer {
 }
 .lg-brand b {
   font-family: var(--f-display);
-  font-size: 1.6rem;
-  font-weight: 400;
+  font-size: 1.65rem;
+  font-weight: 700;
   color: var(--ink);
+  letter-spacing: -0.02em;
 }
 .lg-q {
   font-weight: 600;
@@ -1628,8 +1634,9 @@ footer {
 .pl-top h2 {
   margin: 0 0 6px;
   font-family: var(--f-display, inherit);
-  font-weight: 400;
+  font-weight: 600;
   font-size: 1.7rem;
+  letter-spacing: -0.015em;
 }
 .pl-top p {
   margin: 0;
@@ -1750,9 +1757,10 @@ footer {
   --shadow:0 1px 2px rgba(15,23,42,.05),0 6px 18px rgba(15,23,42,.06);
   --l1:#2F5BEA; --l2:#D97706; --l3:#16A34A; --l4:#DB2777; --l5:#0891B2;
   --paper:#FFFFFF; --paper-ink:#1E2124; --paper-line:#CDD0CC; --paper-muted:#5B6166;
-  --f-body:"Hind Siliguri","Noto Sans Bengali",system-ui,sans-serif;
-  --f-display:"Tiro Bangla","Hind Siliguri",serif;
-  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --f-sans:"Inter","Hind Siliguri","Noto Sans Bengali",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --f-body:var(--f-sans);
+  --f-display:var(--f-sans);
+  --f-mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0B1220; --surface:#121B2E; --surface2:#18233A; --line:#22304A;
@@ -1772,9 +1780,9 @@ footer {
   --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.3); color-scheme:dark}
 
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
 .num,td.n,.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
-h1,h2,h3{font-family:var(--f-display);font-weight:400;text-wrap:balance;margin:0}
+h1,h2,h3{font-family:var(--f-display);font-weight:600;text-wrap:balance;margin:0;letter-spacing:-0.015em}
 h2{font-size:1.55rem} h3{font-size:1.15rem}
 button,input,select{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -1783,7 +1791,7 @@ button,input,select{font:inherit;color:inherit}
   display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;padding:10px 16px}
 .brand{display:flex;align-items:center;gap:10px;margin-right:auto}
 .logo{width:34px;height:34px;border-radius:9px;background:var(--grad);display:grid;place-items:center}
-.brand b{font-family:var(--f-display);font-size:1.3rem;font-weight:400}
+.brand b{font-family:var(--f-display);font-size:1.3rem;font-weight:700;letter-spacing:-0.02em}
 .brand small{display:block;color:var(--muted);font-size:.78rem;line-height:1.1}
 .roleswitch{display:flex;background:var(--surface2);border:1px solid var(--line);border-radius:999px;padding:3px}
 .roleswitch button{border:0;background:transparent;padding:5px 12px;border-radius:999px;cursor:pointer;font-size:.86rem;color:var(--muted)}
@@ -1903,7 +1911,7 @@ label.f input,label.f select{border:1px solid var(--line);background:var(--surfa
 .lh{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;border-bottom:2px solid var(--paper-ink);padding-bottom:12px;margin-bottom:16px}
 .lh h1{font-size:1.5rem}
 .lh .doc{text-align:right;font-family:var(--f-mono);font-size:.82rem}
-.lh .doc b{display:block;font-family:var(--f-display);font-size:1.4rem;font-weight:400;letter-spacing:.04em}
+.lh .doc b{display:block;font-family:var(--f-display);font-size:1.4rem;font-weight:600;letter-spacing:-0.01em}
 .bto{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;margin-bottom:14px}
 .words{margin:12px 0 0;padding:8px 10px;border:1px dashed var(--paper-line);font-size:.85rem}
 .sig{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:56px;font-size:.8rem;text-align:center}
@@ -1978,7 +1986,7 @@ tr.totrow td{background:var(--surface2);font-weight:600}
 .qs-ok{background:var(--ok-soft);border-color:transparent}.qs-bad{background:var(--bad-soft);border-color:transparent}
 .qs-h{display:flex;gap:6px;align-items:baseline;font-size:.86rem}
 .qs-n{margin:0;font-size:.88rem}
-.qs-sig{font-size:.82rem;color:var(--ink);font-family:'Tiro Bangla',serif;border-top:1px dashed currentColor;padding-top:5px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.qs-sig span{font-family:var(--f-mono);color:var(--muted);font-size:.74rem}
+.qs-sig{font-size:.82rem;color:var(--ink);font-family:var(--f-body);border-top:1px dashed currentColor;padding-top:5px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.qs-sig span{font-family:var(--f-mono);color:var(--muted);font-size:.74rem}
 .qs-b{display:flex;gap:6px;flex-wrap:wrap}
 .qok{border-color:var(--ok);color:var(--ok)}.qbad{border-color:var(--bad);color:var(--bad)}
 .qs-form{display:flex;flex-direction:column;gap:8px;background:var(--surface);border-radius:8px;padding:10px}
