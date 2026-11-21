@@ -4,6 +4,14 @@ import { useApp } from '@/context/AppContext';
 import { bnNum } from '@/utils/formatters';
 import { QrCodeSvg } from '@/components/common/QrCodeSvg';
 import { SearchableSelect } from '@/components/common/SearchableSelect';
+import {
+  FileText,
+  Printer,
+  QrCode,
+  Package,
+  Cpu,
+  AlertTriangle,
+} from 'lucide-react';
 
 // The exact 16 faults from KnitKhata.html
 const FAULTS = [
@@ -409,94 +417,324 @@ export const FactoryJobCardPage: React.FC = () => {
 
   return (
     <div className="jobcard-page" style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 40 }}>
-      {/* 1. HEADER MATCHING KnitKhata.html */}
-      <div className="head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <h2>জব কার্ড</h2>
-          <p>
-            মেশিন অ্যাসাইন হলেই প্রতিটা মেশিনের জব কার্ড তৈরি হয়। রোল নামলে নিচের QC ঘরে উঠে যায়, {isVendor ? 'আর আপনি এখানেই দেখেন কোন রোলে কী সমস্যা।' : 'আর ভেন্ডরও সাথে সাথে দেখে কোন রোলে কী সমস্যা।'}
-          </p>
-        </div>
-        {!isVendor && (
-          <div className="st-sw" style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface)', padding: '6px 12px', borderRadius: 8, border: '1px solid var(--border)' }}>
-            <span style={{ fontSize: 13, fontWeight: 500 }}>QR রোল স্টিকার (ঐচ্ছিক)</span>
-            <button
-              className={`switch ${stickerOn ? 'on' : ''}`}
-              type="button"
-              id="stkSw"
-              onClick={() => {
-                setStickerOn(!stickerOn);
-                addToast({
-                  type: 'info',
-                  message: !stickerOn ? 'QR স্টিকার চালু হলো' : 'QR স্টিকার বন্ধ · রোল নম্বর হাতে লিখে চলবে',
-                });
-              }}
-              aria-pressed={stickerOn}
-              aria-label="QR রোল স্টিকার চালু বা বন্ধ"
-            />
-            <span className="small muted" style={{ fontSize: 12 }}>
-              {stickerOn ? 'চালু' : 'বন্ধ, হাতে লিখে চলবে'}
-            </span>
+      {/* 1. MODERN HEADER */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 16,
+          paddingBottom: 4,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div
+            style={{
+              width: 42,
+              height: 42,
+              borderRadius: 10,
+              background: 'var(--accent-soft)',
+              color: 'var(--accent)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 6px rgba(47, 91, 234, 0.12)',
+              flexShrink: 0,
+            }}
+          >
+            <FileText size={22} />
           </div>
-        )}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <h2
+                style={{
+                  fontSize: '1.45rem',
+                  fontWeight: 700,
+                  margin: 0,
+                  color: 'var(--ink)',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                জব কার্ড
+              </h2>
+              <span
+                style={{
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  color: 'var(--accent)',
+                  background: 'var(--accent-soft)',
+                  padding: '2px 8px',
+                  borderRadius: 999,
+                  fontFamily: 'var(--f-mono)',
+                }}
+              >
+                {curMachine.m}
+              </span>
+            </div>
+            <p style={{ margin: '2px 0 0', fontSize: '0.84rem', color: 'var(--muted)' }}>
+              মেশিনভিত্তিক প্রোডাকশন ট্র্যাকিং, রোল এন্ট্রি ও ইনস্ট্যান্ট QC ইন্সপেকশন
+            </p>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            className="btn sm"
+            onClick={handlePrintJobCard}
+            title="জব কার্ড প্রিন্ট করুন"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: '0.84rem',
+              padding: '7px 12px',
+            }}
+          >
+            <Printer size={14} />
+            <span>প্রিন্ট জব কার্ড</span>
+          </button>
+
+          {!isVendor && (
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 10,
+                background: 'var(--surface)',
+                padding: '6px 12px',
+                borderRadius: 8,
+                border: '1px solid var(--line)',
+                boxShadow: 'var(--shadow)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <QrCode size={15} style={{ color: stickerOn ? 'var(--accent)' : 'var(--muted)' }} />
+                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ink)' }}>QR রোল স্টিকার</span>
+              </div>
+              <button
+                className={`switch ${stickerOn ? 'on' : ''}`}
+                type="button"
+                id="stkSw"
+                onClick={() => {
+                  setStickerOn(!stickerOn);
+                  addToast({
+                    type: 'info',
+                    message: !stickerOn ? 'QR স্টিকার চালু হলো' : 'QR স্টিকার বন্ধ · রোল নম্বর হাতে লিখে চলবে',
+                  });
+                }}
+                aria-pressed={stickerOn}
+                aria-label="QR রোল স্টিকার চালু বা বন্ধ"
+              />
+              <span
+                style={{
+                  fontSize: '0.74rem',
+                  fontWeight: 600,
+                  padding: '1px 7px',
+                  borderRadius: 999,
+                  background: stickerOn ? 'var(--ok-soft)' : 'var(--surface2)',
+                  color: stickerOn ? 'var(--ok)' : 'var(--muted)',
+                }}
+              >
+                {stickerOn ? 'চালু' : 'বন্ধ'}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* 2. ORDER SELECTOR & MACHINE CHIPS IN SAME ROW */}
-      <div className="row" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 12, margin: '8px 0 16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap' }}>অর্ডার:</span>
-          <SearchableSelect
-            id="jcO"
-            value={selectedOrderId}
-            onChange={(val) => {
-              setSelectedOrderId(val);
-              setSelectedMachine('');
-              setEditMode(false);
-            }}
-            options={validOrders.map((o) => ({
-              value: o.id,
-              label: `${o.id} ${o.party ? `· ${o.party}` : ''} ${o.buyer ? `(${o.buyer})` : ''}`.trim(),
-            }))}
-            searchPlaceholder="অর্ডার বা ভেন্ডর খুঁজুন..."
-            style={{ width: 280 }}
-          />
-        </div>
-
-        {/* 3. MACHINE CHIPS MATCHING KnitKhata.html in SAME ROW */}
-        <div className="chips" id="jcM" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: 0, position: 'static' }}>
-          {ms.map((x, idx) => {
-            const isSelected = x.m === curMachine.m;
-            const partLine = lines[x.i];
-            const colorVar = `var(--l${(x.i % 5) + 1})`;
-
-            return (
-              <button
-                key={`${x.m}-${idx}`}
-                type="button"
-                className={isSelected ? 'on' : ''}
-                data-m={x.m}
-                onClick={() => {
-                  setSelectedMachine(x.m);
+      {/* 2. UNIFIED ORDER & MACHINE CONTROL CENTER CARD */}
+      <div
+        style={{
+          background: 'var(--surface)',
+          borderRadius: 12,
+          border: '1px solid var(--line)',
+          boxShadow: 'var(--shadow)',
+          padding: '14px 18px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 14,
+          }}
+        >
+          {/* Order Selection */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: '1 1 300px', maxWidth: 440 }}>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                fontWeight: 600,
+                fontSize: '0.84rem',
+                color: 'var(--muted)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <Package size={15} style={{ color: 'var(--accent)' }} />
+              অর্ডার:
+            </span>
+            <div style={{ flex: 1, minWidth: 220 }}>
+              <SearchableSelect
+                id="jcO"
+                value={selectedOrderId}
+                onChange={(val) => {
+                  setSelectedOrderId(val);
+                  setSelectedMachine('');
                   setEditMode(false);
                 }}
+                options={validOrders.map((o) => {
+                  const partyPart = o.party ? ` · ${o.party}` : '';
+                  const buyerPart = o.buyer && o.buyer !== o.party ? ` (${o.buyer})` : '';
+                  return {
+                    value: o.id,
+                    label: `${o.id}${partyPart}${buyerPart}`.trim(),
+                  };
+                })}
+                searchPlaceholder="অর্ডার বা ভেন্ডর খুঁজুন..."
+              />
+            </div>
+          </div>
+
+          {/* Machine Selection Chips */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                fontWeight: 600,
+                fontSize: '0.84rem',
+                color: 'var(--muted)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <Cpu size={15} style={{ color: 'var(--ok)' }} />
+              মেশিন:
+            </span>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+              {ms.map((x, idx) => {
+                const isSelected = x.m === curMachine.m;
+                const partLine = lines[x.i];
+                const colorVar = `var(--l${(x.i % 5) + 1})`;
+
+                return (
+                  <button
+                    key={`${x.m}-${idx}`}
+                    type="button"
+                    onClick={() => {
+                      setSelectedMachine(x.m);
+                      setEditMode(false);
+                    }}
+                    style={{
+                      border: isSelected ? '1px solid var(--accent)' : '1px solid var(--line)',
+                      background: isSelected ? 'var(--accent-soft)' : 'var(--surface2)',
+                      color: isSelected ? 'var(--accent)' : 'var(--ink)',
+                      padding: '6px 12px',
+                      borderRadius: 8,
+                      fontSize: '0.85rem',
+                      fontWeight: isSelected ? 700 : 500,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      boxShadow: isSelected ? '0 1px 3px rgba(47, 91, 234, 0.15)' : 'none',
+                      transition: 'all 0.15s ease',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 7,
+                        height: 7,
+                        borderRadius: '50%',
+                        background: colorVar,
+                        display: 'inline-block',
+                      }}
+                    />
+                    <span style={{ fontFamily: 'var(--f-mono)' }}>{x.m}</span>
+                    <span
+                      style={{
+                        fontSize: '0.74rem',
+                        color: isSelected ? 'var(--accent)' : 'var(--muted)',
+                        background: isSelected ? 'rgba(47, 91, 234, 0.12)' : 'var(--surface)',
+                        padding: '1px 6px',
+                        borderRadius: 4,
+                      }}
+                    >
+                      {partLine?.place || 'Body'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Context Summary Bar for Selected Machine */}
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            gap: 16,
+            paddingTop: 10,
+            borderTop: '1px dashed var(--line)',
+            fontSize: '0.82rem',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ color: 'var(--muted)' }}>ভেন্ডর:</span>
+            <b style={{ color: 'var(--ink)' }}>{vendorName}</b>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ color: 'var(--muted)' }}>ফেব্রিক:</span>
+            <b style={{ color: 'var(--ink)' }}>
+              {curLine.fab} ({curLine.dia})
+            </b>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ color: 'var(--muted)' }}>টার্গেট ভলিউম:</span>
+            <b style={{ color: 'var(--ink)', fontFamily: 'var(--f-mono)' }}>{bnNum(inQty)} kg</b>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ color: 'var(--muted)' }}>রোল উৎপাদন:</span>
+            <b style={{ color: 'var(--ok)', fontFamily: 'var(--f-mono)' }}>
+              {bnNum(usedCols.length)}টি ({bnNum(outQty)} kg)
+            </b>
+          </div>
+
+          {notOkCount > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
+              <span
                 style={{
-                  '--c': colorVar,
-                  position: 'static',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 6,
-                  cursor: 'pointer',
-                  padding: '6px 14px',
+                  gap: 4,
+                  padding: '2px 8px',
                   borderRadius: 999,
-                  fontSize: '0.88rem',
-                  fontWeight: isSelected ? 600 : 500,
-                } as React.CSSProperties}
+                  background: 'var(--bad-soft)',
+                  color: 'var(--bad)',
+                  fontSize: '0.76rem',
+                  fontWeight: 600,
+                }}
               >
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: colorVar, display: 'inline-block' }} />
-                {x.m} · {partLine?.place || 'Body'}
-              </button>
-            );
-          })}
+                <AlertTriangle size={12} />
+                {bnNum(notOkCount)}টি রোলে ত্রুটি আছে
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -509,13 +747,13 @@ export const FactoryJobCardPage: React.FC = () => {
             <span>{factoryProfile?.address || 'কোনাবাড়ি, গাজীপুর'}</span>
             <em>জব কার্ড</em>
           </div>
-          <div className="jc-r">
-            <div className="row no-pdf jc-tools">
+          <div className="jc-r" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <QrCodeSvg value={`${activeOrder.id}-${curMachine.m}`} size={76} />
+            <div className="row no-pdf jc-tools" style={{ margin: 0 }}>
               <button className="btn sm no-pdf prn-btn" type="button" onClick={handlePrintJobCard}>
                 🖨️ প্রিন্ট
               </button>
             </div>
-            <QrCodeSvg value={`${activeOrder.id}-${curMachine.m}`} size={78} />
           </div>
         </div>
 
