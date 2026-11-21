@@ -2237,16 +2237,21 @@ tr.totrow td{background:var(--surface2);font-weight:600}
 .prn-seg{display:flex;flex-direction:column;gap:6px;font-weight:400}
 .prn-seg input{accent-color:var(--accent)}
 .prn-act{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+@page{size:auto;margin:12mm 15mm}
 @media print{
  body.printing>*:not(#printArea){display:none!important}
  html:has(body.printing),body.printing,body.printing #printArea{background:#FFFFFF!important}
  body.printing::before{display:none!important}
- body.printing #printArea{display:block!important;color:#000}
+ body.printing{margin:0!important;padding:0!important}
+ body.printing #printArea{display:block!important;color:#000;margin:0 auto!important;padding:16px 20px!important;box-sizing:border-box!important;width:100%!important;max-width:100%!important}
  #printArea *{-webkit-print-color-adjust:exact;print-color-adjust:exact;box-shadow:none!important}
- #printArea .card,#printArea .kpi,#printArea tr,#printArea .stk{break-inside:avoid}
+ #printArea .card,#printArea .kpi,#printArea tr,#printArea .stk,#printArea .jc{break-inside:avoid}
  #printArea .tw{overflow:visible!important;border-color:#CBD5E1}
- #printArea table{font-size:11px}
+ #printArea table{font-size:10px}
  #printArea .head{margin-bottom:8px}
+ #printArea .jc{background:#FFFFFF!important;color:#1E2124!important;border:1px solid #CBD5E1!important;border-radius:8px;padding:20px 24px!important;margin:0 auto!important;box-sizing:border-box!important;width:100%!important}
+ #printArea .jc-t td,#printArea .jc-t th{padding:3px 4px!important}
+ .no-pdf,.no-print,#printArea .no-pdf,#printArea .no-print,#printArea button{display:none!important}
 }
 .ic-b{display:inline-grid;place-items:center;width:40px;height:40px;padding:0;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;flex:none}
 .ic-b:hover{border-color:var(--accent);color:var(--accent)}

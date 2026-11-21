@@ -367,41 +367,71 @@ export const FactoryJobCardPage: React.FC = () => {
       window.print();
       return;
     }
-    const printArea = document.getElementById('printArea');
-    if (printArea) {
-      printArea.innerHTML = jcEl.outerHTML;
-      document.body.classList.add('printing');
-      window.print();
-      setTimeout(() => {
-        document.body.classList.remove('printing');
-        printArea.innerHTML = '';
-      }, 600);
-    } else {
-      window.print();
+    let printArea = document.getElementById('printArea');
+    if (!printArea) {
+      printArea = document.createElement('div');
+      printArea.id = 'printArea';
+      document.body.appendChild(printArea);
     }
+
+    // Clone element to retain input/textarea state if modified in editMode
+    const clone = jcEl.cloneNode(true) as HTMLElement;
+    const origInputs = jcEl.querySelectorAll('input, textarea');
+    const cloneInputs = clone.querySelectorAll('input, textarea');
+    origInputs.forEach((inp, idx) => {
+      const cInp = cloneInputs[idx] as HTMLInputElement | HTMLTextAreaElement;
+      if (cInp) cInp.value = (inp as HTMLInputElement | HTMLTextAreaElement).value;
+    });
+
+    printArea.innerHTML = '';
+    printArea.appendChild(clone);
+    document.body.classList.add('printing');
+
+    let cleaned = false;
+    const cleanup = () => {
+      if (cleaned) return;
+      cleaned = true;
+      document.body.classList.remove('printing');
+      if (printArea) printArea.innerHTML = '';
+      window.removeEventListener('afterprint', cleanup);
+    };
+
+    window.addEventListener('afterprint', cleanup);
+    window.print();
+    // Safety fallback cleanup in case browser doesn't dispatch afterprint
+    setTimeout(cleanup, 3000);
   };
 
   // Print helper for Roll Stickers
   const handlePrintStickers = () => {
     const stkGridEl = document.querySelector('#jcStk .stk-grid');
     if (!stkGridEl) return;
-    const printArea = document.getElementById('printArea');
-    if (printArea) {
-      printArea.innerHTML = `
-        <div style="padding: 16px;">
-          <h3 style="margin-bottom: 12px;">রোল স্টিকার · ${activeOrder.id} (${curMachine.m})</h3>
-          ${stkGridEl.outerHTML}
-        </div>
-      `;
-      document.body.classList.add('printing');
-      window.print();
-      setTimeout(() => {
-        document.body.classList.remove('printing');
-        printArea.innerHTML = '';
-      }, 600);
-    } else {
-      window.print();
+    let printArea = document.getElementById('printArea');
+    if (!printArea) {
+      printArea = document.createElement('div');
+      printArea.id = 'printArea';
+      document.body.appendChild(printArea);
     }
+    printArea.innerHTML = `
+      <div style="padding: 16px;">
+        <h3 style="margin-bottom: 12px;">রোল স্টিকার · ${activeOrder.id} (${curMachine.m})</h3>
+        ${stkGridEl.outerHTML}
+      </div>
+    `;
+    document.body.classList.add('printing');
+
+    let cleaned = false;
+    const cleanup = () => {
+      if (cleaned) return;
+      cleaned = true;
+      document.body.classList.remove('printing');
+      if (printArea) printArea.innerHTML = '';
+      window.removeEventListener('afterprint', cleanup);
+    };
+
+    window.addEventListener('afterprint', cleanup);
+    window.print();
+    setTimeout(cleanup, 3000);
   };
 
   if (!activeOrder) {
