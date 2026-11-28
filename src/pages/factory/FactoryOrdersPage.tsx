@@ -65,8 +65,10 @@ export const FactoryOrdersPage: React.FC = () => {
   }, [searchInput]);
 
   // Fetch paginated orders from server
-  const loadOrders = async () => {
-    setIsLoading(true);
+  const loadOrders = async (isInitial = false) => {
+    if (isInitial || paginatedOrders.length === 0) {
+      setIsLoading(true);
+    }
     setErrorMsg(null);
     try {
       const res = await apiClient.get('portal/orders', {
@@ -243,7 +245,7 @@ export const FactoryOrdersPage: React.FC = () => {
     return range;
   }, [pagination.last_page, pagination.current_page]);
 
-  const hasActiveFilters = Boolean(searchInput || statusFilter !== 'all' || partyFilter !== 'all' || sortBy !== 'id');
+  const hasActiveFilters = Boolean(searchInput || partyFilter !== 'all' || sortBy !== 'id');
 
   const statusTabs = [
     { id: 'all', label: language === 'en' ? 'All Orders' : 'সকল অর্ডার', count: metrics.totalOrders },
@@ -317,7 +319,7 @@ export const FactoryOrdersPage: React.FC = () => {
           <button
             type="button"
             className="btn sm"
-            onClick={loadOrders}
+            onClick={() => loadOrders(true)}
             title={language === 'en' ? 'Refresh data' : 'ডাটা রিফ্রেশ করুন'}
             style={{
               display: 'inline-flex',
@@ -579,8 +581,8 @@ export const FactoryOrdersPage: React.FC = () => {
           position: 'relative',
         }}
       >
-        {/* Loading Overlay */}
-        {isLoading && (
+        {/* Loading Overlay — only on cold initial load without existing data */}
+        {isLoading && paginatedOrders.length === 0 && (
           <div
             style={{
               position: 'absolute',
@@ -609,9 +611,24 @@ export const FactoryOrdersPage: React.FC = () => {
               }}
             >
               <Loader2 size={18} className="animate-spin" />
-              <span>ডাটা লোড হচ্ছে...</span>
+              <span>{language === 'en' ? 'Loading orders...' : 'ডাটা লোড হচ্ছে...'}</span>
             </div>
           </div>
+        )}
+
+        {/* Subtle top loading line during background fetch */}
+        {isLoading && paginatedOrders.length > 0 && (
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 2,
+              background: 'var(--grad, linear-gradient(90deg, #2563EB, #4F46E5))',
+              zIndex: 25,
+            }}
+          />
         )}
 
         {/* Top Header Tabs Row */}
@@ -635,6 +652,36 @@ export const FactoryOrdersPage: React.FC = () => {
                 onClick={() => {
                   setStatusFilter(tab.id);
                   setCurrentPage(1);
+                  // Instant zero-lag filter from in-memory globalOrders
+                  if (globalOrders.length > 0) {
+                    const filtered = globalOrders.filter((o) => {
+                      if (tab.id !== 'all') {
+                        const st = (o.status || '').toLowerCase();
+                        if (tab.id === 'running' && st !== 'running' && st !== 'run') return false;
+                        if (tab.id === 'pending' && st !== 'pending' && st !== 'wait') return false;
+                        if (tab.id === 'completed' && st !== 'completed' && st !== 'done' && st !== 'delivered') return false;
+                      }
+                      if (partyFilter !== 'all' && (o as any).party_code !== partyFilter && o.party !== partyFilter) return false;
+                      if (debouncedSearch.trim()) {
+                        const q = debouncedSearch.toLowerCase();
+                        const matchNo = (o.id || o.po || '').toLowerCase().includes(q);
+                        const matchBuyer = (o.buyer || '').toLowerCase().includes(q);
+                        const matchParty = (o.party || '').toLowerCase().includes(q);
+                        const matchFabric = (o.fabric || o.style || '').toLowerCase().includes(q);
+                        if (!matchNo && !matchBuyer && !matchParty && !matchFabric) return false;
+                      }
+                      return true;
+                    });
+                    setPaginatedOrders(filtered.slice(0, perPage));
+                    setPagination({
+                      current_page: 1,
+                      per_page: perPage,
+                      total: filtered.length,
+                      last_page: Math.max(1, Math.ceil(filtered.length / perPage)),
+                      from: filtered.length > 0 ? 1 : 0,
+                      to: Math.min(perPage, filtered.length),
+                    });
+                  }
                 }}
                 style={{
                   border: 'none',
@@ -645,7 +692,7 @@ export const FactoryOrdersPage: React.FC = () => {
                   alignItems: 'center',
                   gap: 8,
                   fontSize: '0.88rem',
-                  fontWeight: isActive ? 600 : 500,
+                  fontWeight: 600,
                   color: isActive ? 'var(--accent)' : 'var(--muted)',
                   borderBottom: isActive ? '2px solid var(--accent)' : '2px solid transparent',
                   marginBottom: -1,
@@ -924,36 +971,6 @@ export const FactoryOrdersPage: React.FC = () => {
               </span>
             )}
 
-            {statusFilter !== 'all' && (
-              <span
-                style={{
-                  background: 'var(--surface)',
-                  border: '1px solid var(--line)',
-                  borderRadius: 6,
-                  padding: '2px 7px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 5,
-                }}
-              >
-                অবস্থা:{' '}
-                <b>
-                  {statusFilter === 'running'
-                    ? 'চলমান'
-                    : statusFilter === 'pending'
-                    ? 'সুতার অপেক্ষায়'
-                    : 'সম্পন্ন'}
-                </b>
-                <button
-                  type="button"
-                  onClick={() => setStatusFilter('all')}
-                  style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: 0, color: 'var(--muted)' }}
-                >
-                  <X size={11} />
-                </button>
-              </span>
-            )}
-
             {partyFilter !== 'all' && (
               <span
                 style={{
@@ -980,7 +997,7 @@ export const FactoryOrdersPage: React.FC = () => {
         )}
 
         {/* The Orders Table */}
-        <div className="tw" style={{ border: 'none', borderRadius: 0, overflowX: 'auto' }}>
+        <div className="tw" style={{ border: 'none', borderRadius: 0, overflowX: 'auto', minHeight: 460 }}>
           <table style={{ margin: 0, width: '100%' }}>
             <thead>
               <tr style={{ background: 'var(--surface2)', borderBottom: '1px solid var(--line)' }}>

@@ -35,6 +35,10 @@
   box-sizing: border-box;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -1975,8 +1979,8 @@ tr.totrow td{background:var(--surface2);font-weight:600}
 .mcb.down{background:var(--bad-soft);color:var(--bad);cursor:not-allowed}
 .no-save{align-self:flex-end}
 .issd{grid-column:span 2}
-.qc-list{display:flex;flex-direction:column;gap:12px;margin-top:12px}
-.qc-c{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--warn);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.qc-list{display:flex;flex-direction:column;gap:10px;margin-top:2px}
+.qc-c{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--warn);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
 .qc-agree{border-left-color:var(--ok)}.qc-dispute{border-left-color:var(--bad)}
 .qc-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .qc-t{font-size:1.02rem}

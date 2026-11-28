@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Layers, Clock, Users, AlertTriangle, CheckCircle2, Search } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { SearchableSelect } from '@/components/common/SearchableSelect';
 
@@ -100,11 +100,12 @@ export const FactoryQcPage: React.FC = () => {
   const isVendorRole = (role as string) === 'vendor' || (role as string) === 'ven';
   const mySide: 'fac' | 'ven' = isVendorRole ? 'ven' : 'fac';
 
-  // Loading state
-  const [isLoading, setIsLoading] = useState(true);
+  // Loading state (instant if orders already in memory)
+  const [isLoading, setIsLoading] = useState(orders.length === 0);
 
   // Filter state
   const [qcFilter, setQcFilter] = useState<'all' | 'mine' | 'theirs' | 'disp' | 'agree'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [qcFormOpen, setQcFormOpen] = useState(false);
   const [qcSignTarget, setQcSignTarget] = useState<{ id: string; v: 'ok' | 'bad'; side: 'fac' | 'ven' } | null>(null);
   const [signNote, setSignNote] = useState('');
@@ -129,7 +130,9 @@ export const FactoryQcPage: React.FC = () => {
   useEffect(() => {
     let isMounted = true;
     const loadInitialData = async () => {
-      setIsLoading(true);
+      if (orders.length === 0) {
+        setIsLoading(true);
+      }
       try {
         await Promise.all([fetchOrders(), fetchQcInspections()]);
       } catch (err) {
@@ -242,21 +245,47 @@ export const FactoryQcPage: React.FC = () => {
   const agr = useMemo(() => allQcItems.filter(({ q }) => qcState(q, language).k === 'agree'), [allQcItems, language]);
   const passCount = useMemo(() => agr.filter(({ q }) => q.fac?.v === 'ok' && q.ven?.v === 'ok').length, [agr]);
 
-  // Filtered List
+  // Filtered List (with tab filter + live search)
   const filteredList = useMemo(() => {
+    let list: { q: QcItem; o: any }[] = [];
     switch (qcFilter) {
       case 'mine':
-        return myPend;
+        list = myPend;
+        break;
       case 'theirs':
-        return theirPend;
+        list = theirPend;
+        break;
       case 'disp':
-        return disp;
+        list = disp;
+        break;
       case 'agree':
-        return agr;
+        list = agr;
+        break;
       default:
-        return allQcItems;
+        list = allQcItems;
+        break;
     }
-  }, [qcFilter, myPend, theirPend, disp, agr, allQcItems]);
+    if (searchQuery.trim()) {
+      const s = searchQuery.toLowerCase().trim();
+      list = list.filter(({ q, o }) => {
+        const orderNo = String(q.o || o.id || o.order_no || '').toLowerCase();
+        const roll = String(q.roll || '').toLowerCase();
+        const issue = String(q.issue || '').toLowerCase();
+        const party = String(o.party || o.party_name || o.party_code || '').toLowerCase();
+        const machine = String(q.m || '').toLowerCase();
+        const qcId = String(q.id || '').toLowerCase();
+        return (
+          orderNo.includes(s) ||
+          roll.includes(s) ||
+          issue.includes(s) ||
+          party.includes(s) ||
+          machine.includes(s) ||
+          qcId.includes(s)
+        );
+      });
+    }
+    return list;
+  }, [qcFilter, myPend, theirPend, disp, agr, allQcItems, searchQuery]);
 
   // Selectable vendors & orders for new QC
   const selectableOrders = useMemo(
@@ -565,11 +594,11 @@ export const FactoryQcPage: React.FC = () => {
         </div>
       )}
 
-      {/* Header */}
-      <div className="head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+      {/* Compact Header */}
+      <div className="head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
         <div>
           <h2 style={{ margin: 0 }}>{t('QC ও কাপড়ের সমস্যা')}</h2>
-          <p style={{ margin: '4px 0 0', color: 'var(--muted)' }}>
+          <p style={{ margin: '2px 0 0', color: 'var(--muted)', fontSize: '0.84rem' }}>
             {language === 'en' ? 'Both factory QC and vendor QC inspect and sign each roll. The record is finalized once both agree.' : 'প্রতিটা রোলে ফ্যাক্টরি QC আর ভেন্ডর QC দুজনেই মত দেবেন ও সাইন করবেন। দুজন একমত হলে তবেই রেকর্ড চূড়ান্ত।'}
           </p>
         </div>
@@ -580,39 +609,237 @@ export const FactoryQcPage: React.FC = () => {
             setQcFormOpen(!qcFormOpen);
             setFormError('');
           }}
+          style={{ whiteSpace: 'nowrap' }}
         >
-          {qcFormOpen ? (language === 'en' ? '✕ Close' : '✕ বন্ধ করুন') : (language === 'en' ? '+ QC Entry / Report Defect' : '+ QC এন্ট্রি / সমস্যা জানান')}
+          {qcFormOpen ? (language === 'en' ? '✕ Close Form' : '✕ বন্ধ করুন') : (language === 'en' ? '+ QC Entry / Report Defect' : '+ QC এন্ট্রি / সমস্যা জানান')}
         </button>
       </div>
 
-      {/* KPIs exact from live database */}
-      <div className="kpis" style={{ marginTop: 16 }}>
+      {/* Interactive Unified KPI Filter Cards (Replaces duplicate chips & loose spacing) */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: 10,
+          marginBottom: 10,
+        }}
+      >
+        {/* Tab 1: All Inspected */}
         {!isVendorRole && (
-          <div className="kpi">
-            <span>{language === 'en' ? 'Total Inspected' : 'মোট পরিদর্শন'}</span>
-            <b>{toBn(allQcItems.length)} {language === 'en' ? 'rolls' : 'রোল'}</b>
-            <i>{language === 'en' ? 'Mutually passed ' : 'উভয় পক্ষের পাস '}{toBn(passCount)}</i>
-          </div>
+          <button
+            type="button"
+            onClick={() => setQcFilter('all')}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              textAlign: 'left',
+              padding: '10px 14px',
+              borderRadius: 10,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+              border: qcFilter === 'all' ? '2px solid var(--accent, #2563eb)' : '1px solid var(--line)',
+              background: qcFilter === 'all' ? 'var(--accent-soft, #e7edff)' : 'var(--surface, #ffffff)',
+              boxShadow: qcFilter === 'all' ? '0 4px 12px rgba(37, 99, 235, 0.12)' : 'var(--shadow, none)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: qcFilter === 'all' ? 'var(--accent)' : 'var(--muted)' }}>
+                {language === 'en' ? 'All Inspected' : 'মোট পরিদর্শন'}
+              </span>
+              <div
+                style={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: 6,
+                  display: 'grid',
+                  placeItems: 'center',
+                  background: qcFilter === 'all' ? 'var(--accent)' : 'var(--surface2)',
+                  color: qcFilter === 'all' ? '#ffffff' : 'var(--muted)',
+                }}
+              >
+                <Layers size={13} />
+              </div>
+            </div>
+            <b style={{ fontFamily: 'var(--f-mono)', fontSize: '1.4rem', fontWeight: 700, margin: '4px 0 1px', color: 'var(--ink)' }}>
+              {toBn(allQcItems.length)} <span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--muted)' }}>{language === 'en' ? 'rolls' : 'রোল'}</span>
+            </b>
+            <i style={{ fontStyle: 'normal', fontSize: '0.74rem', color: 'var(--muted)' }}>
+              {language === 'en' ? 'Mutually passed: ' : 'উভয় পক্ষের পাস: '}<b>{toBn(passCount)}</b>
+            </i>
+          </button>
         )}
-        <div className="kpi">
-          <span>{language === 'en' ? 'Your Sign Pending' : 'আপনার সাইন বাকি'}</span>
-          <b>{toBn(myPend.length)}</b>
-        </div>
-        <div className="kpi">
-          <span>{language === 'en' ? (mySide === 'fac' ? 'Vendor Sign Pending' : 'Factory Sign Pending') : `${mySide === 'fac' ? 'ভেন্ডরের' : 'ফ্যাক্টরির'} সাইন বাকি`}</span>
-          <b>{toBn(theirPend.length)}</b>
-        </div>
-        <div
-          className="kpi"
-          style={disp.length ? { borderColor: 'var(--bad)' } : undefined}
+
+        {/* Tab 2: Your Sign Pending */}
+        <button
+          type="button"
+          onClick={() => setQcFilter('mine')}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            textAlign: 'left',
+            padding: '10px 14px',
+            borderRadius: 10,
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+            border: qcFilter === 'mine' ? '2px solid var(--accent, #2563eb)' : '1px solid var(--line)',
+            background: qcFilter === 'mine' ? 'var(--accent-soft, #e7edff)' : 'var(--surface, #ffffff)',
+            boxShadow: qcFilter === 'mine' ? '0 4px 12px rgba(37, 99, 235, 0.12)' : 'var(--shadow, none)',
+          }}
         >
-          <span>{language === 'en' ? 'Dispute' : 'দ্বিমত'}</span>
-          <b style={disp.length ? { color: 'var(--bad)' } : undefined}>{toBn(disp.length)}</b>
-        </div>
-        <div className="kpi">
-          <span>{language === 'en' ? 'Both Agreed' : 'উভয় পক্ষ একমত'}</span>
-          <b>{toBn(agr.length)}</b>
-        </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: qcFilter === 'mine' ? 'var(--accent)' : 'var(--muted)' }}>
+              {language === 'en' ? 'Your Sign Pending' : 'আপনার সাইন বাকি'}
+            </span>
+            <div
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: 6,
+                display: 'grid',
+                placeItems: 'center',
+                background: qcFilter === 'mine' ? 'var(--accent)' : 'var(--surface2)',
+                color: qcFilter === 'mine' ? '#ffffff' : 'var(--muted)',
+              }}
+            >
+              <Clock size={13} />
+            </div>
+          </div>
+          <b style={{ fontFamily: 'var(--f-mono)', fontSize: '1.4rem', fontWeight: 700, margin: '4px 0 1px', color: myPend.length > 0 ? 'var(--accent)' : 'var(--ink)' }}>
+            {toBn(myPend.length)}
+          </b>
+          <i style={{ fontStyle: 'normal', fontSize: '0.74rem', color: myPend.length > 0 ? 'var(--warn)' : 'var(--muted)', fontWeight: myPend.length > 0 ? 600 : 400 }}>
+            {myPend.length > 0 ? (language === 'en' ? '● Action required' : '● মত দেওয়া বাকি') : (language === 'en' ? 'All cleared' : 'সব সাইন সম্পন্ন')}
+          </i>
+        </button>
+
+        {/* Tab 3: Partner Sign Pending */}
+        <button
+          type="button"
+          onClick={() => setQcFilter('theirs')}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            textAlign: 'left',
+            padding: '10px 14px',
+            borderRadius: 10,
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+            border: qcFilter === 'theirs' ? '2px solid var(--accent, #2563eb)' : '1px solid var(--line)',
+            background: qcFilter === 'theirs' ? 'var(--accent-soft, #e7edff)' : 'var(--surface, #ffffff)',
+            boxShadow: qcFilter === 'theirs' ? '0 4px 12px rgba(37, 99, 235, 0.12)' : 'var(--shadow, none)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: qcFilter === 'theirs' ? 'var(--accent)' : 'var(--muted)' }}>
+              {language === 'en' ? (mySide === 'fac' ? 'Vendor Pending' : 'Factory Pending') : `${mySide === 'fac' ? 'ভেন্ডরের' : 'ফ্যাক্টরির'} সাইন বাকি`}
+            </span>
+            <div
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: 6,
+                display: 'grid',
+                placeItems: 'center',
+                background: qcFilter === 'theirs' ? 'var(--accent)' : 'var(--surface2)',
+                color: qcFilter === 'theirs' ? '#ffffff' : 'var(--muted)',
+              }}
+            >
+              <Users size={13} />
+            </div>
+          </div>
+          <b style={{ fontFamily: 'var(--f-mono)', fontSize: '1.4rem', fontWeight: 700, margin: '4px 0 1px', color: 'var(--ink)' }}>
+            {toBn(theirPend.length)}
+          </b>
+          <i style={{ fontStyle: 'normal', fontSize: '0.74rem', color: 'var(--muted)' }}>
+            {language === 'en' ? 'Awaiting inspection' : 'অপর পক্ষের অপেক্ষায়'}
+          </i>
+        </button>
+
+        {/* Tab 4: Dispute */}
+        <button
+          type="button"
+          onClick={() => setQcFilter('disp')}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            textAlign: 'left',
+            padding: '10px 14px',
+            borderRadius: 10,
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+            border: qcFilter === 'disp' ? '2px solid var(--bad, #dc2626)' : disp.length ? '1px solid var(--bad-soft, #fca5a5)' : '1px solid var(--line)',
+            background: qcFilter === 'disp' ? 'var(--bad-soft, #fee2e2)' : 'var(--surface, #ffffff)',
+            boxShadow: qcFilter === 'disp' ? '0 4px 12px rgba(220, 38, 38, 0.12)' : 'var(--shadow, none)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: qcFilter === 'disp' ? 'var(--bad)' : 'var(--muted)' }}>
+              {language === 'en' ? 'Disputes' : 'দ্বিমত রেকর্ড'}
+            </span>
+            <div
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: 6,
+                display: 'grid',
+                placeItems: 'center',
+                background: qcFilter === 'disp' ? 'var(--bad)' : 'var(--surface2)',
+                color: qcFilter === 'disp' ? '#ffffff' : disp.length ? 'var(--bad)' : 'var(--muted)',
+              }}
+            >
+              <AlertTriangle size={13} />
+            </div>
+          </div>
+          <b style={{ fontFamily: 'var(--f-mono)', fontSize: '1.4rem', fontWeight: 700, margin: '4px 0 1px', color: disp.length ? 'var(--bad)' : 'var(--ink)' }}>
+            {toBn(disp.length)}
+          </b>
+          <i style={{ fontStyle: 'normal', fontSize: '0.74rem', color: disp.length ? 'var(--bad)' : 'var(--muted)', fontWeight: disp.length ? 600 : 400 }}>
+            {disp.length > 0 ? (language === 'en' ? '● Joint review needed' : '● যৌথ পরিদর্শন দরকার') : (language === 'en' ? 'No dispute' : 'কোনো দ্বিমত নেই')}
+          </i>
+        </button>
+
+        {/* Tab 5: Both Agreed */}
+        <button
+          type="button"
+          onClick={() => setQcFilter('agree')}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            textAlign: 'left',
+            padding: '10px 14px',
+            borderRadius: 10,
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+            border: qcFilter === 'agree' ? '2px solid var(--ok, #16a34a)' : '1px solid var(--line)',
+            background: qcFilter === 'agree' ? 'var(--ok-soft, #dcfce7)' : 'var(--surface, #ffffff)',
+            boxShadow: qcFilter === 'agree' ? '0 4px 12px rgba(22, 163, 74, 0.12)' : 'var(--shadow, none)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: qcFilter === 'agree' ? 'var(--ok)' : 'var(--muted)' }}>
+              {language === 'en' ? 'Both Agreed' : 'উভয় পক্ষ একমত'}
+            </span>
+            <div
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: 6,
+                display: 'grid',
+                placeItems: 'center',
+                background: qcFilter === 'agree' ? 'var(--ok)' : 'var(--surface2)',
+                color: qcFilter === 'agree' ? '#ffffff' : 'var(--muted)',
+              }}
+            >
+              <CheckCircle2 size={13} />
+            </div>
+          </div>
+          <b style={{ fontFamily: 'var(--f-mono)', fontSize: '1.4rem', fontWeight: 700, margin: '4px 0 1px', color: 'var(--ok)' }}>
+            {toBn(agr.length)}
+          </b>
+          <i style={{ fontStyle: 'normal', fontSize: '0.74rem', color: 'var(--muted)' }}>
+            {language === 'en' ? 'Mutually signed' : 'উভয়ের সাইন সম্পন্ন'}
+          </i>
+        </button>
       </div>
 
       {/* New QC Entry Expandable Form */}
@@ -768,52 +995,93 @@ export const FactoryQcPage: React.FC = () => {
         </form>
       )}
 
-      {/* Filter Chips */}
-      <div className="chips" style={{ margin: '16px 0 12px' }}>
-        <button
-          type="button"
-          className={qcFilter === 'all' ? 'on' : ''}
-          onClick={() => setQcFilter('all')}
-        >
-          {language === 'en' ? `All (${toBn(allQcItems.length)})` : `সব (${toBn(allQcItems.length)})`}
-        </button>
-        <button
-          type="button"
-          className={qcFilter === 'mine' ? 'on' : ''}
-          onClick={() => setQcFilter('mine')}
-        >
-          {language === 'en' ? `My Sign Pending (${toBn(myPend.length)})` : `আমার সাইন বাকি (${toBn(myPend.length)})`}
-        </button>
-        <button
-          type="button"
-          className={qcFilter === 'theirs' ? 'on' : ''}
-          onClick={() => setQcFilter('theirs')}
-        >
-          {language === 'en' ? (mySide === 'fac' ? `Vendor Sign Pending (${toBn(theirPend.length)})` : `Factory Sign Pending (${toBn(theirPend.length)})`) : (mySide === 'fac' ? `ভেন্ডরের সাইন বাকি (${toBn(theirPend.length)})` : `ফ্যাক্টরির সাইন বাকি (${toBn(theirPend.length)})`)}
-        </button>
-        <button
-          type="button"
-          className={qcFilter === 'disp' ? 'on' : ''}
-          onClick={() => setQcFilter('disp')}
-        >
-          {language === 'en' ? `Disputed (${toBn(disp.length)})` : `দ্বিমত (${toBn(disp.length)})`}
-        </button>
-        <button
-          type="button"
-          className={qcFilter === 'agree' ? 'on' : ''}
-          onClick={() => setQcFilter('agree')}
-        >
-          {language === 'en' ? `Agreed (${toBn(agr.length)})` : `একমত (${toBn(agr.length)})`}
-        </button>
+      {/* Active Filter & Live Search Toolbar (Zero wasted space) */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 8,
+          marginBottom: 4,
+          padding: '0 2px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.84rem', color: 'var(--muted)' }}>
+          <span>
+            {language === 'en' ? 'Showing records: ' : 'প্রদর্শিত রেকর্ড: '}
+            <b style={{ color: 'var(--ink)' }}>{toBn(filteredList.length)}</b> {language === 'en' ? 'rolls' : 'টি'}
+          </span>
+          {qcFilter !== 'all' && (
+            <span
+              style={{
+                fontSize: '0.74rem',
+                padding: '1px 8px',
+                borderRadius: 999,
+                background: qcFilter === 'disp' ? 'var(--bad-soft)' : 'var(--accent-soft)',
+                color: qcFilter === 'disp' ? 'var(--bad)' : 'var(--accent)',
+                fontWeight: 600,
+              }}
+            >
+              {qcFilter === 'mine'
+                ? (language === 'en' ? 'Filter: My Sign Pending' : 'ফিল্টার: আমার সাইন বাকি')
+                : qcFilter === 'theirs'
+                ? (language === 'en' ? 'Filter: Partner Sign Pending' : 'ফিল্টার: অপর পক্ষের সাইন বাকি')
+                : qcFilter === 'disp'
+                ? (language === 'en' ? 'Filter: Disputed Rolls' : 'ফিল্টার: দ্বিমত রোল')
+                : (language === 'en' ? 'Filter: Agreed Rolls' : 'ফিল্টার: একমত রোল')}
+            </span>
+          )}
+        </div>
+
+        {/* Live Search Input */}
+        <div style={{ position: 'relative', width: 240, maxWidth: '100%' }}>
+          <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', pointerEvents: 'none' }} />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={language === 'en' ? 'Search roll, order...' : 'রোল নং, অর্ডার খুঁজুন...'}
+            style={{
+              width: '100%',
+              padding: '5px 10px 5px 30px',
+              fontSize: '0.82rem',
+              borderRadius: 6,
+              border: '1px solid var(--line)',
+              background: 'var(--surface)',
+              color: 'var(--ink)',
+            }}
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              style={{
+                position: 'absolute',
+                right: 6,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--muted)',
+                cursor: 'pointer',
+                fontSize: '0.75rem',
+                padding: 2,
+              }}
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Loading Spinner or QC Cards List */}
       {isLoading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 260 }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 180 }}>
           <div
             style={{
-              width: 44,
-              height: 44,
+              width: 38,
+              height: 38,
               borderRadius: '50%',
               background: 'var(--surface, #ffffff)',
               boxShadow: '0 4px 14px rgba(0, 0, 0, 0.08)',
@@ -824,11 +1092,11 @@ export const FactoryQcPage: React.FC = () => {
               color: 'var(--primary, #0284c7)',
             }}
           >
-            <Loader2 size={24} className="animate-spin" />
+            <Loader2 size={20} className="animate-spin" />
           </div>
         </div>
       ) : (
-        <div className="qc-list">
+        <div className="qc-list" style={{ marginTop: 0 }}>
           {filteredList.length === 0 ? (
             <div className="card muted" style={{ padding: 24, textAlign: 'center' }}>
               {language === 'en' ? 'No QC records found in this list.' : 'এই তালিকায় কোনো QC রেকর্ড পাওয়া যায়নি।'}
