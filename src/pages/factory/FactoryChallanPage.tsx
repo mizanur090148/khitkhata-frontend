@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Truck, Clock, CheckCircle2, AlertTriangle, Search, Eye } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { bnNum } from '@/utils/formatters';
 import { SearchableSelect } from '@/components/common/SearchableSelect';
@@ -28,8 +28,12 @@ export const FactoryChallanPage: React.FC = () => {
 
   const isVendor = role === 'vendor' || (role as string) === 'ven';
 
-  // Loading state
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  // Loading state (instant if data already in memory)
+  const [isLoading, setIsLoading] = useState<boolean>(deliveryChallans.length === 0);
+
+  // Status and Search Filters
+  const [statusFilter, setStatusFilter] = useState<'all' | 'transit' | 'received' | 'discrepancy'>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   // State
   const [chOpen, setChOpen] = useState<string | null>(null);
@@ -45,6 +49,7 @@ export const FactoryChallanPage: React.FC = () => {
   // Initial load from live backend
   useEffect(() => {
     let mounted = true;
+    if (deliveryChallans.length === 0) setIsLoading(true);
     Promise.all([fetchChallans(), fetchRolls(), fetchOrders()])
       .catch((err) => console.warn('Challan page data load error:', err))
       .finally(() => {
@@ -188,17 +193,29 @@ export const FactoryChallanPage: React.FC = () => {
     return deliveryChallans;
   }, [deliveryChallans, isVendor, currentUser, parties]);
 
-  // Status helper
+  // Status helper with status key for filtering
   const chState = (c: any) => {
     if (!c.ven) {
-      return { s: 'warn', t: language === 'en' ? 'In Transit · Awaiting Vendor Sign' : 'পথে · ভেন্ডরের সাইন বাকি' };
+      return {
+        s: 'warn',
+        k: 'transit' as const,
+        t: language === 'en' ? 'In Transit · Pending Sign' : 'পথে · ভেন্ডরের সাইন বাকি',
+      };
     }
     const rollsCount = Array.isArray(c.rolls) ? c.rolls.length : 0;
     const got = c.ven.got !== undefined ? c.ven.got : rollsCount;
     if (got < rollsCount) {
-      return { s: 'bad', t: language === 'en' ? `Discrepancy · ${rollsCount - got} roll(s) short` : `গরমিল · ${rollsCount - got}টা রোল কম` };
+      return {
+        s: 'bad',
+        k: 'discrepancy' as const,
+        t: language === 'en' ? `Discrepancy · ${rollsCount - got} roll(s) short` : `গরমিল · ${rollsCount - got}টা রোল কম`,
+      };
     }
-    return { s: 'ok', t: language === 'en' ? 'Received by Vendor' : 'ভেন্ডর বুঝে পেয়েছে' };
+    return {
+      s: 'ok',
+      k: 'received' as const,
+      t: language === 'en' ? 'Received by Vendor' : 'ভেন্ডর বুঝে পেয়েছে',
+    };
   };
 
   // Total kg of a challan dynamically calculated
@@ -216,6 +233,64 @@ export const FactoryChallanPage: React.FC = () => {
     }
     return 0;
   };
+
+  // Counts by status for interactive KPIs
+  const transitChallans = useMemo(
+    () => listChallans.filter((c) => chState(c).k === 'transit'),
+    [listChallans, language]
+  );
+  const receivedChallans = useMemo(
+    () => listChallans.filter((c) => chState(c).k === 'received'),
+    [listChallans, language]
+  );
+  const discrepancyChallans = useMemo(
+    () => listChallans.filter((c) => chState(c).k === 'discrepancy'),
+    [listChallans, language]
+  );
+  const totalDispatchedKg = useMemo(
+    () => listChallans.reduce((sum, c) => sum + challanKg(c), 0),
+    [listChallans, rolls]
+  );
+
+  // Filtered and searched challans
+  const filteredChallans = useMemo(() => {
+    let list = listChallans;
+
+    // Filter by status tab
+    if (statusFilter === 'transit') {
+      list = transitChallans;
+    } else if (statusFilter === 'received') {
+      list = receivedChallans;
+    } else if (statusFilter === 'discrepancy') {
+      list = discrepancyChallans;
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter((c) => {
+        const no = String(c.no || c.challan_no || '').toLowerCase();
+        const orderNo = String(c.o || c.order_no || '').toLowerCase();
+        const vendor = vName(c.v || c.party_code).toLowerCase();
+        const partyCode = String(c.v || c.party_code || '').toLowerCase();
+        const vehicle = String(c.veh || c.vehicle_no || '').toLowerCase();
+        const driver = String(c.drv || c.driver_name || '').toLowerCase();
+        const date = String(getChallanDate(c)).toLowerCase();
+
+        return (
+          no.includes(q) ||
+          orderNo.includes(q) ||
+          vendor.includes(q) ||
+          partyCode.includes(q) ||
+          vehicle.includes(q) ||
+          driver.includes(q) ||
+          date.includes(q)
+        );
+      });
+    }
+
+    return list;
+  }, [listChallans, statusFilter, transitChallans, receivedChallans, discrepancyChallans, searchQuery, parties, orders]);
 
   // Scan roll barcode handler
   const handleScanRoll = () => {
@@ -510,10 +585,10 @@ export const FactoryChallanPage: React.FC = () => {
                       )}
                       <tr>
                         <td colSpan={6}>
-                          <b>{language === 'en' ? `Total ${bnNum(rollNos.length)} Rolls` : `মোট ${bnNum(rollNos.length)} রোল`}</b>
+                          <b>{language === 'en' ? `Total ${bnNum(rollNos.length, language)} Rolls` : `মোট ${bnNum(rollNos.length, language)} রোল`}</b>
                         </td>
                         <td className="n">
-                          <b>{totalKg > 0 ? totalKg.toFixed(1) : '—'}</b>
+                          <b>{totalKg > 0 ? bnNum(totalKg.toFixed(1), language) : '—'}</b>
                         </td>
                       </tr>
                     </tbody>
@@ -536,7 +611,7 @@ export const FactoryChallanPage: React.FC = () => {
                       <>
                         <b>✍ {c.ven.by || (language === 'en' ? 'Vendor Representative' : 'ভেন্ডর প্রতিনিধি')}</b>
                         <small>
-                          {c.ven.at} · {language === 'en' ? `Received ${bnNum(c.ven.got)} / ${bnNum(rollNos.length)} rolls` : `পেয়েছে ${bnNum(c.ven.got)} / ${bnNum(rollNos.length)} রোল`}
+                          {c.ven.at} · {language === 'en' ? `Received ${bnNum(c.ven.got, language)} / ${bnNum(rollNos.length, language)} rolls` : `পেয়েছে ${bnNum(c.ven.got, language)} / ${bnNum(rollNos.length, language)} রোল`}
                         </small>
                       </>
                     ) : isVendor ? (
@@ -575,10 +650,10 @@ export const FactoryChallanPage: React.FC = () => {
       ) : (
         /* ================= VIEW 2: CHALLAN LIST & NEW CHALLAN FORM ================= */
         <>
-          <div className="head">
+          <div className="head" style={{ marginBottom: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
             <div>
-              <h2>{t('ডেলিভারি চালান')}</h2>
-              <p>
+              <h2 style={{ margin: 0 }}>{t('ডেলিভারি চালান')}</h2>
+              <p style={{ margin: '3px 0 0', color: 'var(--muted)', fontSize: '0.84rem' }}>
                 {isVendor
                   ? (language === 'en'
                       ? 'Delivery challans from the factory arrive here. Count rolls upon unloading and provide digital signature.'
@@ -596,10 +671,193 @@ export const FactoryChallanPage: React.FC = () => {
                   setChNew(!chNew);
                   setChSel(new Set());
                 }}
+                style={{ whiteSpace: 'nowrap' }}
               >
-                {chNew ? (language === 'en' ? '✕ Close' : '✕ বন্ধ করুন') : (language === 'en' ? '+ New Challan' : '+ নতুন চালান')}
+                {chNew ? (language === 'en' ? '✕ Close Form' : '✕ বন্ধ করুন') : (language === 'en' ? '+ New Delivery Challan' : '+ নতুন ডেলিভারি চালান')}
               </button>
             )}
+          </div>
+
+          {/* Interactive Status KPI Filter Cards */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+              gap: 10,
+              margin: '10px 0 12px',
+            }}
+          >
+            {/* Card 1: All Challans */}
+            <button
+              type="button"
+              onClick={() => setStatusFilter('all')}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                textAlign: 'left',
+                padding: '10px 14px',
+                borderRadius: 10,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                border: statusFilter === 'all' ? '2px solid var(--accent, #2563eb)' : '1px solid var(--line)',
+                background: statusFilter === 'all' ? 'var(--accent-soft, #e7edff)' : 'var(--surface, #ffffff)',
+                boxShadow: statusFilter === 'all' ? '0 4px 12px rgba(37, 99, 235, 0.12)' : 'var(--shadow, none)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: statusFilter === 'all' ? 'var(--accent)' : 'var(--muted)' }}>
+                  {language === 'en' ? 'All Challans' : 'সকল চালান'}
+                </span>
+                <div
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 6,
+                    display: 'grid',
+                    placeItems: 'center',
+                    background: statusFilter === 'all' ? 'var(--accent)' : 'var(--surface2)',
+                    color: statusFilter === 'all' ? '#ffffff' : 'var(--muted)',
+                  }}
+                >
+                  <Truck size={14} />
+                </div>
+              </div>
+              <b style={{ fontFamily: 'var(--f-mono)', fontSize: '1.4rem', fontWeight: 700, margin: '4px 0 1px', color: 'var(--ink)' }}>
+                {bnNum(listChallans.length, language)} <span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--muted)' }}>{language === 'en' ? 'challans' : 'টি'}</span>
+              </b>
+              <i style={{ fontStyle: 'normal', fontSize: '0.74rem', color: 'var(--muted)' }}>
+                {language === 'en' ? 'Dispatched: ' : 'মোট: '}<b>{bnNum(totalDispatchedKg.toFixed(1), language)} kg</b>
+              </i>
+            </button>
+
+            {/* Card 2: In Transit / Pending Sign */}
+            <button
+              type="button"
+              onClick={() => setStatusFilter('transit')}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                textAlign: 'left',
+                padding: '10px 14px',
+                borderRadius: 10,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                border: statusFilter === 'transit' ? '2px solid var(--warn, #d97706)' : '1px solid var(--line)',
+                background: statusFilter === 'transit' ? 'var(--warn-soft, #fef3c7)' : 'var(--surface, #ffffff)',
+                boxShadow: statusFilter === 'transit' ? '0 4px 12px rgba(217, 119, 6, 0.15)' : 'var(--shadow, none)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: statusFilter === 'transit' ? 'var(--warn)' : 'var(--muted)' }}>
+                  {language === 'en' ? 'In Transit' : 'পথে · সাইন বাকি'}
+                </span>
+                <div
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 6,
+                    display: 'grid',
+                    placeItems: 'center',
+                    background: statusFilter === 'transit' ? 'var(--warn)' : 'var(--surface2)',
+                    color: statusFilter === 'transit' ? '#ffffff' : 'var(--muted)',
+                  }}
+                >
+                  <Clock size={14} />
+                </div>
+              </div>
+              <b style={{ fontFamily: 'var(--f-mono)', fontSize: '1.4rem', fontWeight: 700, margin: '4px 0 1px', color: transitChallans.length ? 'var(--warn)' : 'var(--ink)' }}>
+                {bnNum(transitChallans.length, language)}
+              </b>
+              <i style={{ fontStyle: 'normal', fontSize: '0.74rem', color: transitChallans.length ? 'var(--warn)' : 'var(--muted)', fontWeight: transitChallans.length ? 600 : 400 }}>
+                {transitChallans.length > 0 ? (language === 'en' ? '● Awaiting vendor sign' : '● ভেন্ডরের সাইন বাকি') : (language === 'en' ? 'All received' : 'সব সাইন সম্পন্ন')}
+              </i>
+            </button>
+
+            {/* Card 3: Received by Vendor */}
+            <button
+              type="button"
+              onClick={() => setStatusFilter('received')}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                textAlign: 'left',
+                padding: '10px 14px',
+                borderRadius: 10,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                border: statusFilter === 'received' ? '2px solid var(--ok, #16a34a)' : '1px solid var(--line)',
+                background: statusFilter === 'received' ? 'var(--ok-soft, #dcfce7)' : 'var(--surface, #ffffff)',
+                boxShadow: statusFilter === 'received' ? '0 4px 12px rgba(220, 163, 74, 0.12)' : 'var(--shadow, none)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: statusFilter === 'received' ? 'var(--ok)' : 'var(--muted)' }}>
+                  {language === 'en' ? 'Received by Vendor' : 'ভেন্ডর বুঝে পেয়েছে'}
+                </span>
+                <div
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 6,
+                    display: 'grid',
+                    placeItems: 'center',
+                    background: statusFilter === 'received' ? 'var(--ok)' : 'var(--surface2)',
+                    color: statusFilter === 'received' ? '#ffffff' : 'var(--muted)',
+                  }}
+                >
+                  <CheckCircle2 size={14} />
+                </div>
+              </div>
+              <b style={{ fontFamily: 'var(--f-mono)', fontSize: '1.4rem', fontWeight: 700, margin: '4px 0 1px', color: 'var(--ok)' }}>
+                {bnNum(receivedChallans.length, language)}
+              </b>
+              <i style={{ fontStyle: 'normal', fontSize: '0.74rem', color: 'var(--muted)' }}>
+                {language === 'en' ? 'Delivery confirmed' : 'ডেলিভারি নিশ্চিত'}
+              </i>
+            </button>
+
+            {/* Card 4: Discrepancy / Shortage */}
+            <button
+              type="button"
+              onClick={() => setStatusFilter('discrepancy')}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                textAlign: 'left',
+                padding: '10px 14px',
+                borderRadius: 10,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                border: statusFilter === 'discrepancy' ? '2px solid var(--bad, #dc2626)' : discrepancyChallans.length ? '1px solid var(--bad-soft, #fca5a5)' : '1px solid var(--line)',
+                background: statusFilter === 'discrepancy' ? 'var(--bad-soft, #fee2e2)' : 'var(--surface, #ffffff)',
+                boxShadow: statusFilter === 'discrepancy' ? '0 4px 12px rgba(220, 38, 38, 0.12)' : 'var(--shadow, none)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: statusFilter === 'discrepancy' ? 'var(--bad)' : 'var(--muted)' }}>
+                  {language === 'en' ? 'Discrepancies' : 'গরমিল রেকর্ড'}
+                </span>
+                <div
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 6,
+                    display: 'grid',
+                    placeItems: 'center',
+                    background: statusFilter === 'discrepancy' ? 'var(--bad)' : 'var(--surface2)',
+                    color: statusFilter === 'discrepancy' ? '#ffffff' : discrepancyChallans.length ? 'var(--bad)' : 'var(--muted)',
+                  }}
+                >
+                  <AlertTriangle size={14} />
+                </div>
+              </div>
+              <b style={{ fontFamily: 'var(--f-mono)', fontSize: '1.4rem', fontWeight: 700, margin: '4px 0 1px', color: discrepancyChallans.length ? 'var(--bad)' : 'var(--ink)' }}>
+                {bnNum(discrepancyChallans.length, language)}
+              </b>
+              <i style={{ fontStyle: 'normal', fontSize: '0.74rem', color: discrepancyChallans.length ? 'var(--bad)' : 'var(--muted)', fontWeight: discrepancyChallans.length ? 600 : 400 }}>
+                {discrepancyChallans.length > 0 ? (language === 'en' ? '● Roll count mismatch' : '● রোল সংখ্যা কম এসেছে') : (language === 'en' ? 'No discrepancy' : 'কোনো গরমিল নেই')}
+              </i>
+            </button>
           </div>
 
           {/* New Challan Creation Form */}
@@ -749,8 +1007,106 @@ export const FactoryChallanPage: React.FC = () => {
             </form>
           )}
 
+          {/* Live Search and Status Filter Toolbar */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 10,
+              margin: '0 0 10px',
+              padding: '0 2px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.84rem', color: 'var(--muted)', flexWrap: 'wrap' }}>
+              <span>
+                {language === 'en' ? 'Showing challans: ' : 'প্রদর্শিত চালান: '}
+                <b style={{ color: 'var(--ink)' }}>{bnNum(filteredChallans.length, language)}</b> {language === 'en' ? '' : 'টি'}
+              </span>
+              {statusFilter !== 'all' && (
+                <span
+                  style={{
+                    fontSize: '0.74rem',
+                    padding: '2px 8px',
+                    borderRadius: 999,
+                    background: statusFilter === 'discrepancy' ? 'var(--bad-soft)' : statusFilter === 'transit' ? 'var(--warn-soft)' : 'var(--ok-soft)',
+                    color: statusFilter === 'discrepancy' ? 'var(--bad)' : statusFilter === 'transit' ? 'var(--warn)' : 'var(--ok)',
+                    fontWeight: 600,
+                  }}
+                >
+                  {statusFilter === 'transit'
+                    ? (language === 'en' ? 'Filter: In Transit' : 'ফিল্টার: পথে · সাইন বাকি')
+                    : statusFilter === 'received'
+                    ? (language === 'en' ? 'Filter: Received' : 'ফিল্টার: ভেন্ডর বুঝে পেয়েছে')
+                    : (language === 'en' ? 'Filter: Discrepancy' : 'ফিল্টার: গরমিল')}
+                </span>
+              )}
+              {(searchQuery || statusFilter !== 'all') && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setStatusFilter('all');
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--accent)',
+                    fontSize: '0.78rem',
+                    cursor: 'pointer',
+                    padding: 0,
+                    textDecoration: 'underline',
+                  }}
+                >
+                  {language === 'en' ? 'Reset filters' : 'ফিল্টার রিসেট'}
+                </button>
+              )}
+            </div>
+
+            {/* Live Search Input */}
+            <div style={{ position: 'relative', width: 280, maxWidth: '100%' }}>
+              <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', pointerEvents: 'none' }} />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={language === 'en' ? 'Search challan, order, vendor...' : 'চালান নং, অর্ডার, ভেন্ডর খুঁজুন...'}
+                style={{
+                  width: '100%',
+                  padding: '6px 28px 6px 30px',
+                  fontSize: '0.82rem',
+                  borderRadius: 8,
+                  border: '1px solid var(--line)',
+                  background: 'var(--surface)',
+                  color: 'var(--ink)',
+                }}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  style={{
+                    position: 'absolute',
+                    right: 8,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--muted)',
+                    cursor: 'pointer',
+                    fontSize: '0.75rem',
+                    padding: 2,
+                  }}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* Challans Table */}
-          <div className="tw">
+          <div className="tw" style={{ borderRadius: 10, overflow: 'hidden', border: '1px solid var(--line)' }}>
             <table>
               <thead>
                 <tr>
@@ -762,11 +1118,12 @@ export const FactoryChallanPage: React.FC = () => {
                   <th className="n">kg</th>
                   <th>{language === 'en' ? 'Vehicle' : 'গাড়ি'}</th>
                   <th>{language === 'en' ? 'Status' : 'অবস্থা'}</th>
+                  <th style={{ textAlign: 'center' }}>{language === 'en' ? 'Action' : 'অ্যাকশন'}</th>
                 </tr>
               </thead>
               <tbody>
-                {listChallans.length ? (
-                  listChallans.map((c) => {
+                {filteredChallans.length ? (
+                  filteredChallans.map((c) => {
                     const no = c.no || c.challan_no;
                     const st = chState(c);
                     const rollsCount = Array.isArray(c.rolls) ? c.rolls.length : 0;
@@ -783,24 +1140,64 @@ export const FactoryChallanPage: React.FC = () => {
                         }}
                       >
                         <td className="mono">
-                          <b>{no}</b>
+                          <b style={{ color: 'var(--accent)' }}>{no}</b>
                         </td>
-                        <td>{getChallanDate(c)}</td>
-                        {!isVendor && <td>{vName(c.v || c.party_code)}</td>}
+                        <td style={{ whiteSpace: 'nowrap' }}>{getChallanDate(c)}</td>
+                        {!isVendor && <td><b>{vName(c.v || c.party_code)}</b></td>}
                         <td className="mono">{c.o || c.order_no}</td>
-                        <td className="n">{rollsCount}</td>
-                        <td className="n">{kg > 0 ? kg.toFixed(1) : '—'}</td>
+                        <td className="n"><b>{bnNum(rollsCount, language)}</b></td>
+                        <td className="n">{kg > 0 ? bnNum(kg.toFixed(1), language) : '—'}</td>
                         <td className="small">{c.veh || c.vehicle_no || '—'}</td>
                         <td>
                           <span className={`pill p-${st.s}`}>{st.t}</span>
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <button
+                            type="button"
+                            className="btn sm"
+                            style={{
+                              padding: '3px 8px',
+                              fontSize: '0.78rem',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setChOpen(no);
+                              window.scrollTo(0, 0);
+                            }}
+                          >
+                            <Eye size={12} /> {language === 'en' ? 'View' : 'দেখুন'}
+                          </button>
                         </td>
                       </tr>
                     );
                   })
                 ) : (
                   <tr>
-                    <td colSpan={isVendor ? 7 : 8} className="muted" style={{ textAlign: 'center', padding: '24px 0' }}>
-                      {language === 'en' ? 'No challans created yet.' : 'এখনো কোনো চালান তৈরি হয়নি।'}
+                    <td colSpan={isVendor ? 8 : 9} className="muted" style={{ textAlign: 'center', padding: '36px 16px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                        <Truck size={32} style={{ opacity: 0.3 }} />
+                        <span style={{ fontSize: '0.9rem' }}>
+                          {searchQuery || statusFilter !== 'all'
+                            ? (language === 'en' ? 'No delivery challans match your search or filter.' : 'আপনার সার্চ বা ফিল্টারের সাথে কোনো চালান মেলেনি।')
+                            : (language === 'en' ? 'No delivery challans created yet.' : 'এখনো কোনো ডেলিভারি চালান তৈরি হয়নি।')}
+                        </span>
+                        {(searchQuery || statusFilter !== 'all') && (
+                          <button
+                            type="button"
+                            className="btn sm"
+                            onClick={() => {
+                              setSearchQuery('');
+                              setStatusFilter('all');
+                            }}
+                            style={{ marginTop: 4 }}
+                          >
+                            {language === 'en' ? 'Clear search & filters' : 'ফিল্টার রিসেট করুন'}
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )}
