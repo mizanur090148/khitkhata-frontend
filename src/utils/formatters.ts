@@ -1,18 +1,50 @@
 const BN_DIGITS = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
 
-export function bnNum(n: number | string | undefined | null): string {
-  if (n === null || n === undefined) return '০';
+function getCurrentLanguage(lang?: 'bn' | 'en'): 'bn' | 'en' {
+  if (lang) return lang;
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem('knitkhata_lang');
+    if (saved === 'en' || saved === 'bn') return saved;
+  }
+  return 'bn';
+}
+
+export function bnNum(n: number | string | undefined | null, lang?: 'bn' | 'en'): string {
+  const currentLang = getCurrentLanguage(lang);
+  if (n === null || n === undefined) return currentLang === 'en' ? '0' : '০';
+  if (currentLang === 'en') {
+    return String(n);
+  }
   return String(n).replace(/\d/g, (d) => BN_DIGITS[Number(d)]);
 }
 
-export function fmtKg(n: number | string | undefined | null): string {
-  const v = Math.round(Number(n) || 0);
-  return `${bnNum(v.toLocaleString('en-IN'))} kg`;
+export function fmtNum(n: number | string | undefined | null, lang?: 'bn' | 'en'): string {
+  const currentLang = getCurrentLanguage(lang);
+  if (n === null || n === undefined) return currentLang === 'en' ? '0' : '০';
+  const val = Number(n);
+  if (isNaN(val)) return bnNum(n, currentLang);
+  const formatted = Math.round(val).toLocaleString('en-IN');
+  return currentLang === 'en' ? formatted : bnNum(formatted, 'bn');
 }
 
-export function fmtTk(n: number | string | undefined | null): string {
+export function fmtKg(n: number | string | undefined | null, lang?: 'bn' | 'en'): string {
+  const currentLang = getCurrentLanguage(lang);
   const v = Math.round(Number(n) || 0);
-  return `৳ ${bnNum(v.toLocaleString('en-IN'))}`;
+  const formatted = v.toLocaleString('en-IN');
+  return `${currentLang === 'en' ? formatted : bnNum(formatted, 'bn')} kg`;
+}
+
+export function fmtTk(n: number | string | undefined | null, lang?: 'bn' | 'en'): string {
+  const currentLang = getCurrentLanguage(lang);
+  const v = Math.round(Number(n) || 0);
+  const formatted = v.toLocaleString('en-IN');
+  const sym = currentLang === 'en' ? 'Tk' : '৳';
+  return `${sym} ${currentLang === 'en' ? formatted : bnNum(formatted, 'bn')}`;
+}
+
+export function curTk(lang?: 'bn' | 'en'): string {
+  const currentLang = getCurrentLanguage(lang);
+  return currentLang === 'en' ? 'Tk' : '৳';
 }
 
 export function pct(part: number, total: number): number {

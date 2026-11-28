@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { User, LogOut, ChevronDown } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 
 export const KK_ICONS: Record<string, string> = {
@@ -80,7 +81,41 @@ export const NAV_VEN: ([ 'grp', string ] | [ string, string, string, string ])[]
 export const FactoryLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { role, setRole, currentUser, users, factoryProfile, logout } = useApp();
+  const { role, setRole, currentUser, users, factoryProfile, logout, language, setLanguage, t } = useApp();
+
+  const GRP_KEY_MAP: Record<string, string> = {
+    'প্রতিদিনের কাজ': 'nav.grp.daily',
+    'কাপড়, সুতা ও স্টোর': 'nav.grp.fabric_store',
+    'বিল ও হিসাব': 'nav.grp.billing',
+    'সেটিংস': 'nav.grp.settings',
+    'আয় করুন': 'nav.grp.earn',
+    'কাপড় ও সুতা': 'nav.grp.fabric_yarn',
+  };
+
+  const NAV_ITEM_KEY_MAP: Record<string, string> = {
+    dash: 'nav.dash',
+    orders: 'nav.orders',
+    jobcard: 'nav.jobcard',
+    entry: 'nav.entry',
+    fmsg: 'nav.fmsg',
+    freem: 'nav.freem',
+    qc: 'nav.qc',
+    fready: 'nav.fready',
+    challan: 'nav.challan',
+    yarn: 'nav.yarn',
+    store: 'nav.store',
+    party: 'nav.party',
+    bill: 'nav.bill',
+    ledger: 'nav.ledger',
+    acc: 'nav.acc',
+    att: 'nav.att',
+    profile: 'nav.profile',
+    users: 'nav.users',
+    wa: 'nav.wa',
+    pdash: 'nav.pdash',
+    vorders: 'nav.vorders',
+    vreport: 'nav.vreport',
+  };
 
   // Redirect unauthenticated guests to login
   React.useEffect(() => {
@@ -91,6 +126,32 @@ export const FactoryLayout: React.FC = () => {
 
   const isVendor = role === 'vendor' || (role as string) === 'ven';
   const currentNav = isVendor ? NAV_VEN : NAV_FAC;
+
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close user dropdown on outside click or escape key
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    if (isUserMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isUserMenuOpen]);
 
   // Extract active path segment (e.g. /dashboard/orders -> 'orders')
   const pathParts = location.pathname.split('/').filter(Boolean);
@@ -113,17 +174,17 @@ export const FactoryLayout: React.FC = () => {
             </svg>
           </div>
           <div>
-            <b>নিটখাতা</b>
+            <b>{t('app.title')}</b>
             <small>
               {isVendor
-                ? `ABC Knit Composite (ভেন্ডর ভিউ) · ফ্যাক্টরি: ${factoryProfile?.name || 'রহমান নিটিং ইন্ডাস্ট্রিজ'}`
+                ? `ABC Knit Composite (${t('app.vendor_label')}) · ${t('app.factory_label')}: ${factoryProfile?.name || 'রহমান নিটিং ইন্ডাস্ট্রিজ'}`
                 : (currentUser?.organization_name || factoryProfile?.name || 'রহমান নিটিং ইন্ডাস্ট্রিজ')}
             </small>
           </div>
         </div>
 
         <span className="proto" style={{ borderColor: 'var(--ok)', color: 'var(--ok)' }}>
-          লাইভ সিঙ্ক
+          {t('app.sync')}
         </span>
 
         <div className="roleswitch" role="group" aria-label="কার চোখে দেখবেন">
@@ -135,7 +196,7 @@ export const FactoryLayout: React.FC = () => {
               navigate('/dashboard');
             }}
           >
-            ফ্যাক্টরি ভিউ
+            {t('app.factory_view')}
           </button>
           <button
             id="r-ven"
@@ -145,41 +206,190 @@ export const FactoryLayout: React.FC = () => {
               navigate('/dashboard/vorders');
             }}
           >
-            ভেন্ডর ভিউ (ABC)
+            {t('app.vendor_view')}
           </button>
         </div>
 
-        <button
-          type="button"
-          className="top-user"
-          id="topUser"
-          onClick={() => {
-            navigate('/dashboard/profile');
-            window.scrollTo(0, 0);
-          }}
-          aria-label="প্রোফাইল ও সেটিংস"
-        >
-          <span className="av">
-            {isVendor ? 'ক' : (currentUser?.name || users[0]?.name || 'আরিফ')[0]}
-          </span>
-          <span>
-            <b id="tuN">
-              {isVendor ? 'মো. কামরুল হাসান' : (currentUser?.name || users[0]?.name || 'আরিফ হোসেন')}
-            </b>
-            <small id="tuR">
-              {isVendor ? 'মার্চেন্ডাইজার (ABC)' : (currentUser?.designation || 'মালিক')}
-            </small>
-          </span>
-        </button>
+        {/* Multi-language Switcher (Bangla & English) */}
+        <div className="roleswitch" role="group" aria-label="ভাষা পরিবর্তন / Switch Language" style={{ marginLeft: 4 }}>
+          <button
+            id="lang-bn"
+            type="button"
+            className={language === 'bn' ? 'on' : ''}
+            onClick={() => setLanguage('bn')}
+            title="বাংলায় দেখুন"
+            style={{ padding: '5px 10px', fontWeight: language === 'bn' ? 700 : 500 }}
+          >
+            BN
+          </button>
+          <button
+            id="lang-en"
+            type="button"
+            className={language === 'en' ? 'on' : ''}
+            onClick={() => setLanguage('en')}
+            title="Switch to English"
+            style={{ padding: '5px 10px', fontWeight: language === 'en' ? 700 : 500 }}
+          >
+            EN
+          </button>
+        </div>
 
-        <button
-          type="button"
-          className="btn sm"
-          id="topOut"
-          onClick={logout}
-        >
-          লগআউট
-        </button>
+        {/* User Profile & Logout Dropdown Menu */}
+        <div ref={userMenuRef} style={{ position: 'relative' }}>
+          <button
+            type="button"
+            className="top-user"
+            id="topUser"
+            onClick={() => setIsUserMenuOpen((prev) => !prev)}
+            aria-expanded={isUserMenuOpen}
+            aria-haspopup="true"
+            aria-label={language === 'en' ? 'User menu' : 'ইউজার মেনু'}
+            style={{
+              cursor: 'pointer',
+              userSelect: 'none',
+              borderColor: isUserMenuOpen ? 'var(--accent, #0ea5e9)' : undefined,
+              background: isUserMenuOpen ? 'var(--surface2, #f1f5f9)' : undefined,
+              boxShadow: isUserMenuOpen ? '0 0 0 2px rgba(14, 165, 233, 0.15)' : undefined,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              paddingRight: 10,
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <span className="av">
+              {isVendor ? (language === 'en' ? 'K' : 'ক') : (currentUser?.name || users[0]?.name || (language === 'en' ? 'A' : 'আ'))[0]}
+            </span>
+            <span>
+              <b id="tuN">
+                {isVendor ? (language === 'en' ? 'Md. Kamrul Hasan' : 'মো. কামরুল হাসান') : (currentUser?.name || users[0]?.name || (language === 'en' ? 'Arif Hossain' : 'আরিফ হোসেন'))}
+              </b>
+              <small id="tuR">
+                {isVendor ? t('app.merchandiser') : (currentUser?.designation === 'মালিক' ? t('app.owner') : (currentUser?.designation || t('app.owner')))}
+              </small>
+            </span>
+            <ChevronDown
+              size={15}
+              style={{
+                marginLeft: 2,
+                color: 'var(--muted, #64748b)',
+                transition: 'transform 0.2s ease',
+                transform: isUserMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+              }}
+            />
+          </button>
+
+          {/* Dropdown Menu Popup */}
+          {isUserMenuOpen && (
+            <div
+              className="user-dropdown-menu"
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 8px)',
+                right: 0,
+                minWidth: 220,
+                background: 'var(--surface, #ffffff)',
+                border: '1px solid var(--line, #e2e8f0)',
+                borderRadius: 12,
+                boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08)',
+                padding: '6px',
+                zIndex: 1050,
+              }}
+            >
+              {/* Header inside popup */}
+              <div
+                style={{
+                  padding: '8px 12px 10px',
+                  borderBottom: '1px solid var(--line, #e2e8f0)',
+                  marginBottom: 4,
+                }}
+              >
+                <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--ink, #1e293b)' }}>
+                  {isVendor ? (language === 'en' ? 'Md. Kamrul Hasan' : 'মো. কামরুল হাসান') : (currentUser?.name || users[0]?.name || (language === 'en' ? 'Arif Hossain' : 'আরিফ হোসেন'))}
+                </div>
+                <div style={{ fontSize: '0.74rem', color: 'var(--muted, #64748b)', marginTop: 2 }}>
+                  {isVendor
+                    ? (language === 'en' ? 'Vendor Merchandiser' : 'ভেন্ডর মার্চেন্ডাইজার')
+                    : (currentUser?.designation === 'মালিক' ? t('app.owner') : (currentUser?.designation || t('app.owner')))}
+                </div>
+              </div>
+
+              {/* Menu items */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <button
+                  type="button"
+                  id="menuProfileBtn"
+                  onClick={() => {
+                    setIsUserMenuOpen(false);
+                    navigate('/dashboard/profile');
+                    window.scrollTo(0, 0);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    width: '100%',
+                    padding: '9px 12px',
+                    fontSize: '0.86rem',
+                    fontWeight: 500,
+                    color: 'var(--ink, #1e293b)',
+                    background: 'transparent',
+                    border: 'none',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'var(--surface2, #f1f5f9)';
+                    e.currentTarget.style.color = 'var(--accent, #0ea5e9)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = 'var(--ink, #1e293b)';
+                  }}
+                >
+                  <User size={16} />
+                  <span>{language === 'en' ? 'Profile' : 'প্রোফাইল'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  id="menuLogoutBtn"
+                  onClick={() => {
+                    setIsUserMenuOpen(false);
+                    logout();
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    width: '100%',
+                    padding: '9px 12px',
+                    fontSize: '0.86rem',
+                    fontWeight: 500,
+                    color: 'var(--bad, #ef4444)',
+                    background: 'transparent',
+                    border: 'none',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                  }}
+                >
+                  <LogOut size={16} />
+                  <span>{language === 'en' ? 'Logout' : 'লগআউট'}</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </header>
 
       {/* App Shell with Left Rail & Working Canvas */}
@@ -187,13 +397,25 @@ export const FactoryLayout: React.FC = () => {
         <nav className="rail" id="rail">
           {currentNav.map((item, idx) => {
             if (item[0] === 'grp') {
+              const grpText = GRP_KEY_MAP[item[1]] ? t(GRP_KEY_MAP[item[1]]) : item[1];
               return (
                 <div key={`grp-${idx}`} className="grp">
-                  {item[1]}
+                  {grpText}
                 </div>
               );
             }
             const [id, label, iconKey, path] = item as [string, string, string, string];
+
+            // Localized navigation item label
+            let localizedLabel = label;
+            if (isVendor) {
+              if (id === 'bill') localizedLabel = t('nav.bill_pay');
+              else if (id === 'ledger') localizedLabel = t('nav.my_ledger');
+              else if (id === 'yarn') localizedLabel = t('nav.yarn_bal');
+              else if (NAV_ITEM_KEY_MAP[id]) localizedLabel = t(NAV_ITEM_KEY_MAP[id]);
+            } else if (NAV_ITEM_KEY_MAP[id]) {
+              localizedLabel = t(NAV_ITEM_KEY_MAP[id]);
+            }
 
             // Active when current path matches or when in subpage like /dashboard/orders/:id or /dashboard/detail
             const active =
@@ -219,7 +441,7 @@ export const FactoryLayout: React.FC = () => {
                   viewBox="0 0 24 24"
                   dangerouslySetInnerHTML={{ __html: KK_ICONS[iconKey] || '' }}
                 />
-                {label}
+                {localizedLabel}
                 {badge !== null && (
                   <span className="ch-un" style={{ marginLeft: 'auto' }}>
                     {badge}

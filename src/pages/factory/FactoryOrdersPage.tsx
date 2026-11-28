@@ -30,7 +30,7 @@ import {
 
 export const FactoryOrdersPage: React.FC = () => {
   const navigate = useNavigate();
-  const { orders: globalOrders, parties, setSelectedOrderId, deleteOrder, clearAllOrders } = useApp();
+  const { orders: globalOrders, parties, setSelectedOrderId, deleteOrder, clearAllOrders, t, language } = useApp();
 
   // Server-side filter and pagination states
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -246,10 +246,10 @@ export const FactoryOrdersPage: React.FC = () => {
   const hasActiveFilters = Boolean(searchInput || statusFilter !== 'all' || partyFilter !== 'all' || sortBy !== 'id');
 
   const statusTabs = [
-    { id: 'all', label: 'সকল অর্ডার', count: metrics.totalOrders },
-    { id: 'running', label: 'চলমান নিটিং', count: metrics.runningCount, dotColor: 'var(--ok)' },
-    { id: 'pending', label: 'সুতার অপেক্ষায়', count: metrics.pendingCount, dotColor: 'var(--yarn)' },
-    { id: 'completed', label: 'সম্পন্ন / ডেলিভারি', count: metrics.completedCount, dotColor: '#6366f1' },
+    { id: 'all', label: language === 'en' ? 'All Orders' : 'সকল অর্ডার', count: metrics.totalOrders },
+    { id: 'running', label: language === 'en' ? 'Running Knitting' : 'চলমান নিটিং', count: metrics.runningCount, dotColor: 'var(--ok)' },
+    { id: 'pending', label: language === 'en' ? 'Awaiting Yarn' : 'সুতার অপেক্ষায়', count: metrics.pendingCount, dotColor: 'var(--yarn)' },
+    { id: 'completed', label: language === 'en' ? 'Completed / Delivered' : 'সম্পন্ন / ডেলিভারি', count: metrics.completedCount, dotColor: '#6366f1' },
   ];
 
   return (
@@ -291,7 +291,7 @@ export const FactoryOrdersPage: React.FC = () => {
                   letterSpacing: '-0.02em',
                 }}
               >
-                অর্ডার তালিকা
+                {t('অর্ডার তালিকা')}
               </h2>
               <span
                 style={{
@@ -304,11 +304,11 @@ export const FactoryOrdersPage: React.FC = () => {
                   fontFamily: 'var(--f-mono)',
                 }}
               >
-                মোট {bnNum(pagination.total || metrics.totalOrders)}টি
+                {t('মোট')} {bnNum(pagination.total || metrics.totalOrders)} {language === 'en' ? 'orders' : 'টি'}
               </span>
             </div>
             <p style={{ margin: '2px 0 0', fontSize: '0.84rem', color: 'var(--muted)' }}>
-              ফ্যাক্টরির সমস্ত সক্রিয় ও সম্পন্ন নিটিং অর্ডারের ট্র্যাকিং ও বিস্তারিত হিস্ট্রি
+              {language === 'en' ? 'Tracking & history of all active & completed knitting orders' : 'ফ্যাক্টরির সমস্ত সক্রিয় ও সম্পন্ন নিটিং অর্ডারের ট্র্যাকিং ও বিস্তারিত হিস্ট্রি'}
             </p>
           </div>
         </div>
@@ -318,7 +318,7 @@ export const FactoryOrdersPage: React.FC = () => {
             type="button"
             className="btn sm"
             onClick={loadOrders}
-            title="ডাটা রিফ্রেশ করুন"
+            title={language === 'en' ? 'Refresh data' : 'ডাটা রিফ্রেশ করুন'}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -328,7 +328,7 @@ export const FactoryOrdersPage: React.FC = () => {
             }}
           >
             <RotateCcw size={13} className={isLoading ? 'animate-spin' : ''} />
-            <span>রিফ্রেশ</span>
+            <span>{language === 'en' ? 'Refresh' : 'রিফ্রেশ'}</span>
           </button>
 
           <button
@@ -344,7 +344,7 @@ export const FactoryOrdersPage: React.FC = () => {
             }}
           >
             <Building2 size={14} style={{ color: 'var(--muted)' }} />
-            <span>+ নতুন পার্টি</span>
+            <span>+ {t('নতুন পার্টি')}</span>
           </button>
 
           <button
@@ -360,7 +360,7 @@ export const FactoryOrdersPage: React.FC = () => {
             }}
           >
             <Plus size={15} />
-            <span>নতুন অর্ডার এন্ট্রি</span>
+            <span>{t('নতুন অর্ডার এন্ট্রি')}</span>
           </button>
         </div>
       </div>
@@ -388,7 +388,7 @@ export const FactoryOrdersPage: React.FC = () => {
           }}
         >
           <div>
-            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)' }}>মোট অর্ডার ভলিউম</div>
+            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)' }}>{t('মোট অর্ডার ভলিউম')}</div>
             <div
               style={{
                 fontSize: '1.35rem',
@@ -402,7 +402,7 @@ export const FactoryOrdersPage: React.FC = () => {
               <span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--muted)' }}>kg</span>
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: 2 }}>
-              {bnNum(metrics.totalOrders)}টি অর্ডার বুকিং
+              {bnNum(metrics.totalOrders)} {language === 'en' ? 'orders booked' : 'টি অর্ডার বুকিং'}
             </div>
           </div>
           <div
@@ -436,7 +436,7 @@ export const FactoryOrdersPage: React.FC = () => {
           }}
         >
           <div>
-            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)' }}>চলমান উৎপাদন</div>
+            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)' }}>{t('চলমান উৎপাদন')}</div>
             <div
               style={{
                 fontSize: '1.35rem',
@@ -450,7 +450,7 @@ export const FactoryOrdersPage: React.FC = () => {
               <span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--muted)' }}>kg</span>
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--ok)', fontWeight: 600, marginTop: 2 }}>
-              {bnNum(metrics.runningPct)}% সম্পন্ন ({bnNum(metrics.runningCount)}টি চলমান)
+              {bnNum(metrics.runningPct)}% {t('সম্পন্ন')} ({bnNum(metrics.runningCount)} {language === 'en' ? 'running' : 'টি চলমান'})
             </div>
           </div>
           <div
@@ -484,7 +484,7 @@ export const FactoryOrdersPage: React.FC = () => {
           }}
         >
           <div>
-            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)' }}>সুতার অপেক্ষায়</div>
+            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)' }}>{t('সুতার অপেক্ষায়')}</div>
             <div
               style={{
                 fontSize: '1.35rem',
@@ -498,7 +498,7 @@ export const FactoryOrdersPage: React.FC = () => {
               <span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--muted)' }}>kg</span>
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--yarn)', fontWeight: 600, marginTop: 2 }}>
-              {bnNum(metrics.pendingCount)}টি অর্ডারে সুতা বাকি
+              {bnNum(metrics.pendingCount)} {language === 'en' ? 'orders awaiting yarn' : 'টি অর্ডারে সুতা বাকি'}
             </div>
           </div>
           <div
@@ -532,7 +532,7 @@ export const FactoryOrdersPage: React.FC = () => {
           }}
         >
           <div>
-            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)' }}>ডেলিভারি সম্পন্ন</div>
+            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)' }}>{t('ডেলিভারি সম্পন্ন')}</div>
             <div
               style={{
                 fontSize: '1.35rem',
@@ -546,7 +546,7 @@ export const FactoryOrdersPage: React.FC = () => {
               <span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--muted)' }}>kg</span>
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginTop: 2 }}>
-              {bnNum(metrics.completedCount)}টি অর্ডার ডেলিভারি সমাপ্ত
+              {bnNum(metrics.completedCount)} {language === 'en' ? 'orders delivered' : 'টি অর্ডার ডেলিভারি সমাপ্ত'}
             </div>
           </div>
           <div
@@ -727,7 +727,7 @@ export const FactoryOrdersPage: React.FC = () => {
             </div>
             <input
               type="text"
-              placeholder="অর্ডার নং, বায়ার, ফেব্রিক বা কালার খুঁজুন..."
+              placeholder={language === 'en' ? 'Search order no, buyer, fabric or color...' : 'অর্ডার নং, বায়ার, ফেব্রিক বা কালার খুঁজুন...'}
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               style={{
@@ -966,7 +966,7 @@ export const FactoryOrdersPage: React.FC = () => {
                   gap: 5,
                 }}
               >
-                বায়ার / ভেন্ডর: <b>{partyFilter}</b>
+                {language === 'en' ? 'Buyer / Vendor:' : 'বায়ার / ভেন্ডর:'} <b>{partyFilter}</b>
                 <button
                   type="button"
                   onClick={() => setPartyFilter('all')}
@@ -984,23 +984,23 @@ export const FactoryOrdersPage: React.FC = () => {
           <table style={{ margin: 0, width: '100%' }}>
             <thead>
               <tr style={{ background: 'var(--surface2)', borderBottom: '1px solid var(--line)' }}>
-                <th style={{ padding: '11px 14px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)' }}>অর্ডার নং</th>
-                <th style={{ padding: '11px 14px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)' }}>ভেন্ডর</th>
-                <th style={{ padding: '11px 14px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)' }}>ফেব্রিক</th>
+                <th style={{ padding: '11px 14px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)' }}>{t('অর্ডার নং')}</th>
+                <th style={{ padding: '11px 14px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)' }}>{t('ভেন্ডর')}</th>
+                <th style={{ padding: '11px 14px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)' }}>{t('ফেব্রিক')}</th>
                 <th className="n" style={{ padding: '11px 14px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)' }}>
-                  অর্ডার (kg)
+                  {t('অর্ডার (kg)')}
                 </th>
                 <th className="n" style={{ padding: '11px 14px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)' }}>
-                  হয়েছে (kg)
+                  {t('হয়েছে (kg)')}
                 </th>
                 <th style={{ padding: '11px 14px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)', minWidth: 120 }}>
-                  অগ্রগতি
+                  {t('অগ্রগতি')}
                 </th>
                 <th className="n" style={{ padding: '11px 14px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)' }}>
-                  মেশিন
+                  {t('মেশিন')}
                 </th>
-                <th style={{ padding: '11px 14px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)' }}>সম্ভাব্য শেষ</th>
-                <th style={{ padding: '11px 14px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)' }}>অবস্থা</th>
+                <th style={{ padding: '11px 14px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)' }}>{language === 'en' ? 'Target Date' : 'সম্ভাব্য শেষ'}</th>
+                <th style={{ padding: '11px 14px', fontSize: '0.78rem', fontWeight: 600, color: 'var(--muted)' }}>{t('অবস্থা')}</th>
                 <th style={{ padding: '11px 14px', textAlign: 'center', width: 85 }}></th>
               </tr>
             </thead>

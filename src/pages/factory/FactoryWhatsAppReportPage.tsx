@@ -3,7 +3,7 @@ import { useApp } from '@/context/AppContext';
 import { bnNum } from '@/utils/formatters';
 
 export const FactoryWhatsAppReportPage: React.FC = () => {
-  const { prodLogs, addToast, factoryProfile, currentUser } = useApp();
+  const { prodLogs, addToast, factoryProfile, currentUser, t, language } = useApp();
   const [waPhone, setWaPhone] = useState<string>(currentUser?.phone || factoryProfile.phone || '01711234567');
   const [sendTime, setSendTime] = useState<string>('21:00');
   const [includeProd, setIncludeProd] = useState<boolean>(true);
@@ -23,22 +23,21 @@ export const FactoryWhatsAppReportPage: React.FC = () => {
       {/* Header */}
       <div className="head">
         <div>
-          <h2>WhatsApp রিপোর্ট</h2>
+          <h2>{t('WhatsApp রিপোর্ট')}</h2>
           <p>
-            প্রতিদিন শিফট শেষে আজকের প্রোডাকশন, QC আর ডেলিভারির সারাংশ Excel
-            ফাইল হয়ে আপনার ও ভেন্ডরের WhatsApp-এ নিজে থেকেই চলে যাবে।
+            {t('প্রতিদিন শিফট শেষে আজকের প্রোডাকশন, QC আর ডেলিভারির সারাংশ Excel ফাইল হয়ে আপনার ও ভেন্ডরের WhatsApp-এ নিজে থেকেই চলে যাবে।')}
           </p>
         </div>
-        <span className="pill p-ok">অটোমেশন সক্রিয়</span>
+        <span className="pill p-ok">{t('অটোমেশন সক্রিয়')}</span>
       </div>
 
       <div className="grid g2" style={{ marginBottom: 20 }}>
         {/* Settings Form */}
         <div className="card">
-          <h3>স্বয়ংক্রিয় WhatsApp শিডিউল</h3>
+          <h3>{t('স্বয়ংক্রিয় WhatsApp শিডিউল')}</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 14 }}>
             <label className="f">
-              WhatsApp মোবাইল নম্বর
+              {t('WhatsApp মোবাইল নম্বর')}
               <input
                 type="text"
                 value={waPhone}
@@ -48,7 +47,7 @@ export const FactoryWhatsAppReportPage: React.FC = () => {
             </label>
 
             <label className="f">
-              পাঠানোর সময় (প্রতিদিন)
+              {t('পাঠানোর সময় (প্রতিদিন)')}
               <input
                 type="time"
                 value={sendTime}
@@ -58,7 +57,7 @@ export const FactoryWhatsAppReportPage: React.FC = () => {
 
             <div>
               <b style={{ display: 'block', marginBottom: 8, fontSize: '.9rem' }}>
-                রিপোর্টে যা যা থাকবে
+                {t('রিপোর্টে যা যা থাকবে')}
               </b>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
@@ -67,7 +66,7 @@ export const FactoryWhatsAppReportPage: React.FC = () => {
                     checked={includeProd}
                     onChange={(e) => setIncludeProd(e.target.checked)}
                   />
-                  <span>শিফট অনুযায়ী ফ্লোর প্রোডাকশন সামারি (kg ও রোল)</span>
+                  <span>{t('শিফট অনুযায়ী ফ্লোর প্রোডাকশন সামারি (kg ও রোল)')}</span>
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
                   <input
@@ -75,7 +74,7 @@ export const FactoryWhatsAppReportPage: React.FC = () => {
                     checked={includeQc}
                     onChange={(e) => setIncludeQc(e.target.checked)}
                   />
-                  <span>QC সমস্যা ও দুই পক্ষের সাইন রিপোর্ট</span>
+                  <span>{t('QC সমস্যা ও দুই পক্ষের সাইন রিপোর্ট')}</span>
                 </label>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
                   <input
@@ -83,7 +82,7 @@ export const FactoryWhatsAppReportPage: React.FC = () => {
                     checked={includeChallan}
                     onChange={(e) => setIncludeChallan(e.target.checked)}
                   />
-                  <span>আজকের ডেলিভারি চালান ও গেটপাস তালিকা</span>
+                  <span>{t('আজকের ডেলিভারি চালান ও গেটপাস তালিকা')}</span>
                 </label>
               </div>
             </div>
@@ -94,7 +93,7 @@ export const FactoryWhatsAppReportPage: React.FC = () => {
                 className="btn pri"
                 onClick={handleSendTest}
               >
-                এখনই টেস্ট পাঠান
+                {t('এখনই টেস্ট পাঠান')}
               </button>
               <button
                 type="button"
@@ -107,7 +106,7 @@ export const FactoryWhatsAppReportPage: React.FC = () => {
                   })
                 }
               >
-                সেটিংস সেভ করুন
+                {t('সেটিংস সেভ করুন')}
               </button>
             </div>
           </div>
@@ -115,32 +114,32 @@ export const FactoryWhatsAppReportPage: React.FC = () => {
 
         {/* Live Preview Card */}
         <div className="card">
-          <h3>আজকের Excel শিটের প্রিভিউ</h3>
+          <h3>{t('আজকের Excel শিটের প্রিভিউ')}</h3>
           <p className="small muted">
-            নিচে প্রিভিউ দেখে নিন, WhatsApp-এ এই ফরম্যাটের ফাইল চলে যাবে:
+            {t('নিচে প্রিভিউ দেখে নিন, WhatsApp-এ এই ফরম্যাটের ফাইল চলে যাবে:')}
           </p>
           <div className="tw" style={{ marginTop: 10 }}>
             <table>
               <thead>
                 <tr>
-                  <th>তারিখ</th>
-                  <th>শিফট</th>
-                  <th>মেশিন</th>
-                  <th>অর্ডার নং</th>
-                  <th>অপারেটর</th>
-                  <th className="n">রোল</th>
-                  <th className="n">ওজন (kg)</th>
+                  <th>{t('তারিখ')}</th>
+                  <th>{t('শিফট')}</th>
+                  <th>{t('মেশিন')}</th>
+                  <th>{t('অর্ডার নং')}</th>
+                  <th>{t('অপারেটর')}</th>
+                  <th className="n">{t('রোল')}</th>
+                  <th className="n">{t('ওজন (kg)')}</th>
                 </tr>
               </thead>
               <tbody>
                 {prodLogs && prodLogs.length > 0 ? (
                   prodLogs.slice(0, 6).map((p: any, idx: number) => (
                     <tr key={p.id || idx}>
-                      <td className="mono small">{p.date || p.d || 'আজ'}</td>
+                      <td className="mono small">{p.date || p.d || (language === 'en' ? 'Today' : 'আজ')}</td>
                       <td>{p.shift || p.sh || 'A'}</td>
                       <td className="mono">{p.machine || p.m || 'M-01'}</td>
                       <td className="mono">{p.orderId || p.order_no || p.o || 'SC-2610-014'}</td>
-                      <td>{p.operator || p.op || 'অপারেটর'}</td>
+                      <td>{p.operator || p.op || t('অপারেটর')}</td>
                       <td className="n">{bnNum(p.rolls || 0)}</td>
                       <td className="n">{bnNum((p.kg || p.knitKg || 0).toLocaleString('en-IN'))}</td>
                     </tr>
@@ -148,7 +147,7 @@ export const FactoryWhatsAppReportPage: React.FC = () => {
                 ) : (
                   <tr>
                     <td colSpan={7} style={{ textAlign: 'center', padding: '16px', color: 'var(--muted)' }}>
-                      আজকে এখনো কোনো প্রোডাকশন ডাটা এন্ট্রি হয়নি।
+                      {language === 'en' ? 'No production data logged yet today.' : 'আজকে এখনো কোনো প্রোডাকশন ডাটা এন্ট্রি হয়নি।'}
                     </td>
                   </tr>
                 )}

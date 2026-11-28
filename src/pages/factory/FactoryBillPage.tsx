@@ -14,6 +14,9 @@ export const FactoryBillPage: React.FC = () => {
     fetchOrders,
     createKkBill,
     recordKkBillPayment,
+    t,
+    language,
+    tkSymbol,
   } = useApp();
 
   const isVendor = role === 'vendor' || (role as string) === 'ven';
@@ -133,9 +136,9 @@ export const FactoryBillPage: React.FC = () => {
               type="button"
               onClick={() => setCurBill(null)}
             >
-              ← সব বিল
+              {language === 'en' ? '← All Bills' : '← সব বিল'}
             </button>
-            <h2 style={{ margin: 0 }}>বিল · {b.no}</h2>
+            <h2 style={{ margin: 0 }}>{language === 'en' ? 'Bill' : 'বিল'} · {b.no}</h2>
           </div>
           <div className="row no-pdf" style={{ gap: 8 }}>
             <button
@@ -143,14 +146,14 @@ export const FactoryBillPage: React.FC = () => {
               type="button"
               onClick={() => window.print()}
             >
-              প্রিন্ট করুন
+              {t('প্রিন্ট করুন')}
             </button>
             <button
               className="btn pri sm"
               type="button"
               onClick={() => window.print()}
             >
-              PDF নামান
+              {language === 'en' ? 'Download PDF' : 'PDF নামান'}
             </button>
           </div>
         </div>
@@ -159,7 +162,7 @@ export const FactoryBillPage: React.FC = () => {
         <div className="paper pad" id="billDoc">
           <div className="bhdr">
             <div className="blogo">
-              <b>রহমান নিটিং ইন্ডাস্ট্রিজ</b>
+              <b>{factoryProfile?.name || (language === 'en' ? 'Rahman Knitting Industries' : 'রহমান নিটিং ইন্ডাস্ট্রিজ')}</b>
               <div className="small muted">
                 কড্ডা, কাশিমপুর রোড, গাজীপুর · ফোন: 01711-000000 · BIN: 001234567-0101
                 <br />
@@ -201,8 +204,8 @@ export const FactoryBillPage: React.FC = () => {
                   <th>Fabric</th>
                   <th>GSM / Dia</th>
                   <th className="n">Qty (kg)</th>
-                  <th className="n">Rate (৳/kg)</th>
-                  <th className="n">Amount (৳)</th>
+                  <th className="n">Rate ({tkSymbol}/kg)</th>
+                  <th className="n">Amount ({tkSymbol})</th>
                 </tr>
               </thead>
               <tbody>
@@ -234,7 +237,7 @@ export const FactoryBillPage: React.FC = () => {
                     {bnNum(b.lines.reduce((a: number, l: any) => a + l.kg, 0))}
                   </td>
                   <td></td>
-                  <td className="n">৳ {bnNum(amt)}</td>
+                  <td className="n">{tkSymbol} {bnNum(amt)}</td>
                 </tr>
               </tbody>
             </table>
@@ -266,49 +269,49 @@ export const FactoryBillPage: React.FC = () => {
           {/* Left: Journal Voucher (JV) */}
           <div className="card" id="jvDoc">
             <div className="row" style={{ justifyContent: 'space-between' }}>
-              <h3 style={{ margin: 0 }}>জার্নাল ভাউচার · {b.jv}</h3>
-              <span className="pill p-ok">অটো জেনারেটেড</span>
+              <h3 style={{ margin: 0 }}>{language === 'en' ? 'Journal Voucher' : 'জার্নাল ভাউচার'} · {b.jv}</h3>
+              <span className="pill p-ok">{language === 'en' ? 'Auto Generated' : 'অটো জেনারেটেড'}</span>
             </div>
             <div className="tw" style={{ marginTop: 12 }}>
               <table>
                 <thead>
                   <tr>
-                    <th>হিসাবের খাত</th>
-                    <th className="n">ডেবিট ৳</th>
-                    <th className="n">ক্রেডিট ৳</th>
+                    <th>{language === 'en' ? 'Account Head' : 'হিসাবের খাত'}</th>
+                    <th className="n">{language === 'en' ? `Debit ${tkSymbol}` : 'ডেবিট ৳'}</th>
+                    <th className="n">{language === 'en' ? `Credit ${tkSymbol}` : 'ক্রেডিট ৳'}</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td>{v.name} (পাওনা)</td>
-                    <td className="n">৳ {bnNum(amt)}</td>
+                    <td>{v.name} {language === 'en' ? '(Receivable)' : '(পাওনা)'}</td>
+                    <td className="n">{tkSymbol} {bnNum(amt)}</td>
                     <td className="n">—</td>
                   </tr>
                   <tr>
-                    <td>নিটিং চার্জ আয়</td>
+                    <td>{language === 'en' ? 'Knitting Charge Revenue' : 'নিটিং চার্জ আয়'}</td>
                     <td className="n">—</td>
-                    <td className="n">৳ {bnNum(amt)}</td>
+                    <td className="n">{tkSymbol} {bnNum(amt)}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
             <p className="small muted" style={{ marginTop: 10 }}>
-              বিল নং {b.no} এর বিপরীতে নিজে থেকেই তৈরি।
+              {language === 'en' ? `Auto-created against Bill No. ${b.no}` : `বিল নং ${b.no} এর বিপরীতে নিজে থেকেই তৈরি।`}
             </p>
           </div>
 
           {/* Right: Payment Receipt (RV) */}
           <div className="card">
-            <h3>পেমেন্ট গ্রহণ (RV)</h3>
+            <h3>{language === 'en' ? 'Receive Payment (RV)' : 'পেমেন্ট গ্রহণ (RV)'}</h3>
             {b.recv && b.recv.length > 0 ? (
               <div className="tw" style={{ marginTop: 10 }}>
                 <table>
                   <thead>
                     <tr>
-                      <th>তারিখ</th>
-                      <th>ভাউচার</th>
-                      <th>মাধ্যম</th>
-                      <th className="n">৳</th>
+                      <th>{t('তারিখ')}</th>
+                      <th>{language === 'en' ? 'Voucher' : 'ভাউচার'}</th>
+                      <th>{language === 'en' ? 'Method' : 'মাধ্যম'}</th>
+                      <th className="n">{tkSymbol}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -317,23 +320,23 @@ export const FactoryBillPage: React.FC = () => {
                         <td className="mono small">{r.d}</td>
                         <td className="mono">{r.rv}</td>
                         <td className="small">{r.mode}</td>
-                        <td className="n">৳ {bnNum(r.amt)}</td>
+                        <td className="n">{tkSymbol} {bnNum(r.amt)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             ) : (
-              <p className="small muted">এখনো কোনো টাকা পাওয়া যায়নি।</p>
+              <p className="small muted">{language === 'en' ? 'No payments received yet.' : 'এখনো কোনো টাকা পাওয়া যায়নি।'}</p>
             )}
 
             <p style={{ margin: '14px 0 10px', fontSize: '1.05rem' }}>
-              বাকি:{' '}
+              {language === 'en' ? 'Due:' : 'বাকি:'}{' '}
               <b
                 className="mono"
                 style={{ color: remaining > 0 ? 'var(--bad)' : 'var(--ok)' }}
               >
-                ৳ {bnNum(remaining)}
+                {tkSymbol} {bnNum(remaining)}
               </b>
             </p>
 
@@ -341,7 +344,7 @@ export const FactoryBillPage: React.FC = () => {
               <form onSubmit={handlePayment} style={{ marginTop: 12 }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   <label className="f">
-                    টাকা
+                    {language === 'en' ? `Amount (${tkSymbol})` : 'টাকা'}
                     <input
                       type="number"
                       placeholder={String(remaining)}
@@ -350,27 +353,29 @@ export const FactoryBillPage: React.FC = () => {
                     />
                   </label>
                   <label className="f">
-                    মাধ্যম
+                    {language === 'en' ? 'Method' : 'মাধ্যম'}
                     <select
                       value={payMode}
                       onChange={(e) => setPayMode(e.target.value)}
                     >
-                      <option>ব্যাংক ট্রান্সফার — ব্যাংক A</option>
-                      <option>চেক — ব্যাংক A</option>
-                      <option>নগদ</option>
-                      <option>বিকাশ / নগদ (মার্চেন্ট)</option>
+                      <option value="ব্যাংক ট্রান্সফার — ব্যাংক A">{language === 'en' ? 'Bank Transfer — Bank A' : 'ব্যাংক ট্রান্সফার — ব্যাংক A'}</option>
+                      <option value="চেক — ব্যাংক A">{language === 'en' ? 'Cheque — Bank A' : 'চেক — ব্যাংক A'}</option>
+                      <option value="নগদ">{language === 'en' ? 'Cash' : 'নগদ'}</option>
+                      <option value="বিকাশ / নগদ (মার্চেন্ট)">{language === 'en' ? 'bKash / Nagad (Merchant)' : 'বিকাশ / নগদ (মার্চেন্ট)'}</option>
                     </select>
                   </label>
                 </div>
                 <button className="btn pri" type="submit" style={{ marginTop: 10 }}>
-                  টাকা পেয়েছি
+                  {language === 'en' ? 'Record Payment' : 'টাকা পেয়েছি'}
                 </button>
               </form>
             )}
 
             {isVendor && (
               <p className="small muted" style={{ marginTop: 8 }}>
-                পেমেন্ট দিলে ফ্যাক্টরি &quot;টাকা পেয়েছি&quot; চাপলেই এখানে উঠে যাবে।
+                {language === 'en'
+                  ? 'When payment is recorded by the factory, it will appear here automatically.'
+                  : 'পেমেন্ট দিলে ফ্যাক্টরি "টাকা পেয়েছি" চাপলেই এখানে উঠে যাবে।'}
               </p>
             )}
           </div>
@@ -391,9 +396,9 @@ export const FactoryBillPage: React.FC = () => {
       {/* Header */}
       <div className="head">
         <div>
-          <h2>{isVendor ? 'বিল ও পেমেন্ট' : 'বিল ও ভাউচার'}</h2>
+          <h2>{isVendor ? t('বিল ও পেমেন্ট') : t('বিল ও ভাউচার')}</h2>
           <p>
-            কাজ শেষ → ডেলিভারি চালান → বিল → ভাউচার। প্রতিটা ভেন্ডরকে আলাদা বিল।
+            {language === 'en' ? 'Completed Work → Delivery Challan → Bill → Voucher. Distinct billing for each vendor.' : 'কাজ শেষ → ডেলিভারি চালান → বিল → ভাউচার। প্রতিটা ভেন্ডরকে আলাদা বিল।'}
           </p>
         </div>
       </div>
@@ -401,25 +406,24 @@ export const FactoryBillPage: React.FC = () => {
       {/* 3 KPI Cards */}
       <div className="kpis">
         <div className="kpi">
-          <span>বিল করা বাকি</span>
-          <b>{bnNum(unbilledAll.length)}টি অর্ডার</b>
+          <span>{language === 'en' ? 'Unbilled Orders' : 'বিল করা বাকি'}</span>
+          <b>{bnNum(unbilledAll.length)} {language === 'en' ? 'orders' : 'টি অর্ডার'}</b>
           <i>
-            {bnNum(unbilledAll.reduce((a, o) => a + Number(o.delivered || o.done || 0), 0))} kg
-            ডেলিভারি হয়ে গেছে
+            {bnNum(unbilledAll.reduce((a, o) => a + Number(o.delivered || o.done || 0), 0))} kg{' '}
+            {language === 'en' ? 'delivered' : 'ডেলিভারি হয়ে গেছে'}
           </i>
         </div>
         <div className="kpi">
-          <span>{isVendor ? 'আপনার মোট বাকি' : 'ভেন্ডরদের কাছে মোট পাওনা'}</span>
-          <b>৳ {bnNum(totalDue)}</b>
+          <span>{isVendor ? (language === 'en' ? 'Your Total Due' : 'আপনার মোট বাকি') : (language === 'en' ? 'Total Vendor Receivables' : 'ভেন্ডরদের কাছে মোট পাওনা')}</span>
+          <b>{tkSymbol} {bnNum(totalDue)}</b>
           <i>
-            {filteredBills.filter((b) => billAmt(b) > billRecv(b)).length}টি বিল
-            খোলা
+            {bnNum(filteredBills.filter((b) => billAmt(b) > billRecv(b)).length)} {language === 'en' ? 'bills due' : 'টি বিল খোলা'}
           </i>
         </div>
         <div className="kpi">
-          <span>চলতি মাসে বিল</span>
-          <b>৳ {bnNum(currentMonthTotal)}</b>
-          <i>{bnNum(currentMonthBills.length)}টি বিল</i>
+          <span>{language === 'en' ? 'This Month Bills' : 'চলতি মাসে বিল'}</span>
+          <b>{tkSymbol} {bnNum(currentMonthTotal)}</b>
+          <i>{bnNum(currentMonthBills.length)} {language === 'en' ? 'bills' : 'টি বিল'}</i>
         </div>
       </div>
 
@@ -427,9 +431,9 @@ export const FactoryBillPage: React.FC = () => {
       {!isVendor && (
         <div className="grid g2" style={{ marginBottom: 20 }}>
           <form className="card" id="nb" onSubmit={handleCreateBill}>
-            <h3>নতুন বিল তৈরি করুন</h3>
+            <h3>{language === 'en' ? 'Create New Bill' : 'নতুন বিল তৈরি করুন'}</h3>
             <label className="f" style={{ maxWidth: 360, marginTop: 8 }}>
-              পার্টি
+              {t('পার্টি')}
               <SearchableSelect
                 id="nbp"
                 value={newBillParty}
@@ -437,11 +441,11 @@ export const FactoryBillPage: React.FC = () => {
                 options={[
                   {
                     value: 'abc',
-                    label: `ABC Knit Composite ${getUnbilledOrders('abc').length > 0 ? `(${getUnbilledOrders('abc').length}টি বাকি)` : ''}`.trim(),
+                    label: `ABC Knit Composite ${getUnbilledOrders('abc').length > 0 ? `(${getUnbilledOrders('abc').length} ${language === 'en' ? 'due' : 'টি বাকি'})` : ''}`.trim(),
                   },
                   {
                     value: 'xyz',
-                    label: `XYZ Fashion Ltd ${getUnbilledOrders('xyz').length > 0 ? `(${getUnbilledOrders('xyz').length}টি বাকি)` : ''}`.trim(),
+                    label: `XYZ Fashion Ltd ${getUnbilledOrders('xyz').length > 0 ? `(${getUnbilledOrders('xyz').length} ${language === 'en' ? 'due' : 'টি বাকি'})` : ''}`.trim(),
                   },
                   ...parties
                     .filter((p) => p.code !== 'abc' && p.code !== 'xyz')
@@ -449,11 +453,11 @@ export const FactoryBillPage: React.FC = () => {
                       const code = p.code || String(p.id || p.name);
                       return {
                         value: code,
-                        label: `${p.name} ${getUnbilledOrders(code).length > 0 ? `(${getUnbilledOrders(code).length}টি বাকি)` : ''}`.trim(),
+                        label: `${p.name} ${getUnbilledOrders(code).length > 0 ? `(${getUnbilledOrders(code).length} ${language === 'en' ? 'due' : 'টি বাকি'})` : ''}`.trim(),
                       };
                     }),
                 ]}
-                searchPlaceholder="পার্টি খুঁজুন..."
+                searchPlaceholder={language === 'en' ? 'Search party...' : 'পার্টি খুঁজুন...'}
               />
             </label>
 
@@ -464,12 +468,12 @@ export const FactoryBillPage: React.FC = () => {
                     <thead>
                       <tr>
                         <th style={{ width: 36 }}></th>
-                        <th>অর্ডার</th>
-                        <th>কমপ্লিট</th>
-                        <th>চালান</th>
-                        <th className="n">ডেলিভারি kg</th>
-                        <th className="n">রেট ৳</th>
-                        <th className="n">টাকা</th>
+                        <th>{t('অর্ডার')}</th>
+                        <th>{language === 'en' ? 'Completed' : 'কমপ্লিট'}</th>
+                        <th>{t('চালান নং')}</th>
+                        <th className="n">{language === 'en' ? 'Delivered kg' : 'ডেলিভারি kg'}</th>
+                        <th className="n">{language === 'en' ? `Rate ${tkSymbol}` : 'রেট ৳'}</th>
+                        <th className="n">{t('টাকা')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -502,8 +506,8 @@ export const FactoryBillPage: React.FC = () => {
                                 : 'DC-0872'}
                             </td>
                             <td className="n">{bnNum(deliv)}</td>
-                            <td className="n">৳{rate}</td>
-                            <td className="n">৳{bnNum(deliv * rate)}</td>
+                            <td className="n">{tkSymbol}{rate}</td>
+                            <td className="n">{tkSymbol}{bnNum(deliv * rate)}</td>
                           </tr>
                         );
                       })}
@@ -520,9 +524,9 @@ export const FactoryBillPage: React.FC = () => {
                   }}
                 >
                   <span>
-                    মোট নির্বাচিত:{' '}
+                    {language === 'en' ? 'Total Selected: ' : 'মোট নির্বাচিত: '}
                     <b className="mono" id="nbt" style={{ fontSize: '1.15rem' }}>
-                      ৳ {bnNum(selectedOrdersTotal)}
+                      {tkSymbol} {bnNum(selectedOrdersTotal)}
                     </b>
                   </span>
                   <button
@@ -530,33 +534,28 @@ export const FactoryBillPage: React.FC = () => {
                     type="submit"
                     disabled={selectedOrderIds.length === 0}
                   >
-                    বিল ও ভাউচার তৈরি করুন
+                    {language === 'en' ? 'Create Bill & Voucher' : 'বিল ও ভাউচার তৈরি করুন'}
                   </button>
                 </div>
               </>
             ) : (
               <p className="small muted" style={{ marginTop: 12 }}>
-                এই পার্টির কোনো কমপ্লিট অর্ডার বিল করার বাকি নেই। চলমান অর্ডার
-                শেষ হলে এখানে নিজে থেকেই আসবে।
+                {language === 'en' ? 'No completed orders pending billing for this party.' : 'এই পার্টির কোনো কমপ্লিট অর্ডার বিল করার বাকি নেই। চলমান অর্ডার শেষ হলে এখানে নিজে থেকেই আসবে।'}
               </p>
             )}
           </form>
 
           {/* Explanatory Card */}
           <div className="card">
-            <h3>কীভাবে কাজ করে</h3>
+            <h3>{language === 'en' ? 'How It Works' : 'কীভাবে কাজ করে'}</h3>
             <div className="prose small" style={{ lineHeight: 1.6 }}>
               <p>
-                অর্ডার কমপ্লিট হলে আর ডেলিভারি চালান হয়ে গেলে, সেই অর্ডার এখানে
-                &quot;বিল করা বাকি&quot; তালিকায় চলে আসে। ডেলিভারির kg আর
-                অর্ডারের রেট থেকে টাকা নিজে থেকেই হিসাব হয়।
+                {language === 'en' ? 'Once orders are delivered via challan, they appear in the unbilled list. Total amount is calculated from delivered kg and unit rate.' : 'অর্ডার কমপ্লিট হলে আর ডেলিভারি চালান হয়ে গেলে, সেই অর্ডার এখানে "বিল করা বাকি" তালিকায় চলে আসে। ডেলিভারির kg আর অর্ডারের রেট থেকে টাকা নিজে থেকেই হিসাব হয়।'}
               </p>
               <p>
-                বিল সেভ করলে সাথে সাথে একটা জার্নাল ভাউচার (JV) তৈরি হয়: পার্টির
-                নামে ডেবিট, নিটিং আয়ে ক্রেডিট। ভেন্ডর টাকা দিলে রিসিভ ভাউচার
-                (RV) হয়, আর পার্টি লেজারে বাকি টাকা কমে যায়।
+                {language === 'en' ? 'Creating a bill automatically generates a Journal Voucher (JV). When payment is received, a Receipt Voucher (RV) is posted.' : 'বিল সেভ করলে সাথে সাথে একটা জার্নাল ভাউচার (JV) তৈরি হয়: পার্টির নামে ডেবিট, নিটিং আয়ে ক্রেডিট। ভেন্ডর টাকা দিলে রিসিভ ভাউচার (RV) হয়, আর পার্টি লেজারে বাকি টাকা কমে যায়।'}
               </p>
-              <p>একাধিক অর্ডার একসাথে এক বিলেও দেওয়া যাবে, আবার আলাদা আলাদাও।</p>
+              <p>{language === 'en' ? 'Multiple orders can be combined into one bill or billed separately.' : 'একাধিক অর্ডার একসাথে এক বিলেও দেওয়া যাবে, আবার আলাদা আলাদাও।'}</p>
             </div>
           </div>
         </div>
@@ -564,20 +563,20 @@ export const FactoryBillPage: React.FC = () => {
 
       {/* All Bills Table */}
       <div className="card">
-        <h3>সব বিল</h3>
+        <h3>{language === 'en' ? 'All Bills' : 'সব বিল'}</h3>
         <div className="tw">
           <table>
             <thead>
               <tr>
-                <th>বিল নং</th>
-                <th>তারিখ</th>
-                <th>পার্টি</th>
-                <th>অর্ডার</th>
+                <th>{t('বিল নং')}</th>
+                <th>{t('তারিখ')}</th>
+                <th>{t('পার্টি')}</th>
+                <th>{t('অর্ডার')}</th>
                 <th className="n">kg</th>
-                <th className="n">বিল ৳</th>
-                <th className="n">পেয়েছি ৳</th>
-                <th>ভাউচার</th>
-                <th>অবস্থা</th>
+                <th className="n">{language === 'en' ? `Bill ${tkSymbol}` : 'বিল ৳'}</th>
+                <th className="n">{language === 'en' ? `Received ${tkSymbol}` : 'পেয়েছি ৳'}</th>
+                <th>{language === 'en' ? 'Voucher' : 'ভাউচার'}</th>
+                <th>{t('অবস্থা')}</th>
               </tr>
             </thead>
             <tbody>
@@ -591,7 +590,7 @@ export const FactoryBillPage: React.FC = () => {
                       color: 'var(--muted)',
                     }}
                   >
-                    কোনো বিল পাওয়া যায়নি।
+                    {language === 'en' ? 'No bills found.' : 'কোনো বিল পাওয়া যায়নি।'}
                   </td>
                 </tr>
               ) : (
@@ -622,17 +621,17 @@ export const FactoryBillPage: React.FC = () => {
                     </td>
                     <td className="n">{bnNum(totalKg)}</td>
                     <td className="n" style={{ fontWeight: 600 }}>
-                      ৳ {bnNum(amt)}
+                      {tkSymbol} {bnNum(amt)}
                     </td>
-                    <td className="n">৳ {bnNum(rec)}</td>
+                    <td className="n">{tkSymbol} {bnNum(rec)}</td>
                     <td className="mono small">{b.jv}</td>
                     <td>
                       {isPaid ? (
-                        <span className="pill p-ok">পরিশোধ</span>
+                        <span className="pill p-ok">{t('পরিশোধিত')}</span>
                       ) : isPart ? (
-                        <span className="pill p-warn">আংশিক</span>
+                        <span className="pill p-warn">{language === 'en' ? 'Partial' : 'আংশিক'}</span>
                       ) : (
-                        <span className="pill p-bad">বাকি</span>
+                        <span className="pill p-bad">{language === 'en' ? 'Due' : 'বাকি'}</span>
                       )}
                     </td>
                   </tr>

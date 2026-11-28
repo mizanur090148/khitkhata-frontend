@@ -12,6 +12,9 @@ export const VendorReportPage: React.FC = () => {
     parties,
     factoryProfile,
     addToast,
+    t,
+    language,
+    tkSymbol,
   } = useApp();
 
   // Active Vendor Selection (Default to ABC Knit Composite, dynamic with database parties)
@@ -37,21 +40,21 @@ export const VendorReportPage: React.FC = () => {
     try {
       const [y, m, d] = reportDate.split('-').map(Number);
       const dateObj = new Date(y, m - 1, d);
-      return dateObj.toLocaleDateString('bn-BD', {
+      return dateObj.toLocaleDateString(language === 'en' ? 'en-US' : 'bn-BD', {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
         day: 'numeric',
       });
     } catch {
-      return new Date().toLocaleDateString('bn-BD', {
+      return new Date().toLocaleDateString(language === 'en' ? 'en-US' : 'bn-BD', {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
         day: 'numeric',
       });
     }
-  }, [reportDate]);
+  }, [reportDate, language]);
 
   // Real Database Subcontract Orders for the selected vendor
   const vendorOrders = useMemo(() => {
@@ -234,7 +237,7 @@ export const VendorReportPage: React.FC = () => {
                 gap: 4,
               }}
             >
-              · ফ্যাক্টরি: <b>{factoryProfile?.name || 'রহমান নিটিং ইন্ডাস্ট্রিজ'}</b>
+              · {t('ফ্যাক্টরি')}: <b>{factoryProfile?.name || 'রহমান নিটিং ইন্ডাস্ট্রিজ'}</b>
             </span>
           </div>
 
@@ -261,7 +264,7 @@ export const VendorReportPage: React.FC = () => {
                   display: 'inline-block',
                 }}
               />
-              লাইভ এক্সিকিউটিভ ভিউ
+              {t('লাইভ এক্সিকিউটিভ ভিউ')}
             </span>
           </div>
         </div>
@@ -288,10 +291,10 @@ export const VendorReportPage: React.FC = () => {
               }}
             >
               <FileText size={22} style={{ color: 'var(--accent)' }} />
-              দৈনিক এক্সিকিউটিভ রিপোর্ট
+              {t('দৈনিক এক্সিকিউটিভ রিপোর্ট')}
             </h2>
             <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.92rem', lineHeight: 1.5 }}>
-              <b>{activeParty.name}</b>-এর জন্য লাইভ উৎপাদন, ডেলিভারি ও কোয়ালিটি সামারি · <b>{factoryProfile?.name || 'রহমান নিটিং ইন্ডাস্ট্রিজ'}</b>-এ আপনার কাজের অবস্থা
+              <b>{activeParty.name}</b> {t('এর জন্য লাইভ উৎপাদন, ডেলিভারি ও কোয়ালিটি সামারি')} · <b>{factoryProfile?.name || 'রহমান নিটিং ইন্ডাস্ট্রিজ'}</b>
             </p>
 
             {/* Dynamic Date Display & Date Picker Controls */}
@@ -328,7 +331,7 @@ export const VendorReportPage: React.FC = () => {
                     color: 'var(--text)',
                     cursor: 'pointer',
                   }}
-                  aria-label="রিপোর্টের তারিখ নির্বাচন করুন"
+                  aria-label={t('রিপোর্টের তারিখ')}
                 />
                 {reportDate !== new Date().toISOString().split('T')[0] && (
                   <button
@@ -345,7 +348,7 @@ export const VendorReportPage: React.FC = () => {
                       fontWeight: 600,
                     }}
                   >
-                    আজকে ফিরুন
+                    {t('আজকে ফিরুন')}
                   </button>
                 )}
               </div>
@@ -360,7 +363,7 @@ export const VendorReportPage: React.FC = () => {
               onClick={() => window.print()}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
             >
-              <Printer size={14} /> প্রিন্ট / PDF
+              <Printer size={14} /> {t('প্রিন্ট / PDF')}
             </button>
             <button
               type="button"
@@ -368,7 +371,7 @@ export const VendorReportPage: React.FC = () => {
               onClick={handleExportExcel}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 600 }}
             >
-              <Download size={14} /> Excel নামান
+              <Download size={14} /> {t('Excel নামান')}
             </button>
           </div>
         </div>
@@ -377,24 +380,24 @@ export const VendorReportPage: React.FC = () => {
       {/* 4 KPIs - 100% Dynamic from Database */}
       <div className="kpis" style={{ marginBottom: 20 }}>
         <div className="kpi">
-          <span>আজকের মোট উৎপাদন</span>
-          <b>{totalTodayKg > 0 ? `${bnNum(totalTodayKg.toLocaleString('en-IN'))} kg` : '০ kg'}</b>
-          <i>{uniqueMachines > 0 ? `${bnNum(uniqueMachines)}টি মেশিনে বোনা হয়েছে` : 'কোনো সক্রিয় মেশিন নেই'}</i>
+          <span>{t('আজকের মোট উৎপাদন')}</span>
+          <b>{totalTodayKg > 0 ? `${bnNum(totalTodayKg.toLocaleString('en-IN'))} kg` : `0 kg`}</b>
+          <i>{uniqueMachines > 0 ? `${bnNum(uniqueMachines)} ${language === 'en' ? 'machines active' : 'টি মেশিনে বোনা হয়েছে'}` : (language === 'en' ? 'No active machines' : 'কোনো সক্রিয় মেশিন নেই')}</i>
         </div>
         <div className="kpi">
-          <span>QC পাস রেট</span>
-          <b style={{ color: 'var(--ok)' }}>৯৮.২%</b>
-          <i>দুই পক্ষের সম্মতিতে পাস</i>
+          <span>{t('QC পাস রেট')}</span>
+          <b style={{ color: 'var(--ok)' }}>{language === 'en' ? '98.2%' : '৯৮.২%'}</b>
+          <i>{t('দুই পক্ষের সম্মতিতে পাস')}</i>
         </div>
         <div className="kpi">
-          <span>মোট ডেলিভারি চালান</span>
-          <b>{totalDelivered > 0 ? `${bnNum(totalDelivered.toLocaleString('en-IN'))} kg` : '০ kg'}</b>
-          <i>{bnNum(deliveryChallans.length)}টি চালানে পাঠানো</i>
+          <span>{t('মোট ডেলিভারি চালান')}</span>
+          <b>{totalDelivered > 0 ? `${bnNum(totalDelivered.toLocaleString('en-IN'))} kg` : `0 kg`}</b>
+          <i>{bnNum(deliveryChallans.length)} {language === 'en' ? 'challans sent' : 'টি চালানে পাঠানো'}</i>
         </div>
         <div className="kpi">
-          <span>বর্তমান বাকি বিল</span>
-          <b style={{ color: totalDue > 0 ? 'var(--bad)' : 'var(--ok)' }}>৳ {bnNum(totalDue.toLocaleString('en-IN'))}</b>
-          <i>{vendorBills[0]?.no || 'বিল সম্পূর্ণ পরিশোধিত'}</i>
+          <span>{t('বকেয়া বিল')}</span>
+          <b style={{ color: totalDue > 0 ? 'var(--bad)' : 'var(--ok)' }}>{tkSymbol} {bnNum(totalDue.toLocaleString('en-IN'))}</b>
+          <i>{vendorBills[0]?.no || (language === 'en' ? 'Bill fully paid' : 'বিল সম্পূর্ণ পরিশোধিত')}</i>
         </div>
       </div>
 
@@ -402,7 +405,7 @@ export const VendorReportPage: React.FC = () => {
         {/* Shift Breakdown Card */}
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <h3 style={{ margin: 0 }}>আজকের শিফট অনুযায়ী উৎপাদন</h3>
+            <h3 style={{ margin: 0 }}>{t('আজকের শিফট অনুযায়ী উৎপাদন')}</h3>
             <span
               style={{
                 fontSize: '0.74rem',
@@ -413,7 +416,7 @@ export const VendorReportPage: React.FC = () => {
                 borderRadius: 999,
               }}
             >
-              মোট {bnNum(displayLogs.length)}টি এন্ট্রি
+              {t('মোট')} {bnNum(displayLogs.length)} {language === 'en' ? 'entries' : 'টি এন্ট্রি'}
             </span>
           </div>
 
@@ -421,28 +424,28 @@ export const VendorReportPage: React.FC = () => {
             <table>
               <thead>
                 <tr>
-                  <th>শিফট</th>
-                  <th>মেশিন</th>
-                  <th>অপারেটর</th>
-                  <th className="n">রোল</th>
-                  <th className="n">ওজন (kg)</th>
+                  <th>{t('শিফট')}</th>
+                  <th>{t('মেশিন')}</th>
+                  <th>{t('অপারেটর')}</th>
+                  <th className="n">{t('রোল')}</th>
+                  <th className="n">{t('ওজন (kg)')}</th>
                 </tr>
               </thead>
               <tbody>
                 {displayLogs.length === 0 ? (
                   <tr>
                     <td colSpan={5} style={{ textAlign: 'center', padding: '24px', color: 'var(--muted)' }}>
-                      আজকে এই পার্টির জন্য কোনো উৎপাদন লগ রেকর্ড নেই।
+                      {language === 'en' ? 'No production logs recorded for this party today.' : 'আজকে এই পার্টির জন্য কোনো উৎপাদন লগ রেকর্ড নেই।'}
                     </td>
                   </tr>
                 ) : (
                   displayLogs.map((p: any, idx: number) => (
                     <tr key={p.id || idx}>
                       <td>
-                        <span className="pill p-acc">শিফট {p.shift || p.sh || 'A'}</span>
+                        <span className="pill p-acc">{t('শিফট')} {p.shift || p.sh || 'A'}</span>
                       </td>
                       <td className="mono" style={{ fontWeight: 600 }}>{p.machine || p.machine_code || p.m || 'M-01'}</td>
-                      <td>{p.operator || p.operator_name || p.op || 'অপারেটর'}</td>
+                      <td>{p.operator || p.operator_name || p.op || t('অপারেটর')}</td>
                       <td className="n">{bnNum(p.rolls || 0)}</td>
                       <td className="n">{bnNum((Number(p.kg || p.knitKg || p.qty_kg) || 0).toLocaleString('en-IN'))} kg</td>
                     </tr>
@@ -450,7 +453,7 @@ export const VendorReportPage: React.FC = () => {
                 )}
                 {displayLogs.length > 0 && (
                   <tr className="totrow" style={{ fontWeight: 700, background: 'var(--surface2)' }}>
-                    <td colSpan={3}>মোট উৎপাদন</td>
+                    <td colSpan={3}>{t('মোট উৎপাদন')}</td>
                     <td className="n">{bnNum(totalTodayRolls)}</td>
                     <td className="n">{bnNum(totalTodayKg.toLocaleString('en-IN'))} kg</td>
                   </tr>
@@ -463,7 +466,7 @@ export const VendorReportPage: React.FC = () => {
         {/* Yarn Status & Loss Statement */}
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <h3 style={{ margin: 0 }}>সুতা গ্রহণ ও প্রসেস লস ট্র্যাকার</h3>
+            <h3 style={{ margin: 0 }}>{t('সুতা গ্রহণ ও প্রসেস লস ট্র্যাকার')}</h3>
             <span
               style={{
                 fontSize: '0.74rem',
@@ -474,26 +477,26 @@ export const VendorReportPage: React.FC = () => {
                 borderRadius: 999,
               }}
             >
-              অনুমোদিত সীমা: ৩%
+              {language === 'en' ? 'Allowed Limit: 3%' : 'অনুমোদিত সীমা: ৩%'}
             </span>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
             {vendorYarnItems.length === 0 ? (
               <p className="small muted" style={{ textAlign: 'center', padding: '24px' }}>
-                বর্তমানে এই পার্টির কোনো সুতা বরাদ্দের রেকর্ড পাওয়া যায়নি।
+                {language === 'en' ? 'No yarn allocation records currently found for this party.' : 'বর্তমানে এই পার্টির কোনো সুতা বরাদ্দের রেকর্ড পাওয়া যায়নি।'}
               </p>
             ) : (
               vendorYarnItems.map((y, idx) => (
                 <div key={idx} style={{ padding: 12, borderRadius: 8, background: 'var(--surface2)', border: '1px solid var(--border)' }}>
                   <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
                     <b>{y.brand} · {y.count}</b>
-                    <span className="pill p-ok">লট {y.lot}</span>
+                    <span className="pill p-ok">{t('লট')} {y.lot}</span>
                   </div>
                   <p style={{ margin: '8px 0 0', fontSize: '.88rem', lineHeight: 1.5 }}>
-                    প্রাপ্ত সুতা: <b>{bnNum(y.rcvKg.toLocaleString('en-IN'))} kg</b> · বোনা হয়েছে: <b>{bnNum(y.usedKg.toLocaleString('en-IN'))} kg</b>
+                    {t('প্রাপ্ত সুতা')}: <b>{bnNum(y.rcvKg.toLocaleString('en-IN'))} kg</b> · {t('হয়েছে (kg)')}: <b>{bnNum(y.usedKg.toLocaleString('en-IN'))} kg</b>
                     <br />
-                    অবশিষ্টাংশ: <b>{bnNum(y.remKg.toLocaleString('en-IN'))} kg</b> · প্রসেস লস: <b>{y.lossPct}</b> (অনুমোদিত ৩% সীমার মধ্যে রয়েছে)
+                    {t('ব্যালেন্স')}: <b>{bnNum(y.remKg.toLocaleString('en-IN'))} kg</b> · {t('প্রসেস লস')}: <b>{y.lossPct}</b>
                   </p>
                 </div>
               ))

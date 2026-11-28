@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
 import { SearchableOperatorSelect } from '@/components';
 import { SearchableSelect } from '@/components/common/SearchableSelect';
+import { bnNum } from '@/utils/formatters';
 
 // 16 FAULTS matching KnitKhata.html
 export const FAULTS = [
@@ -30,10 +31,22 @@ export const SHIFTS: [string, string][] = [
   ['C', 'C'],
 ];
 
+export const getShifts = (lang: 'bn' | 'en'): [string, string][] => [
+  ['A', lang === 'en' ? 'A (Day)' : 'A (দিন)'],
+  ['B', lang === 'en' ? 'B (Night)' : 'B (রাত)'],
+  ['C', 'C'],
+];
+
 export const ISSUES: [string, string][] = [
   ['', 'না'],
   ...FAULTS.map((f) => [f, f] as [string, string]),
   ['other', 'অন্যান্য'],
+];
+
+export const getIssues = (lang: 'bn' | 'en'): [string, string][] => [
+  ['', lang === 'en' ? 'None' : 'না'],
+  ...FAULTS.map((f) => [f, f] as [string, string]),
+  ['other', lang === 'en' ? 'Other' : 'অন্যান্য'],
 ];
 
 export const ISS_PH: Record<string, string> = {
@@ -48,11 +61,19 @@ export const ISS_PH: Record<string, string> = {
   other: 'সমস্যার বিবরণ লিখুন',
 };
 
-// Bengali numeral converter
-function bnNum(n: number | string): string {
-  const bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
-  return String(n).replace(/\d/g, (d) => bnDigits[parseInt(d, 10)]);
-}
+export const getIssuePlaceholders = (lang: 'bn' | 'en'): Record<string, string> => ({
+  Hole: lang === 'en' ? 'e.g., 3 holes, roll no 12' : 'যেমন: ৩টা হোল, রোল নং ১২',
+  'Needle Mark': lang === 'en' ? 'e.g., needle line on 2 rolls, needle changed' : 'যেমন: ২টা রোলে নিডল দাগ, নিডল বদলানো হয়েছে',
+  'Needle Broken': lang === 'en' ? 'e.g., 2 broken needles, replaced' : 'যেমন: ২টা নিডল ভাঙা, বদলানো হয়েছে',
+  'Patta (Barre)': lang === 'en' ? 'e.g., Barre visible from roll 8, suspect lot mix' : 'যেমন: রোল ৮ থেকে পাট্টা দেখা যাচ্ছে, লট মিক্স সন্দেহ',
+  'Oil Spot': lang === 'en' ? 'e.g., 4 oil spots, roll no 5' : 'যেমন: ৪টা অয়েল স্পট, রোল নং ৫',
+  'Lycra Out': lang === 'en' ? 'e.g., Lycra dropped on 1 roll, 3 meters' : 'যেমন: ১টা রোলে লাইক্রা আউট, ৩ মিটার',
+  'Missing Yarn': lang === 'en' ? 'e.g., yarn snapped at feeder' : 'যেমন: একটা ফিডারে সুতা ছিঁড়ে ছিল',
+  'Thick Thin': lang === 'en' ? 'e.g., excessive thick-thin yarn fault' : 'যেমন: সুতায় থিক-থিন ফল্ট বেশি',
+  other: lang === 'en' ? 'Describe the issue' : 'সমস্যার বিবরণ লিখুন',
+});
+
+// bnNum imported from formatters
 
 function parseBnFloat(val: any): number {
   if (val == null || val === '') return 0;
@@ -116,7 +137,7 @@ export function normalizeOrderLines(o: any): OrderLineNormalized[] {
     if (!machinesList.length) machinesList = ['M-01'];
 
     return {
-      place: l.place || l.placement || (i === 0 ? 'Body' : `অংশ ${i + 1}`),
+      place: l.place || l.placement || (i === 0 ? 'Body' : (typeof window !== 'undefined' && localStorage.getItem('knitkhata_lang') === 'en' ? `Part ${i + 1}` : `অংশ ${i + 1}`)),
       fab: l.fab || l.fabrication || l.fabric || 'Single Jersey',
       color: l.color || o.color || '—',
       qty: Number(l.qty || l.orderKg || 0),
@@ -233,6 +254,8 @@ export const FactoryProductionEntryPage: React.FC = () => {
     fetchOrders,
     saveShiftProduction,
     addToast,
+    t,
+    language,
   } = useApp();
 
   // Load orders and operators on mount
@@ -392,10 +415,10 @@ export const FactoryProductionEntryPage: React.FC = () => {
       );
 
       let yarnsList: YarnEntryState[] = [];
-      let yarnSrcText = 'অর্ডার থেকে';
+      let yarnSrcText = language === 'en' ? 'From Order' : 'অর্ডার থেকে';
 
       if (prevLog && (prevLog as any).yarns && (prevLog as any).yarns.length) {
-        yarnSrcText = `আগের এন্ট্রি থেকে · ${(prevLog as any).d || (prevLog as any).date_label}, শিফট ${(prevLog as any).sh || (prevLog as any).shift}`;
+        yarnSrcText = language === 'en' ? `From previous entry · ${(prevLog as any).d || (prevLog as any).date_label}, Shift ${(prevLog as any).sh || (prevLog as any).shift}` : `আগের এন্ট্রি থেকে · ${(prevLog as any).d || (prevLog as any).date_label}, শিফট ${(prevLog as any).sh || (prevLog as any).shift}`;
         yarnsList = (prevLog as any).yarns.map((y: any) => ({
           count: y.count === '—' ? '' : y.count || '',
           brand: y.brand === '—' ? '' : y.brand || '',
@@ -713,7 +736,7 @@ export const FactoryProductionEntryPage: React.FC = () => {
     setErrorMessage('');
 
     if (!activeOrder) {
-      setErrorMessage('অনুগ্রহ করে একটি অর্ডার নির্বাচন করুন।');
+      setErrorMessage(language === 'en' ? 'Please select an order.' : 'অনুগ্রহ করে একটি অর্ডার নির্বাচন করুন।');
       return;
     }
 
@@ -735,7 +758,7 @@ export const FactoryProductionEntryPage: React.FC = () => {
 
       lForm.machines.forEach((mRow) => {
         const mCode = mRow.machine.trim();
-        const where = `${lineData.place || 'অংশ'} · ${mCode || 'মেশিন'}`;
+        const where = `${lineData.place || (language === 'en' ? 'Part' : 'অংশ')} · ${mCode || (language === 'en' ? 'Machine' : 'মেশিন')}`;
 
         if (isFlat) {
           const pcs = parseBnFloat(mRow.flatPieces);
@@ -743,13 +766,13 @@ export const FactoryProductionEntryPage: React.FC = () => {
             return; // Not filled, skip
           }
           if (pcs <= 0) {
-            badFields.push(`${where}-এর পিস সংখ্যা লিখুন`);
+            badFields.push(language === 'en' ? `Enter pieces count for ${where}` : `${where}-এর পিস সংখ্যা লিখুন`);
           }
           if (!mCode) {
-            badFields.push(`${lineData.place}-এর মেশিন নির্বাচন করুন`);
+            badFields.push(language === 'en' ? `Select machine for ${lineData.place}` : `${lineData.place}-এর মেশিন নির্বাচন করুন`);
           }
           if (mRow.flatIssue && !mRow.flatIssueDesc.trim()) {
-            badFields.push(`${where}-এর সমস্যার বিবরণ লিখুন`);
+            badFields.push(language === 'en' ? `Enter issue details for ${where}` : `${where}-এর সমস্যার বিবরণ লিখুন`);
           }
 
           const flatOpName = mRow.flatOperator.trim();
@@ -776,7 +799,7 @@ export const FactoryProductionEntryPage: React.FC = () => {
           }
 
           if (!mRow.rolls.length) {
-            badFields.push(`${where}-এর কয়টা রোল নামল লিখুন`);
+            badFields.push(language === 'en' ? `Enter rolls produced for ${where}` : `${where}-এর কয়টা রোল নামল লিখুন`);
             return;
           }
 
@@ -784,25 +807,25 @@ export const FactoryProductionEntryPage: React.FC = () => {
           const totalKg = parseBnFloat(mRow.totalKg);
 
           if (totalKg <= 0) {
-            badFields.push(`${where}-এর মোট ওজন (kg) লিখুন`);
+            badFields.push(language === 'en' ? `Enter total weight (kg) for ${where}` : `${where}-এর মোট ওজন (kg) লিখুন`);
           }
 
           if (mRow.sameOperator && !mRow.operator.trim()) {
-            badFields.push(`${where}-এর অপারেটরের নাম লিখুন`);
+            badFields.push(language === 'en' ? `Enter operator name for ${where}` : `${where}-এর অপারেটরের নাম লিখুন`);
           }
 
           if (!mCode) {
-            badFields.push(`${lineData.place}-এর মেশিন নির্বাচন করুন`);
+            badFields.push(language === 'en' ? `Select machine for ${lineData.place}` : `${lineData.place}-এর মেশিন নির্বাচন করুন`);
           }
 
           // Check each roll weight
           mRow.rolls.forEach((r, rIdx) => {
             const w = parseBnFloat(r.weight);
             if (w <= 0) {
-              badFields.push(`${where} · রোল ${r.jc || rIdx + 1}-এর ওজন লিখুন`);
+              badFields.push(language === 'en' ? `Enter weight for ${where} · Roll ${r.jc || rIdx + 1}` : `${where} · রোল ${r.jc || rIdx + 1}-এর ওজন লিখুন`);
             }
             if (!mRow.sameOperator && !r.operator.trim()) {
-              badFields.push(`${where} · রোল ${r.jc || rIdx + 1}-এর অপারেটর লিখুন`);
+              badFields.push(language === 'en' ? `Enter operator for ${where} · Roll ${r.jc || rIdx + 1}` : `${where} · রোল ${r.jc || rIdx + 1}-এর অপারেটর লিখুন`);
             }
           });
 
@@ -810,7 +833,9 @@ export const FactoryProductionEntryPage: React.FC = () => {
           if (totalKg > 0 && Math.abs(totalKg - rollSum) >= 0.05 && mRow.rolls.every((r) => parseBnFloat(r.weight) > 0)) {
             const diff = +(totalKg - rollSum).toFixed(1);
             badFields.push(
-              `${where}: রোলের ওজনের যোগফল (${rollSum.toFixed(1)} kg) মোট ওজনের (${totalKg} kg) সাথে মেলেনি (${diff > 0 ? `${diff} kg কম আছে` : `${-diff} kg বেশি`})`
+              language === 'en'
+                ? `${where}: Sum of rolls (${rollSum.toFixed(1)} kg) does not match total weight (${totalKg} kg) (${diff > 0 ? `${diff} kg short` : `${-diff} kg over`})`
+                : `${where}: রোলের ওজনের যোগফল (${rollSum.toFixed(1)} kg) মোট ওজনের (${totalKg} kg) সাথে মেলেনি (${diff > 0 ? `${diff} kg কম আছে` : `${-diff} kg বেশি`})`
             );
           }
 
@@ -853,12 +878,12 @@ export const FactoryProductionEntryPage: React.FC = () => {
     });
 
     if (!payloadRows.length && !badFields.length) {
-      setErrorMessage('অন্তত একটা মেশিনে কয়টা রোল নামল আর রোলের ওজন লিখুন।');
+      setErrorMessage(language === 'en' ? 'Please enter rolls count and roll weight for at least one machine.' : 'অন্তত একটা মেশিনে কয়টা রোল নামল আর রোলের ওজন লিখুন।');
       return;
     }
 
     if (badFields.length > 0) {
-      setErrorMessage(Array.from(new Set(badFields)).join(' · ') + ' — এগুলো ঠিক করুন।');
+      setErrorMessage(Array.from(new Set(badFields)).join(' · ') + (language === 'en' ? ' — please fix these.' : ' — এগুলো ঠিক করুন।'));
       return;
     }
 
@@ -882,8 +907,8 @@ export const FactoryProductionEntryPage: React.FC = () => {
 
       addToast({
         type: 'success',
-        title: 'প্রোডাকশন সেভ হয়েছে',
-        message: `${activeOrder.id} · ${payloadRows.length}টি মেশিনে প্রোডাকশন ডাটাবেজে সংরক্ষিত হয়েছে`,
+        title: language === 'en' ? 'Production Saved' : 'প্রোডাকশন সেভ হয়েছে',
+        message: language === 'en' ? `${activeOrder.id} · Production saved to database for ${payloadRows.length} machine(s)` : `${activeOrder.id} · ${payloadRows.length}টি মেশিনে প্রোডাকশন ডাটাবেজে সংরক্ষিত হয়েছে`,
       });
 
       // Reset roll inputs
@@ -903,7 +928,7 @@ export const FactoryProductionEntryPage: React.FC = () => {
         }))
       );
     } catch (err: any) {
-      setErrorMessage(err.message || 'প্রোডাকশন সেভ করতে সমস্যা হয়েছে।');
+      setErrorMessage(err.message || (language === 'en' ? 'Failed to save production.' : 'প্রোডাকশন সেভ করতে সমস্যা হয়েছে।'));
     } finally {
       setIsSubmitting(false);
     }
@@ -936,8 +961,8 @@ export const FactoryProductionEntryPage: React.FC = () => {
       {/* 1. HEADER MATCHING KnitKhata.html */}
       <div className="head" style={{ width: '100%' }}>
         <div>
-          <h2>প্রোডাকশন এন্ট্রি</h2>
-          <p>ভেন্ডর আর অর্ডার বাছলেই সব অংশ, মেশিন আর সুতা নিজে থেকে চলে আসবে। শুধু প্রোডাকশন লিখুন।</p>
+          <h2>{t('প্রোডাকশন এন্ট্রি')}</h2>
+          <p>{language === 'en' ? 'Select vendor and order to automatically load all parts, machines and yarn. Enter shift production.' : 'ভেন্ডর আর অর্ডার বাছলেই সব অংশ, মেশিন আর সুতা নিজে থেকে চলে আসবে। শুধু প্রোডাকশন লিখুন।'}</p>
         </div>
       </div>
 
@@ -947,11 +972,11 @@ export const FactoryProductionEntryPage: React.FC = () => {
           {/* STEP 1: কোন অর্ডার, কবে (.card) */}
           <div className="card">
             <h3>
-              <span className="stp">১</span>কোন অর্ডার, কবে
+              <span className="stp">১</span>{language === 'en' ? 'Select Order & Date' : 'কোন অর্ডার, কবে'}
             </h3>
             <div className="no-grid pe-top">
               <label className="no-f">
-                <span>ভেন্ডর</span>
+                <span>{t('ভেন্ডর')}</span>
                 <SearchableSelect
                   id="pV"
                   value={selectedVendorKey}
@@ -966,12 +991,12 @@ export const FactoryProductionEntryPage: React.FC = () => {
                       label: p?.name || k,
                     };
                   })}
-                  searchPlaceholder="ভেন্ডর খুঁজুন..."
+                  searchPlaceholder={language === 'en' ? 'Search vendor...' : 'ভেন্ডর খুঁজুন...'}
                 />
               </label>
 
               <label className="no-f">
-                <span>অর্ডার নং</span>
+                <span>{t('অর্ডার নং')}</span>
                 <SearchableSelect
                   id="pO"
                   value={selectedOrderId}
@@ -980,12 +1005,12 @@ export const FactoryProductionEntryPage: React.FC = () => {
                     value: o.id,
                     label: `${o.id}${o.buyer ? ` · ${o.buyer}` : ''}`,
                   }))}
-                  searchPlaceholder="অর্ডার খুঁজুন..."
+                  searchPlaceholder={language === 'en' ? 'Search order...' : 'অর্ডার খুঁজুন...'}
                 />
               </label>
 
               <label className="no-f">
-                <span>তারিখ</span>
+                <span>{t('তারিখ')}</span>
                 <input
                   id="pDate"
                   type="date"
@@ -995,13 +1020,13 @@ export const FactoryProductionEntryPage: React.FC = () => {
               </label>
 
               <label className="no-f">
-                <span>শিফট</span>
+                <span>{t('শিফট')}</span>
                 <select
                   id="pSh"
                   value={entryShift}
                   onChange={(e) => setEntryShift(e.target.value)}
                 >
-                  {SHIFTS.map(([v, t]) => (
+                  {getShifts(language).map(([v, t]) => (
                     <option key={v} value={v}>
                       {t}
                     </option>
@@ -1012,17 +1037,17 @@ export const FactoryProductionEntryPage: React.FC = () => {
 
             {activeOrder && (
               <p className="small muted" style={{ margin: '12px 0 0', fontSize: 13 }}>
-                {activeOrder.buyer ? `বায়ার: ${activeOrder.buyer} · ` : ''}মোট{' '}
-                {bnNum(activeTotalKg)} kg · এখন পর্যন্ত{' '}
+                {activeOrder.buyer ? `${t('বায়ার')}: ${activeOrder.buyer} · ` : ''}{t('মোট')}{' '}
+                {bnNum(activeTotalKg)} kg · {language === 'en' ? 'Completed ' : 'এখন পর্যন্ত '}{' '}
                 {bnNum(Math.round(activeDoneKg))} kg ({orderDonePct}%) ·{' '}
-                {normalizedLines.length}টি অংশ
+                {bnNum(normalizedLines.length)} {language === 'en' ? 'parts' : 'টি অংশ'}
               </p>
             )}
           </div>
 
           {/* STEP 2: অংশ অনুযায়ী প্রোডাকশন */}
           <h3 className="pe-h">
-            <span className="stp">২</span>অংশ অনুযায়ী প্রোডাকশন
+            <span className="stp">২</span>{language === 'en' ? 'Part-wise Production' : 'অংশ অনুযায়ী প্রোডাকশন'}
           </h3>
 
           {/* CARDS FOR EACH ORDER LINE */}
@@ -1070,11 +1095,11 @@ export const FactoryProductionEntryPage: React.FC = () => {
                 {/* Badges */}
                 <div className="pe-kb">
                   {isFlat ? (
-                    <span className="kb kb-f">ফ্ল্যাট নিট</span>
+                    <span className="kb kb-f">{language === 'en' ? 'Flat Knit' : 'ফ্ল্যাট নিট'}</span>
                   ) : lineData.yd ? (
                     <span className="kb kb-y">Y/D</span>
                   ) : (
-                    <span className="kb">গ্রে</span>
+                    <span className="kb">{language === 'en' ? 'Grey' : 'গ্রে'}</span>
                   )}
                 </div>
 
@@ -1087,15 +1112,15 @@ export const FactoryProductionEntryPage: React.FC = () => {
                 <div className="pe-info">
                   <span>M/C {lineData.dia || '—'}</span>
                   <span>
-                    মেশিন:{' '}
+                    {language === 'en' ? 'Machine: ' : 'মেশিন: '}
                     {lForm.machines.map((m) => m.machine).filter(Boolean).length
                       ? lForm.machines.map((m) => m.machine).filter(Boolean).join(', ')
-                      : 'অ্যাসাইন হয়নি'}
+                      : (language === 'en' ? 'Not Assigned' : 'অ্যাসাইন হয়নি')}
                   </span>
                 </div>
 
                 {/* Machines Production */}
-                <div className="ln-sub">এই শিফটের প্রোডাকশন</div>
+                <div className="ln-sub">{language === 'en' ? "This Shift's Production" : 'এই শিফটের প্রোডাকশন'}</div>
                 <div className="pe-ms">
                   {lForm.machines.map((mRow, mIdx) => {
                     const rollSum = !isFlat
@@ -1108,7 +1133,7 @@ export const FactoryProductionEntryPage: React.FC = () => {
                       /* Flat Knit Machine Row */
                       <div key={mRow.key} className="pe-m" data-pl={lIdx} data-flat="1">
                         <div className="pe-mc">
-                          <span>মেশিন</span>
+                          <span>{language === 'en' ? 'Machine' : 'মেশিন'}</span>
                           {mRow.machine ? (
                             <b className="mono">{mRow.machine}</b>
                           ) : (
@@ -1122,54 +1147,54 @@ export const FactoryProductionEntryPage: React.FC = () => {
                                 });
                               }}
                               options={[
-                                { value: '', label: 'বাছুন' },
+                                { value: '', label: language === 'en' ? 'Select' : 'বাছুন' },
                                 ...availableMachines.map((mc) => ({ value: mc, label: mc })),
                               ]}
-                              placeholder="মেশিন বাছুন"
-                              searchPlaceholder="মেশিন খুঁজুন..."
+                              placeholder={language === 'en' ? 'Select machine' : 'মেশিন বাছুন'}
+                              searchPlaceholder={language === 'en' ? 'Search machine...' : 'মেশিন খুঁজুন...'}
                               minWidth={110}
                             />
                           )}
                         </div>
 
                         <label className="no-f">
-                          <span>প্রোডাকশন (পিস)</span>
+                          <span>{language === 'en' ? 'Production (Pcs)' : 'প্রোডাকশন (পিস)'}</span>
                           <input
                             inputMode="decimal"
-                            placeholder="যেমন: 1200"
+                            placeholder={language === 'en' ? 'e.g. 1200' : 'যেমন: 1200'}
                             value={mRow.flatPieces}
                             onChange={(e) => handleFlatFieldChange(lIdx, mIdx, 'flatPieces', e.target.value)}
                           />
                         </label>
 
                         <label className="no-f">
-                          <span>বান্ডেল</span>
+                          <span>{language === 'en' ? 'Bundle' : 'বান্ডেল'}</span>
                           <input
                             inputMode="numeric"
-                            placeholder="যেমন: 8"
+                            placeholder={language === 'en' ? 'e.g. 8' : 'যেমন: 8'}
                             value={mRow.flatBundles}
                             onChange={(e) => handleFlatFieldChange(lIdx, mIdx, 'flatBundles', e.target.value)}
                           />
                         </label>
 
                         <label className="no-f">
-                          <span>অপারেটর <b className="req">*</b></span>
+                          <span>{language === 'en' ? 'Operator' : 'অপারেটর'} <b className="req">*</b></span>
                           <SearchableOperatorSelect
                             value={mRow.flatOperator}
                             operators={shiftOperators}
                             shiftLabel={entryShift}
-                            placeholder="-- অপারেটর বাছুন --"
+                            placeholder={language === 'en' ? '-- Select Operator --' : '-- অপারেটর বাছুন --'}
                             onChange={(name) => handleFlatFieldChange(lIdx, mIdx, 'flatOperator', name)}
                           />
                         </label>
 
                         <label className="no-f">
-                          <span>সমস্যা</span>
+                          <span>{language === 'en' ? 'Issue' : 'সমস্যা'}</span>
                           <select
                             value={mRow.flatIssue}
                             onChange={(e) => handleFlatFieldChange(lIdx, mIdx, 'flatIssue', e.target.value)}
                           >
-                            {ISSUES.map(([v, t]) => (
+                            {getIssues(language).map(([v, t]) => (
                               <option key={v} value={v}>
                                 {t}
                               </option>
@@ -1180,11 +1205,11 @@ export const FactoryProductionEntryPage: React.FC = () => {
                         {mRow.flatIssue && (
                           <label className="no-f pe-issd">
                             <span>
-                              সমস্যার বিবরণ <b className="req">*</b>
+                              {language === 'en' ? 'Issue Details' : 'সমস্যার বিবরণ'} <b className="req">*</b>
                             </span>
                             <input
                               type="text"
-                              placeholder={ISS_PH[mRow.flatIssue] || 'বিবরণ লিখুন'}
+                              placeholder={getIssuePlaceholders(language)[mRow.flatIssue] || (language === 'en' ? 'Describe issue' : 'বিবরণ লিখুন')}
                               value={mRow.flatIssueDesc}
                               onChange={(e) => handleFlatFieldChange(lIdx, mIdx, 'flatIssueDesc', e.target.value)}
                             />
@@ -1197,7 +1222,7 @@ export const FactoryProductionEntryPage: React.FC = () => {
                         {/* Machine Header */}
                         <div className="pe-mh">
                           <div className="pe-mc">
-                            <span>মেশিন</span>
+                            <span>{language === 'en' ? 'Machine' : 'মেশিন'}</span>
                             {mRow.machine ? (
                               <b className="mono">{mRow.machine}</b>
                             ) : (
@@ -1212,49 +1237,49 @@ export const FactoryProductionEntryPage: React.FC = () => {
                                   });
                                 }}
                                 options={[
-                                  { value: '', label: 'বাছুন' },
+                                  { value: '', label: language === 'en' ? 'Select' : 'বাছুন' },
                                   ...availableMachines.map((mc) => ({ value: mc, label: mc })),
                                 ]}
-                                placeholder="মেশিন বাছুন"
-                                searchPlaceholder="মেশিন খুঁজুন..."
+                                placeholder={language === 'en' ? 'Select machine' : 'মেশিন বাছুন'}
+                                searchPlaceholder={language === 'en' ? 'Search machine...' : 'মেশিন খুঁজুন...'}
                                 minWidth={110}
                               />
                             )}
                           </div>
                           <span className="pe-sum mono">
-                            {mRow.rolls.length > 0 ? `মোট ${rollSum.toFixed(1)} kg · ${mRow.rolls.length} রোল` : ''}
+                            {mRow.rolls.length > 0 ? (language === 'en' ? `Total ${rollSum.toFixed(1)} kg · ${mRow.rolls.length} rolls` : `মোট ${rollSum.toFixed(1)} kg · ${mRow.rolls.length} রোল`) : ''}
                           </span>
                         </div>
 
                         {/* Summary Inputs Row (.pe-bg) */}
                         <div className="pe-bg">
                           <label className="no-f">
-                            <span>কয়টা রোল নামল</span>
+                            <span>{language === 'en' ? 'Rolls Produced' : 'কয়টা রোল নামল'}</span>
                             <input
                               inputMode="numeric"
-                              placeholder="যেমন: 5"
+                              placeholder={language === 'en' ? 'e.g. 5' : 'যেমন: 5'}
                               value={mRow.rollsCount}
                               onChange={(e) => handleRollsCountChange(lIdx, mIdx, e.target.value)}
                             />
                           </label>
 
                           <label className="no-f">
-                            <span>মোট ওজন (kg)</span>
+                            <span>{language === 'en' ? 'Total Weight (kg)' : 'মোট ওজন (kg)'}</span>
                             <input
                               inputMode="decimal"
-                              placeholder="যেমন: 110"
+                              placeholder={language === 'en' ? 'e.g. 110' : 'যেমন: 110'}
                               value={mRow.totalKg}
                               onChange={(e) => handleTotalKgChange(lIdx, mIdx, e.target.value)}
                             />
                           </label>
 
                           <label className="no-f pe-op1">
-                            <span>অপারেটর <b className="req">*</b></span>
+                            <span>{language === 'en' ? 'Operator' : 'অপারেটর'} <b className="req">*</b></span>
                             <SearchableOperatorSelect
                               value={mRow.operator}
                               operators={shiftOperators}
                               shiftLabel={entryShift}
-                              placeholder="-- অপারেটর বাছুন --"
+                              placeholder={language === 'en' ? '-- Select Operator --' : '-- অপারেটর বাছুন --'}
                               onChange={(name) => handleMachineOperatorChange(lIdx, mIdx, name)}
                             />
                           </label>
@@ -1265,7 +1290,7 @@ export const FactoryProductionEntryPage: React.FC = () => {
                               checked={mRow.sameOperator}
                               onChange={() => handleToggleSameOperator(lIdx, mIdx)}
                             />
-                            সব রোল একই অপারেটর
+                            {language === 'en' ? 'All rolls same operator' : 'সব রোল একই অপারেটর'}
                           </label>
                         </div>
 
@@ -1273,12 +1298,12 @@ export const FactoryProductionEntryPage: React.FC = () => {
                         {mRow.rolls.length > 0 && (
                           <div className={`pe-rt ${mRow.sameOperator ? 'same' : ''}`}>
                             <div className="pe-rh" aria-hidden="true">
-                              <span>রোল নং</span>
+                              <span>{language === 'en' ? 'Roll No.' : 'রোল নং'}</span>
                               <span>
-                                ওজন (kg) <b className="req">*</b>
+                                {language === 'en' ? 'Weight (kg)' : 'ওজন (kg)'} <b className="req">*</b>
                               </span>
-                              {!mRow.sameOperator && <span className="pe-oc">অপারেটর</span>}
-                              <span>ফল্ট (না থাকলে খালি রাখুন)</span>
+                              {!mRow.sameOperator && <span className="pe-oc">{language === 'en' ? 'Operator' : 'অপারেটর'}</span>}
+                              <span>{language === 'en' ? 'Fault (leave blank if none)' : 'ফল্ট (না থাকলে খালি রাখুন)'}</span>
                             </div>
 
                             {/* Roll rows */}
@@ -1298,7 +1323,7 @@ export const FactoryProductionEntryPage: React.FC = () => {
                                       <input
                                         className="mono"
                                         value={r.jc}
-                                        aria-label="রোল নং"
+                                        aria-label={language === 'en' ? 'Roll No.' : 'রোল নং'}
                                         onChange={(e) =>
                                           handleRollFieldChange(lIdx, mIdx, rIdx, 'jc', e.target.value)
                                         }
@@ -1308,8 +1333,8 @@ export const FactoryProductionEntryPage: React.FC = () => {
                                     {/* Weight input */}
                                     <input
                                       inputMode="decimal"
-                                      placeholder="ওজন kg"
-                                      aria-label="ওজন (kg)"
+                                      placeholder={language === 'en' ? 'Weight kg' : 'ওজন kg'}
+                                      aria-label={language === 'en' ? 'Weight (kg)' : 'ওজন (kg)'}
                                       value={r.weight}
                                       onChange={(e) =>
                                         handleRollFieldChange(lIdx, mIdx, rIdx, 'weight', e.target.value)
@@ -1324,8 +1349,8 @@ export const FactoryProductionEntryPage: React.FC = () => {
                                           operators={shiftOperators}
                                           shiftLabel={entryShift}
                                           compact
-                                          placeholder="অপারেটর"
-                                          ariaLabel="অপারেটর"
+                                          placeholder={language === 'en' ? 'Operator' : 'অপারেটর'}
+                                          ariaLabel={language === 'en' ? 'Operator' : 'অপারেটর'}
                                           onChange={(name) =>
                                             handleRollFieldChange(lIdx, mIdx, rIdx, 'operator', name)
                                           }
@@ -1339,7 +1364,7 @@ export const FactoryProductionEntryPage: React.FC = () => {
                                         <div key={fIdx} className="pe-fp">
                                           <select
                                             value={fItem.fault}
-                                            aria-label="ফল্ট"
+                                            aria-label={language === 'en' ? 'Fault' : 'ফল্ট'}
                                             onChange={(e) =>
                                               handleUpdateFault(
                                                 lIdx,
@@ -1360,8 +1385,8 @@ export const FactoryProductionEntryPage: React.FC = () => {
                                           <input
                                             type="number"
                                             min="1"
-                                            placeholder="কয়টা"
-                                            aria-label="কয়টা ফল্ট"
+                                            placeholder={language === 'en' ? 'Count' : 'কয়টা'}
+                                            aria-label={language === 'en' ? 'Fault count' : 'কয়টা ফল্ট'}
                                             value={fItem.count || ''}
                                             onChange={(e) =>
                                               handleUpdateFault(
@@ -1382,7 +1407,7 @@ export const FactoryProductionEntryPage: React.FC = () => {
                                         className="pe-lnk"
                                         onClick={() => handleAddFault(lIdx, mIdx, rIdx)}
                                       >
-                                        + {r.faults.length ? 'আরেকটা ফল্ট' : 'ফল্ট যোগ করুন'}
+                                        + {r.faults.length ? (language === 'en' ? 'Another fault' : 'আরেকটা ফল্ট') : (language === 'en' ? 'Add fault' : 'ফল্ট যোগ করুন')}
                                       </button>
                                     </div>
                                   </div>
@@ -1402,17 +1427,29 @@ export const FactoryProductionEntryPage: React.FC = () => {
                               }`}
                             >
                               {!parseBnFloat(mRow.totalKg)
-                                ? `উপরে ${bnNum(mRow.rolls.length)} রোলের মোট ওজন লিখুন — রোলের ওজনের যোগফল এর সাথে মিলতে হবে`
+                                ? (language === 'en'
+                                    ? `Enter total weight of ${bnNum(mRow.rolls.length)} rolls above — sum of rolls must match`
+                                    : `উপরে ${bnNum(mRow.rolls.length)} রোলের মোট ওজন লিখুন — রোলের ওজনের যোগফল এর সাথে মিলতে হবে`)
                                 : Math.abs(diffKg) < 0.05 &&
                                   mRow.rolls.every((r) => parseBnFloat(r.weight) > 0)
-                                ? `✓ মিলেছে — ${bnNum(mRow.rolls.length)}টা রোলের যোগফল ${rollSum.toFixed(1)} kg = মোট ${mRow.totalKg} kg`
-                                : `রোলের যোগফল ${rollSum.toFixed(1)} kg, মোট ${mRow.totalKg} kg — ${
-                                    diffKg > 0 ? `${diffKg} kg কম আছে` : `${-diffKg} kg বেশি হয়ে গেছে`
-                                  }${
-                                    mRow.rolls.filter((r) => parseBnFloat(r.weight) <= 0).length > 0
-                                      ? ` · ${bnNum(mRow.rolls.filter((r) => parseBnFloat(r.weight) <= 0).length)}টা রোলের ওজন বাকি`
-                                      : ''
-                                  }`}
+                                ? (language === 'en'
+                                    ? `✓ Matched — sum of ${bnNum(mRow.rolls.length)} rolls is ${rollSum.toFixed(1)} kg = total ${mRow.totalKg} kg`
+                                    : `✓ মিলেছে — ${bnNum(mRow.rolls.length)}টা রোলের যোগফল ${rollSum.toFixed(1)} kg = মোট ${mRow.totalKg} kg`)
+                                : (language === 'en'
+                                    ? `Roll sum ${rollSum.toFixed(1)} kg, total ${mRow.totalKg} kg — ${
+                                        diffKg > 0 ? `${diffKg} kg short` : `${-diffKg} kg over`
+                                      }${
+                                        mRow.rolls.filter((r) => parseBnFloat(r.weight) <= 0).length > 0
+                                          ? ` · ${bnNum(mRow.rolls.filter((r) => parseBnFloat(r.weight) <= 0).length)} roll(s) weight missing`
+                                          : ''
+                                      }`
+                                    : `রোলের যোগফল ${rollSum.toFixed(1)} kg, মোট ${mRow.totalKg} kg — ${
+                                        diffKg > 0 ? `${diffKg} kg কম আছে` : `${-diffKg} kg বেশি হয়ে গেছে`
+                                      }${
+                                        mRow.rolls.filter((r) => parseBnFloat(r.weight) <= 0).length > 0
+                                          ? ` · ${bnNum(mRow.rolls.filter((r) => parseBnFloat(r.weight) <= 0).length)}টা রোলের ওজন বাকি`
+                                          : ''
+                                      }`)}
                             </div>
                           </div>
                         )}
@@ -1428,12 +1465,12 @@ export const FactoryProductionEntryPage: React.FC = () => {
                   style={{ marginTop: 8 }}
                   onClick={() => handleAddMachineToLine(lIdx)}
                 >
-                  + অন্য মেশিন যোগ করুন
+                  + {language === 'en' ? 'Add Another Machine' : 'অন্য মেশিন যোগ করুন'}
                 </button>
 
                 {/* Yarn Inputs */}
                 <div className="ln-sub" style={{ marginTop: 14 }}>
-                  ব্যবহৃত সুতা <span className="pe-src">{lForm.yarnSrc}</span>
+                  {language === 'en' ? 'Yarn Used' : 'ব্যবহৃত সুতা'} <span className="pe-src">{lForm.yarnSrc}</span>
                 </div>
                 <div className="yarns" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {lForm.yarns.map((yItem, yIdx) => (
@@ -1443,7 +1480,7 @@ export const FactoryProductionEntryPage: React.FC = () => {
                         <span>Yarn Count</span>
                         <input
                           value={yItem.count}
-                          placeholder="যেমন: 30/1 Combed"
+                          placeholder={language === 'en' ? 'e.g. 30/1 Combed' : 'যেমন: 30/1 Combed'}
                           onChange={(e) => handleYarnChange(lIdx, yIdx, 'count', e.target.value)}
                         />
                       </label>
@@ -1451,7 +1488,7 @@ export const FactoryProductionEntryPage: React.FC = () => {
                         <span>Yarn Brand</span>
                         <input
                           value={yItem.brand}
-                          placeholder="মিলের নাম"
+                          placeholder={language === 'en' ? 'Mill Name' : 'মিলের নাম'}
                           onChange={(e) => handleYarnChange(lIdx, yIdx, 'brand', e.target.value)}
                         />
                       </label>
@@ -1459,7 +1496,7 @@ export const FactoryProductionEntryPage: React.FC = () => {
                         <span>Yarn Lot</span>
                         <input
                           value={yItem.lot}
-                          placeholder="যেমন: SQ-88415"
+                          placeholder={language === 'en' ? 'e.g. SQ-88415' : 'যেমন: SQ-88415'}
                           onChange={(e) => handleYarnChange(lIdx, yIdx, 'lot', e.target.value)}
                         />
                       </label>
@@ -1480,7 +1517,7 @@ export const FactoryProductionEntryPage: React.FC = () => {
               onChange={(e) => setShowStickersOnSave(e.target.checked)}
               style={{ width: 17, height: 17 }}
             />
-            সেভ করার পর রোলের QR স্টিকার দেখাও (ঐচ্ছিক)
+            {language === 'en' ? 'Show roll QR stickers after saving (optional)' : 'সেভ করার পর রোলের QR স্টিকার দেখাও (ঐচ্ছিক)'}
           </label>
 
           {/* Validation Error Message Box */}
@@ -1493,16 +1530,16 @@ export const FactoryProductionEntryPage: React.FC = () => {
           {/* Bottom Action Row */}
           <div className="row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, marginTop: 8 }}>
             <span className="small muted" style={{ fontSize: 12, lineHeight: 1.4 }}>
-              যে মেশিনে প্রোডাকশন লিখবেন শুধু সেগুলোই সেভ হবে। সেভ করলে প্রতিটা রোল (নম্বর, ওজন, অপারেটর, ফল্ট) সেই মেশিনের জব কার্ডে উঠে যাবে, ফল্টওয়ালা রোল QC-তে যাবে, আর অর্ডারের অগ্রগতি ও ভেন্ডরের রিপোর্ট আপডেট হবে।
+              {language === 'en' ? 'Only machines with entered production will be saved. Saved rolls (no., weight, operator, faults) update that machine job card, rolls with faults move to QC, and order progress & vendor reports update instantly.' : 'যে মেশিনে প্রোডাকশন লিখবেন শুধু সেগুলোই সেভ হবে। সেভ করলে প্রতিটা রোল (নম্বর, ওজন, অপারেটর, ফল্ট) সেই মেশিনের জব কার্ডে উঠে যাবে, ফল্টওয়ালা রোল QC-তে যাবে, আর অর্ডারের অগ্রগতি ও ভেন্ডরের রিপোর্ট আপডেট হবে।'}
             </span>
             <button className="btn pri" type="submit" disabled={isSubmitting} style={{ minWidth: 160, padding: '9px 20px', whiteSpace: 'nowrap' }}>
-              {isSubmitting ? 'সংরক্ষণ হচ্ছে...' : 'প্রোডাকশন সেভ করুন'}
+              {isSubmitting ? (language === 'en' ? 'Saving...' : 'সংরক্ষণ হচ্ছে...') : (language === 'en' ? 'Save Production' : 'প্রোডাকশন সেভ করুন')}
             </button>
           </div>
         </form>
       ) : (
         <div className="card" style={{ padding: 32, textAlign: 'center' }}>
-          <p className="muted">এখন কোনো চলমান অর্ডার নেই। আগে New Order Entry থেকে অর্ডার তৈরি করুন।</p>
+          <p className="muted">{language === 'en' ? 'No active orders currently. Create an order from New Order Entry first.' : 'এখন কোনো চলমান অর্ডার নেই। আগে New Order Entry থেকে অর্ডার তৈরি করুন।'}</p>
           <button className="btn pri" onClick={() => navigate('/dashboard/neworder')} style={{ marginTop: 12 }}>
             + New Order Entry
           </button>
@@ -1513,18 +1550,18 @@ export const FactoryProductionEntryPage: React.FC = () => {
       {newRolls.length > 0 && (
         <div className="card" id="newStk" style={{ marginTop: 16 }}>
           <div className="row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <h3 style={{ margin: 0 }}>নতুন {bnNum(newRolls.length)}টা রোলের স্টিকার</h3>
+            <h3 style={{ margin: 0 }}>{language === 'en' ? `Stickers for ${bnNum(newRolls.length)} New Rolls` : `নতুন ${bnNum(newRolls.length)}টা রোলের স্টিকার`}</h3>
             <div className="row" style={{ display: 'flex', gap: 8 }}>
               <button className="btn sm prn-btn no-pdf" type="button" onClick={handlePrintStickers}>
-                🖨️ স্টিকার প্রিন্ট
+                🖨️ {language === 'en' ? 'Print Stickers' : 'স্টিকার প্রিন্ট'}
               </button>
               <button className="btn sm" type="button" onClick={() => setNewRolls([])}>
-                বন্ধ করুন
+                {language === 'en' ? 'Close' : 'বন্ধ করুন'}
               </button>
             </div>
           </div>
           <p className="small muted" style={{ margin: '-4px 0 12px', fontSize: 12 }}>
-            আসল অ্যাপে এখান থেকে স্টিকার প্রিন্টারে প্রিন্ট হবে। রোলে লাগালে QC আর চালানের সময় স্ক্যান করা যাবে।
+            {language === 'en' ? 'In production, print directly to label printer. Attaching to rolls allows scanning during QC and delivery challan.' : 'আসল অ্যাপে এখান থেকে স্টিকার প্রিন্টারে প্রিন্ট হবে। রোলে লাগালে QC আর চালানের সময় স্ক্যান করা যাবে।'}
           </p>
           <div className="stk-grid">
             {newRolls.map((r, idx) => {
@@ -1551,21 +1588,21 @@ export const FactoryProductionEntryPage: React.FC = () => {
 
       {/* TODAY'S ENTRIES TABLE (.card) */}
       <div className="card" style={{ marginTop: 16 }}>
-        <h3>আজকের এন্ট্রি</h3>
+        <h3>{language === 'en' ? "Today's Entries" : 'আজকের এন্ট্রি'}</h3>
         <div className="tw">
           <table>
             <thead>
               <tr>
-                <th>ভেন্ডর</th>
-                <th>অর্ডার</th>
-                <th>অংশ</th>
-                <th>শিফট</th>
-                <th>মেশিন</th>
+                <th>{language === 'en' ? 'Vendor' : 'ভেন্ডর'}</th>
+                <th>{language === 'en' ? 'Order' : 'অর্ডার'}</th>
+                <th>{language === 'en' ? 'Part' : 'অংশ'}</th>
+                <th>{language === 'en' ? 'Shift' : 'শিফট'}</th>
+                <th>{language === 'en' ? 'Machine' : 'মেশিন'}</th>
                 <th className="n">kg</th>
-                <th className="n">রোল</th>
-                <th>অপারেটর</th>
-                <th>সুতার লট</th>
-                <th>সমস্যা</th>
+                <th className="n">{language === 'en' ? 'Roll' : 'রোল'}</th>
+                <th>{language === 'en' ? 'Operator' : 'অপারেটর'}</th>
+                <th>{language === 'en' ? 'Yarn Lot' : 'সুতার লট'}</th>
+                <th>{language === 'en' ? 'Issue' : 'সমস্যা'}</th>
               </tr>
             </thead>
             <tbody>
@@ -1594,7 +1631,7 @@ export const FactoryProductionEntryPage: React.FC = () => {
                             {pIssue}
                           </span>
                         ) : (
-                          <span className="small muted">নেই</span>
+                          <span className="small muted">{language === 'en' ? 'None' : 'নেই'}</span>
                         )}
                       </td>
                     </tr>
@@ -1603,7 +1640,7 @@ export const FactoryProductionEntryPage: React.FC = () => {
               ) : (
                 <tr>
                   <td colSpan={10} className="muted" style={{ textAlign: 'center', padding: 20 }}>
-                    এই তারিখে এখনো কোনো এন্ট্রি নেই
+                    {language === 'en' ? 'No entries for this date yet' : 'এই তারিখে এখনো কোনো এন্ট্রি নেই'}
                   </td>
                 </tr>
               )}

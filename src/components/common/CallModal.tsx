@@ -1,5 +1,6 @@
 import React from 'react';
 import { Phone, MessageCircle, X, ShieldCheck } from 'lucide-react';
+import { useApp } from '@/context/AppContext';
 
 interface CallModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export const CallModal: React.FC<CallModalProps> = ({
   whatsapp,
   name,
 }) => {
+  const { t } = useApp();
   if (!isOpen) return null;
 
   const cleanPhone = phone.replace(/[^0-9+]/g, '');
@@ -32,7 +34,7 @@ export const CallModal: React.FC<CallModalProps> = ({
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#0d6e4f', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>
               <ShieldCheck size={16} />
-              <span>ভেরিফায়েড নিটিং নেটওয়ার্ক</span>
+              <span>{t('ভেরিফায়েড নিটিং নেটওয়ার্ক')}</span>
             </div>
             <h3 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a' }}>{title}</h3>
             {subtitle && <p style={{ fontSize: 13, color: '#64748b', marginTop: 2 }}>{subtitle}</p>}
@@ -44,7 +46,7 @@ export const CallModal: React.FC<CallModalProps> = ({
 
         {name && (
           <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: 8, marginBottom: 16, fontSize: 13, border: '1px solid #e2e8f0' }}>
-            <span style={{ color: '#64748b' }}>যোগাযোগকারী: </span>
+            <span style={{ color: '#64748b' }}>{t('যোগাযোগকারী')}: </span>
             <strong style={{ color: '#0f172a' }}>{name}</strong>
           </div>
         )}
@@ -56,7 +58,7 @@ export const CallModal: React.FC<CallModalProps> = ({
             style={{ textDecoration: 'none', padding: '12px', fontSize: 15 }}
           >
             <Phone size={18} />
-            <span>সরাসরি কল করুন ({phone})</span>
+            <span>{t('সরাসরি কল করুন')} ({phone})</span>
           </a>
 
           <a
@@ -73,10 +75,10 @@ export const CallModal: React.FC<CallModalProps> = ({
             }}
           >
             <MessageCircle size={18} />
-            <span>হোয়াটসঅ্যাপে চ্যাট করুন</span>
+            <span>{t('হোয়াটসঅ্যাপে চ্যাট করুন')}</span>
           </a>
           <button onClick={onClose} className="btn btn-secondary" style={{ padding: '10px' }}>
-            বন্ধ করুন
+            {t('বন্ধ করুন')}
           </button>
         </div>
       </div>

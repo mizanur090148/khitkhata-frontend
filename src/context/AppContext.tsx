@@ -39,6 +39,8 @@ import {
 } from '@/data/initialSeedState';
 import { apiClient } from '@/api/client';
 import { ToastMessage } from '@/components/common/Toast';
+import { Language, getTranslation } from '@/i18n/translations';
+import { fmtNum, fmtKg, fmtTk } from '@/utils/formatters';
 
 export interface DashboardData {
   factory?: {
@@ -147,6 +149,14 @@ interface AppContextType {
   setRole: (role: UserRoleKey) => void;
   theme: 'light' | 'dark';
   toggleTheme: () => void;
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  toggleLanguage: () => void;
+  t: (key: string, fallback?: string) => string;
+  formatNum: (n: number | string | undefined | null) => string;
+  formatKg: (n: number | string | undefined | null) => string;
+  formatTk: (n: number | string | undefined | null) => string;
+  tkSymbol: string;
 
   // Selected Entities
   selectedOrderId: string;
@@ -461,6 +471,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [supplierView, setSupplierView] = useState<string>('sdash');
   const [role, setRole] = useState<UserRoleKey>('owner');
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [language, setLanguageState] = useState<Language>(() => {
+    const saved = localStorage.getItem('knitkhata_lang');
+    return saved === 'en' || saved === 'bn' ? saved : 'bn';
+  });
+
+  const setLanguage = (lang: Language) => {
+    setLanguageState(lang);
+    localStorage.setItem('knitkhata_lang', lang);
+  };
+
+  const toggleLanguage = () => {
+    const nextLang: Language = language === 'bn' ? 'en' : 'bn';
+    setLanguage(nextLang);
+  };
+
+  const t = (key: string, fallback?: string) => {
+    return getTranslation(language, key, fallback);
+  };
+
+  const formatNum = (n: number | string | undefined | null) => fmtNum(n, language);
+  const formatKg = (n: number | string | undefined | null) => fmtKg(n, language);
+  const formatTk = (n: number | string | undefined | null) => fmtTk(n, language);
 
   const setScreen = (scr: AppScreenMode) => {
     setScreenState(scr);
@@ -2172,6 +2204,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         fetchBills,
         createKkBill,
         recordKkBillPayment,
+        language,
+        setLanguage,
+        toggleLanguage,
+        t,
+        formatNum,
+        formatKg,
+        formatTk,
+        tkSymbol: language === 'en' ? 'Tk' : '৳',
       }}
     >
       {children}

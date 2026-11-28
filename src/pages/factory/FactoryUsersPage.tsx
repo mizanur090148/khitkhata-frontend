@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
+import { bnNum } from '@/utils/formatters';
 
 export const FactoryUsersPage: React.FC = () => {
-  const { users, addUser, toggleUserStatus, addToast } = useApp();
+  const { users, addUser, toggleUserStatus, addToast, t, language } = useApp();
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
 
   // Form state
@@ -48,10 +49,9 @@ export const FactoryUsersPage: React.FC = () => {
       {/* Header */}
       <div className="head">
         <div>
-          <h2>ইউজার ও পারমিশন</h2>
+          <h2>{t('ইউজার ও পারমিশন')}</h2>
           <p>
-            ফ্যাক্টরি আর ভেন্ডরের কারা নিটখাতা দেখতে ও লিখতে পারবে। নতুন ইউজার যোগ
-            করতে ফোন নম্বর লিখুন, SMS-এ ওটিপি যাবে।
+            {t('ফ্যাক্টরি আর ভেন্ডরের কারা নিটখাতা দেখতে ও লিখতে পারবে। নতুন ইউজার যোগ করতে ফোন নম্বর লিখুন, SMS-এ ওটিপি যাবে।')}
           </p>
         </div>
         <button
@@ -59,28 +59,28 @@ export const FactoryUsersPage: React.FC = () => {
           className="btn pri"
           onClick={() => setShowAddModal(true)}
         >
-          + নতুন ইউজার যোগ করুন
+          + {t('নতুন ইউজার যোগ করুন')}
         </button>
       </div>
 
       {/* 3 KPIs */}
       <div className="kpis">
         <div className="kpi">
-          <span>মোট ইউজার</span>
-          <b>{users.length} জন</b>
-          <i>ফ্যাক্টরি ও ভেন্ডর মিলে</i>
+          <span>{t('মোট ইউজার')}</span>
+          <b>{bnNum(users.length)} {language === 'en' ? 'users' : 'জন'}</b>
+          <i>{t('ফ্যাক্টরি ও ভেন্ডর মিলে')}</i>
         </div>
         <div className="kpi">
-          <span>সক্রিয় ইউজার</span>
+          <span>{t('সক্রিয় ইউজার')}</span>
           <b style={{ color: 'var(--ok)' }}>
-            {users.filter((u) => u.is_active).length} জন
+            {bnNum(users.filter((u) => u.is_active).length)} {language === 'en' ? 'active' : 'জন'}
           </b>
-          <i>লগইন অনুমতিপ্রাপ্ত</i>
+          <i>{t('লগইন অনুমতিপ্রাপ্ত')}</i>
         </div>
         <div className="kpi">
-          <span>মেসেজের অনুমতি</span>
-          <b>{users.filter((u) => u.can_message).length} জন</b>
-          <i>সরাসরি চ্যাটে যুক্ত</i>
+          <span>{t('মেসেজের অনুমতি')}</span>
+          <b>{bnNum(users.filter((u) => u.can_message).length)} {language === 'en' ? 'permitted' : 'জন'}</b>
+          <i>{t('সরাসরি চ্যাটে যুক্ত')}</i>
         </div>
       </div>
 
@@ -90,12 +90,12 @@ export const FactoryUsersPage: React.FC = () => {
           <table>
             <thead>
               <tr>
-                <th>নাম ও পদবী</th>
-                <th>প্রতিষ্ঠান</th>
-                <th>মোবাইল নম্বর</th>
-                <th style={{ textAlign: 'center' }}>মেসেজের অনুমতি</th>
-                <th style={{ textAlign: 'center' }}>অবস্থা</th>
-                <th>শেষ লগইন</th>
+                <th>{t('নাম ও পদবী')}</th>
+                <th>{t('প্রতিষ্ঠান')}</th>
+                <th>{t('মোবাইল নম্বর')}</th>
+                <th style={{ textAlign: 'center' }}>{t('মেসেজের অনুমতি')}</th>
+                <th style={{ textAlign: 'center' }}>{t('অবস্থা')}</th>
+                <th>{t('শেষ লগইন')}</th>
               </tr>
             </thead>
             <tbody>
@@ -103,9 +103,9 @@ export const FactoryUsersPage: React.FC = () => {
                 <tr key={u.id}>
                   <td>
                     <b>{u.name}</b>
-                    <div className="small muted">{u.designation || 'স্টাফ'}</div>
+                    <div className="small muted">{u.designation || (language === 'en' ? 'Staff' : 'স্টাফ')}</div>
                   </td>
-                  <td>{u.organization_name || 'রহমান নিটিং ইন্ডাস্ট্রিজ'}</td>
+                  <td>{u.organization_name || (language === 'en' ? 'Rahman Knitting Industries' : 'রহমান নিটিং ইন্ডাস্ট্রিজ')}</td>
                   <td className="mono small">{u.phone}</td>
                   <td style={{ textAlign: 'center' }}>
                     <span
@@ -113,7 +113,7 @@ export const FactoryUsersPage: React.FC = () => {
                         u.can_message ? 'p-ok' : 'p-warn'
                       }`}
                     >
-                      {u.can_message ? 'অনুমতি আছে' : 'অনুমতি নেই'}
+                      {u.can_message ? t('অনুমতি আছে') : t('অনুমতি নেই')}
                     </span>
                   </td>
                   <td style={{ textAlign: 'center' }}>
@@ -122,10 +122,10 @@ export const FactoryUsersPage: React.FC = () => {
                       className={`btn sm ${u.is_active ? 'pri' : ''}`}
                       onClick={() => handleToggle(u.id, Boolean(u.is_active), u.name)}
                     >
-                      {u.is_active ? 'সক্রিয়' : 'নিষ্ক্রিয়'}
+                      {u.is_active ? t('সক্রিয়') : t('নিষ্ক্রিয়')}
                     </button>
                   </td>
-                  <td className="small muted">{u.last_login_label || 'আজ ১০:১৫'}</td>
+                  <td className="small muted">{u.last_login_label || (language === 'en' ? 'Today 10:15' : 'আজ ১০:১৫')}</td>
                 </tr>
               ))}
             </tbody>
@@ -152,7 +152,7 @@ export const FactoryUsersPage: React.FC = () => {
             onSubmit={handleCreateUser}
           >
             <div className="row" style={{ justifyContent: 'space-between' }}>
-              <h3 style={{ margin: 0 }}>নতুন ইউজার যোগ করুন</h3>
+              <h3 style={{ margin: 0 }}>{t('নতুন ইউজার যোগ করুন')}</h3>
               <button
                 type="button"
                 className="btn sm"
@@ -164,44 +164,44 @@ export const FactoryUsersPage: React.FC = () => {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 14 }}>
               <label className="f">
-                নাম *
+                {t('নাম')} *
                 <input
                   type="text"
                   required
-                  placeholder="যেমন: তানভীর আহমেদ"
+                  placeholder={language === 'en' ? 'e.g. Tanvir Ahmed' : 'যেমন: তানভীর আহমেদ'}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
               </label>
 
               <label className="f">
-                পদবী *
+                {t('পদবী')} *
                 <input
                   type="text"
                   required
-                  placeholder="যেমন: হিসাবরক্ষক / ফ্লোর সুপারভাইজার"
+                  placeholder={language === 'en' ? 'e.g. Floor Supervisor' : 'যেমন: হিসাবরক্ষক / ফ্লোর সুপারভাইজার'}
                   value={roleTitle}
                   onChange={(e) => setRoleTitle(e.target.value)}
                 />
               </label>
 
               <label className="f">
-                মোবাইল নম্বর *
+                {t('মোবাইল নম্বর')} *
                 <input
                   type="text"
                   required
-                  placeholder="যেমন: 01711000000"
+                  placeholder="01711000000"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                 />
               </label>
 
               <label className="f">
-                প্রতিষ্ঠান
+                {t('প্রতিষ্ঠান')}
                 <select value={org} onChange={(e) => setOrg(e.target.value)}>
-                  <option value="রহমান নিটিং ইন্ডাস্ট্রিজ">রহমান নিটিং ইন্ডাস্ট্রিজ (ফ্যাক্টরি)</option>
-                  <option value="ABC Knit Composite">ABC Knit Composite (ভেন্ডর)</option>
-                  <option value="XYZ Fashion Ltd">XYZ Fashion Ltd (ভেন্ডর)</option>
+                  <option value="রহমান নিটিং ইন্ডাস্ট্রিজ">{language === 'en' ? 'Rahman Knitting Industries (Factory)' : 'রহমান নিটিং ইন্ডাস্ট্রিজ (ফ্যাক্টরি)'}</option>
+                  <option value="ABC Knit Composite">{language === 'en' ? 'ABC Knit Composite (Vendor)' : 'ABC Knit Composite (ভেন্ডর)'}</option>
+                  <option value="XYZ Fashion Ltd">{language === 'en' ? 'XYZ Fashion Ltd (Vendor)' : 'XYZ Fashion Ltd (ভেন্ডর)'}</option>
                 </select>
               </label>
 
@@ -211,7 +211,7 @@ export const FactoryUsersPage: React.FC = () => {
                   checked={canMsg}
                   onChange={(e) => setCanMsg(e.target.checked)}
                 />
-                <span>ভেন্ডর ও টিমের সাথে মেসেজ আদান-প্রদানের অনুমতি দিন</span>
+                <span>{language === 'en' ? 'Allow messaging with vendors and factory team' : 'ভেন্ডর ও টিমের সাথে মেসেজ আদান-প্রদানের অনুমতি দিন'}</span>
               </label>
             </div>
 
@@ -221,10 +221,10 @@ export const FactoryUsersPage: React.FC = () => {
                 className="btn"
                 onClick={() => setShowAddModal(false)}
               >
-                বাতিল
+                {t('বাতিল')}
               </button>
               <button type="submit" className="btn pri">
-                ইউজার তৈরি করুন
+                {t('সেভ করুন')}
               </button>
             </div>
           </form>

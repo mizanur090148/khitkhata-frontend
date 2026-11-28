@@ -113,6 +113,8 @@ export const FactoryJobCardPage: React.FC = () => {
     saveJobCardGrid,
     fetchOrders,
     addToast,
+    t,
+    language,
   } = useApp();
 
   const isVendor = role === 'vendor' || (role as string) === 'ven';
@@ -486,7 +488,7 @@ export const FactoryJobCardPage: React.FC = () => {
                   letterSpacing: '-0.02em',
                 }}
               >
-                জব কার্ড
+                {t('জব কার্ড')}
               </h2>
               <span
                 style={{
@@ -503,7 +505,7 @@ export const FactoryJobCardPage: React.FC = () => {
               </span>
             </div>
             <p style={{ margin: '2px 0 0', fontSize: '0.84rem', color: 'var(--muted)' }}>
-              মেশিনভিত্তিক প্রোডাকশন ট্র্যাকিং, রোল এন্ট্রি ও ইনস্ট্যান্ট QC ইন্সপেকশন
+              {language === 'en' ? 'Machine-wise production tracking, roll entry and instant QC inspection' : 'মেশিনভিত্তিক প্রোডাকশন ট্র্যাকিং, রোল এন্ট্রি ও ইনস্ট্যান্ট QC ইন্সপেকশন'}
             </p>
           </div>
         </div>
@@ -513,7 +515,7 @@ export const FactoryJobCardPage: React.FC = () => {
             type="button"
             className="btn sm"
             onClick={handlePrintJobCard}
-            title="জব কার্ড প্রিন্ট করুন"
+            title={language === 'en' ? 'Print Job Card' : 'জব কার্ড প্রিন্ট করুন'}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -523,7 +525,7 @@ export const FactoryJobCardPage: React.FC = () => {
             }}
           >
             <Printer size={14} />
-            <span>প্রিন্ট জব কার্ড</span>
+            <span>{language === 'en' ? 'Print Job Card' : 'প্রিন্ট জব কার্ড'}</span>
           </button>
 
           {!isVendor && (
@@ -541,7 +543,7 @@ export const FactoryJobCardPage: React.FC = () => {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <QrCode size={15} style={{ color: stickerOn ? 'var(--accent)' : 'var(--muted)' }} />
-                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ink)' }}>QR রোল স্টিকার</span>
+                <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ink)' }}>{language === 'en' ? 'QR Roll Sticker' : 'QR রোল স্টিকার'}</span>
               </div>
               <button
                 className={`switch ${stickerOn ? 'on' : ''}`}
@@ -551,7 +553,7 @@ export const FactoryJobCardPage: React.FC = () => {
                   setStickerOn(!stickerOn);
                   addToast({
                     type: 'info',
-                    message: !stickerOn ? 'QR স্টিকার চালু হলো' : 'QR স্টিকার বন্ধ · রোল নম্বর হাতে লিখে চলবে',
+                    message: !stickerOn ? (language === 'en' ? 'QR sticker enabled' : 'QR স্টিকার চালু হলো') : (language === 'en' ? 'QR sticker disabled' : 'QR স্টিকার বন্ধ · রোল নম্বর হাতে লিখে চলবে'),
                   });
                 }}
                 aria-pressed={stickerOn}
@@ -567,7 +569,7 @@ export const FactoryJobCardPage: React.FC = () => {
                   color: stickerOn ? 'var(--ok)' : 'var(--muted)',
                 }}
               >
-                {stickerOn ? 'চালু' : 'বন্ধ'}
+                {stickerOn ? t('চালু') : t('বন্ধ')}
               </span>
             </div>
           )}
@@ -610,7 +612,7 @@ export const FactoryJobCardPage: React.FC = () => {
               }}
             >
               <Package size={15} style={{ color: 'var(--accent)' }} />
-              অর্ডার:
+              {language === 'en' ? 'Order:' : 'অর্ডার:'}
             </span>
             <div style={{ flex: 1, minWidth: 220 }}>
               <SearchableSelect
@@ -629,7 +631,7 @@ export const FactoryJobCardPage: React.FC = () => {
                     label: `${o.id}${partyPart}${buyerPart}`.trim(),
                   };
                 })}
-                searchPlaceholder="অর্ডার বা ভেন্ডর খুঁজুন..."
+                searchPlaceholder={language === 'en' ? 'Search order or vendor...' : 'অর্ডার বা ভেন্ডর খুঁজুন...'}
               />
             </div>
           </div>
@@ -648,7 +650,7 @@ export const FactoryJobCardPage: React.FC = () => {
               }}
             >
               <Cpu size={15} style={{ color: 'var(--ok)' }} />
-              মেশিন:
+              {language === 'en' ? 'Machine:' : 'মেশিন:'}
             </span>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
               {ms.map((x, idx) => {
@@ -722,26 +724,26 @@ export const FactoryJobCardPage: React.FC = () => {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ color: 'var(--muted)' }}>ভেন্ডর:</span>
+            <span style={{ color: 'var(--muted)' }}>{t('ভেন্ডর:')}</span>
             <b style={{ color: 'var(--ink)' }}>{vendorName}</b>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ color: 'var(--muted)' }}>ফেব্রিক:</span>
+            <span style={{ color: 'var(--muted)' }}>{t('ফেব্রিক:')}</span>
             <b style={{ color: 'var(--ink)' }}>
               {curLine.fab} ({curLine.dia})
             </b>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ color: 'var(--muted)' }}>টার্গেট ভলিউম:</span>
+            <span style={{ color: 'var(--muted)' }}>{t('টার্গেট ভলিউম:')}</span>
             <b style={{ color: 'var(--ink)', fontFamily: 'var(--f-mono)' }}>{bnNum(inQty)} kg</b>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ color: 'var(--muted)' }}>রোল উৎপাদন:</span>
+            <span style={{ color: 'var(--muted)' }}>{t('রোল উৎপাদন:')}</span>
             <b style={{ color: 'var(--ok)', fontFamily: 'var(--f-mono)' }}>
-              {bnNum(usedCols.length)}টি ({bnNum(outQty)} kg)
+              {bnNum(usedCols.length)} {language === 'en' ? 'rolls' : 'টি'} ({bnNum(outQty)} kg)
             </b>
           </div>
 
@@ -790,45 +792,45 @@ export const FactoryJobCardPage: React.FC = () => {
         {/* Facts Grid (.jc-g) matching KnitKhata.html */}
         <div className="jc-g">
           <div>
-            <span>SL / লট নং</span>
+            <span>{language === 'en' ? 'SL / Lot No' : 'SL / লট নং'}</span>
             <b className="mono">
               {slIndex} / ({ms.length})
             </b>
           </div>
           <div>
-            <span>ভেন্ডর</span>
+            <span>{t('ভেন্ডর')}</span>
             <b>{vendorName}</b>
           </div>
           <div>
-            <span>অর্ডার নং</span>
+            <span>{t('অর্ডার নং')}</span>
             <b className="mono">{activeOrder.id}</b>
           </div>
           <div>
-            <span>অংশ</span>
+            <span>{t('অংশ')}</span>
             <b>
               {curLine.place} · {curLine.fab}{' '}
               {curLine.kt === 'f' ? (
-                <span className="kb kb-f" style={{ marginLeft: 4 }}>ফ্ল্যাট নিট</span>
+                <span className="kb kb-f" style={{ marginLeft: 4 }}>{language === 'en' ? 'Flat Knit' : 'ফ্ল্যাট নিট'}</span>
               ) : null}
               {curLine.yd ? (
                 <span className="kb kb-y" style={{ marginLeft: 4 }}>Y/D</span>
               ) : (
-                <span className="kb" style={{ marginLeft: 4 }}>গ্রে</span>
+                <span className="kb" style={{ marginLeft: 4 }}>{language === 'en' ? 'Grey' : 'গ্রে'}</span>
               )}
             </b>
           </div>
           <div>
-            <span>বায়ার</span>
+            <span>{t('বায়ার')}</span>
             <b>{activeOrder.buyer || '—'}</b>
           </div>
           <div>
-            <span>মেশিন</span>
+            <span>{t('মেশিন')}</span>
             <b className="mono">
               {curMachine.m} · {curLine.dia || (activeOrder as any).dia || '30" × 24G'}
             </b>
           </div>
           <div>
-            <span>তারিখ</span>
+            <span>{t('তারিখ')}</span>
             <b className="mono">
               {(() => {
                 const rawDate =
@@ -845,11 +847,11 @@ export const FactoryJobCardPage: React.FC = () => {
             </b>
           </div>
           <div>
-            <span>শিফট</span>
+            <span>{t('শিফট')}</span>
             <b>{lastProdLog ? (lastProdLog as any).shift || (lastProdLog as any).sh : (machineDbRolls[0] as any)?.shift || 'A'}</b>
           </div>
           <div>
-            <span>অপারেটর</span>
+            <span>{t('অপারেটর')}</span>
             <b>
               {(lastProdLog &&
                 ((lastProdLog as any).operator_name ||
@@ -862,7 +864,7 @@ export const FactoryJobCardPage: React.FC = () => {
             </b>
           </div>
           <div>
-            <span>সুতা লট</span>
+            <span>{t('সুতা লট')}</span>
             <b className="mono">
               {(machineDbRolls[0] as any)?.lot ||
                 (machineDbRolls[0] as any)?.yarn_lot ||
@@ -871,32 +873,32 @@ export const FactoryJobCardPage: React.FC = () => {
             </b>
           </div>
           <div>
-            <span>ইন কোয়ান্টিটি</span>
+            <span>{t('ইন কোয়ান্টিটি')}</span>
             <b className="mono">
-              {bnNum(inQty)} {curLine.unit === 'pcs' || curLine.kt === 'f' ? 'পিস' : 'kg'}
+              {bnNum(inQty)} {curLine.unit === 'pcs' || curLine.kt === 'f' ? (language === 'en' ? 'pcs' : 'পিস') : 'kg'}
             </b>
           </div>
           <div>
-            <span>আউট কোয়ান্টিটি</span>
+            <span>{t('আউট কোয়ান্টিটি')}</span>
             <b className="mono">
-              {bnNum(Math.round(outQty))} kg · {usedCols.length} রোল
+              {bnNum(Math.round(outQty))} kg · {bnNum(usedCols.length)} {language === 'en' ? 'rolls' : 'রোল'}
             </b>
           </div>
           <div>
-            <span>সমস্যাযুক্ত রোল (Not OK)</span>
+            <span>{language === 'en' ? 'Defective Rolls (Not OK)' : 'সমস্যাযুক্ত রোল (Not OK)'}</span>
             <b className="mono" style={{ color: notOkCount > 0 ? 'var(--bad, #b91c1c)' : 'inherit' }}>
-              {notOkCount}
+              {bnNum(notOkCount)}
             </b>
           </div>
           <div>
-            <span>বাকি (WIP)</span>
+            <span>{language === 'en' ? 'Remaining (WIP)' : 'বাকি (WIP)'}</span>
             <b className="mono">{bnNum(Math.max(0, inQty - Math.round(outQty)))} kg</b>
           </div>
         </div>
 
         {/* QC Heading (.jc-qh) matching KnitKhata.html */}
         <div className="jc-qh" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <b>রোল অনুযায়ী QC</b>
+          <b>{language === 'en' ? 'Roll-wise QC' : 'রোল অনুযায়ী QC'}</b>
           <span className="row no-pdf">
             <button
               className="btn sm"
@@ -911,7 +913,11 @@ export const FactoryJobCardPage: React.FC = () => {
                 fontWeight: 600,
               }}
             >
-              {isSaving ? 'সেভ হচ্ছে...' : editMode ? 'সেভ করুন' : 'ফল্ট লিখুন'}
+              {isSaving
+                ? (language === 'en' ? 'Saving...' : 'সেভ হচ্ছে...')
+                : editMode
+                ? (language === 'en' ? 'Save' : 'সেভ করুন')
+                : t('ফল্ট লিখুন')}
             </button>
           </span>
         </div>
@@ -922,7 +928,7 @@ export const FactoryJobCardPage: React.FC = () => {
             <tbody>
               {/* Roll Numbers */}
               <tr className="jc-roll">
-                <td style={{ fontWeight: 600 }}>রোল নং</td>
+                <td style={{ fontWeight: 600 }}>{t('রোল নং')}</td>
                 {Array.from({ length: cols }, (_, i) => (
                   <td key={`r-${i}`} className="n mono">
                     {editMode ? (
@@ -948,7 +954,7 @@ export const FactoryJobCardPage: React.FC = () => {
 
               {/* Weight Row */}
               <tr>
-                <td style={{ fontWeight: 600 }}>ওজন (kg)</td>
+                <td style={{ fontWeight: 600 }}>{t('ওজন (kg)')}</td>
                 {Array.from({ length: cols }, (_, i) => (
                   <td key={`w-${i}`} className="n mono">
                     {editMode ? (
@@ -1009,7 +1015,7 @@ export const FactoryJobCardPage: React.FC = () => {
 
               {/* Total Faults Row (.jc-tot) */}
               <tr className="jc-tot" style={{ fontWeight: 700, borderTop: '2px solid var(--paper-ink)' }}>
-                <td>মোট ফল্ট</td>
+                <td>{t('মোট ফল্ট')}</td>
                 {Array.from({ length: cols }, (_, i) => {
                   const tot = rollTotalFaults(i);
                   const hasRoll = Boolean(rollNums[i]) || parseNum(weights[i]) > 0;
@@ -1026,18 +1032,18 @@ export const FactoryJobCardPage: React.FC = () => {
 
         {/* Remarks Box (.jc-remb) */}
         <div className="jc-remb" style={{ marginTop: 12 }}>
-          <b>মন্তব্য</b>
+          <b>{t('মন্তব্য')}</b>
           {editMode ? (
             <textarea
               className="jc-ta"
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
-              placeholder="যেমন: রোল ৭-এ হোল, নিডল বদলানো হয়েছে"
+              placeholder={language === 'en' ? 'e.g., Hole in Roll 7, needle changed' : 'যেমন: রোল ৭-এ হোল, নিডল বদলানো হয়েছে'}
               style={{ width: '100%', minHeight: 60, padding: '8px 10px', borderRadius: 6, border: '1px solid var(--paper-line)', marginTop: 4, fontFamily: 'inherit' }}
             />
           ) : (
             <div className="jc-remt" style={{ minHeight: 24, color: remarks ? 'inherit' : 'var(--muted)', marginTop: 4 }}>
-              {remarks || 'কোনো মন্তব্য নেই'}
+              {remarks || t('কোনো মন্তব্য নেই')}
             </div>
           )}
         </div>
@@ -1045,10 +1051,12 @@ export const FactoryJobCardPage: React.FC = () => {
         {/* Bottom helper row */}
         <div className="row no-pdf" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginTop: 12 }}>
           <span className="small muted" style={{ fontSize: 12 }}>
-            প্রোডাকশন এন্ট্রিতে রোল লিখলে এখানে নিজে থেকে উঠে যায়। চাইলে কাগজের ব্যাচ কার্ডের মতো হাতেও লেখা যায়। "ফল্ট লিখুন" চাপলে ঘরগুলো লেখা যায়।
+            {language === 'en'
+              ? 'Rolls logged in production entry automatically reflect here. Can also be entered manually like a paper batch card. Click "Enter Faults" to edit cells.'
+              : 'প্রোডাকশন এন্ট্রিতে রোল লিখলে এখানে নিজে থেকে উঠে যায়। চাইলে কাগজের ব্যাচ কার্ডের মতো হাতেও লেখা যায়। "ফল্ট লিখুন" চাপলে ঘরগুলো লেখা যায়।'}
           </span>
           <button className="btn sm" id="jcMore" type="button" onClick={handleAddMoreCols}>
-            + আরও ৫টা রোল যোগ করুন
+            + {language === 'en' ? 'Add 5 More Rolls' : 'আরও ৫টা রোল যোগ করুন'}
           </button>
         </div>
       </div>
@@ -1057,13 +1065,13 @@ export const FactoryJobCardPage: React.FC = () => {
       {stickerOn && machineDbRolls.length > 0 && (
         <div className="card" id="jcStk" style={{ marginTop: 8 }}>
           <div className="row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <h3 style={{ margin: 0 }}>এই মেশিনের রোল স্টিকার</h3>
+            <h3 style={{ margin: 0 }}>{language === 'en' ? 'Roll Stickers for this Machine' : 'এই মেশিনের রোল স্টিকার'}</h3>
             <button className="btn sm no-pdf" type="button" onClick={handlePrintStickers}>
-              🖨️ স্টিকার প্রিন্ট
+              🖨️ {language === 'en' ? 'Print Stickers' : 'স্টিকার প্রিন্ট'}
             </button>
           </div>
           <p className="small muted" style={{ margin: '-4px 0 12px', fontSize: 12 }}>
-            স্টিকার ব্যবহার ঐচ্ছিক। আসল অ্যাপে এখান থেকে প্রিন্ট হবে।
+            {language === 'en' ? 'Sticker usage is optional. In production, print directly from here.' : 'স্টিকার ব্যবহার ঐচ্ছিক। আসল অ্যাপে এখান থেকে প্রিন্ট হবে।'}
           </p>
           <div className="stk-grid">
             {machineDbRolls.slice(-4).map((r: any, idx: number) => {

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { OperatorItem } from '@/types/domain.types';
+import { useApp } from '@/context/AppContext';
 
 export interface SearchableOperatorSelectProps {
   value: string;
@@ -17,13 +18,15 @@ export const SearchableOperatorSelect: React.FC<SearchableOperatorSelectProps> =
   value,
   onChange,
   operators,
-  placeholder = '-- অপারেটর নির্বাচন করুন --',
+  placeholder,
   compact = false,
   disabled = false,
-  ariaLabel = 'অপারেটর',
+  ariaLabel,
   shiftLabel,
   hasError = false,
 }) => {
+  const { t, language } = useApp();
+  const effectivePlaceholder = placeholder || t('-- অপারেটর নির্বাচন করুন --');
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [highlightedIndex, setHighlightedIndex] = useState(0);
@@ -194,7 +197,7 @@ export const SearchableOperatorSelect: React.FC<SearchableOperatorSelectProps> =
           ) : value ? (
             value
           ) : (
-            placeholder
+            effectivePlaceholder
           )}
         </span>
 
@@ -329,7 +332,7 @@ export const SearchableOperatorSelect: React.FC<SearchableOperatorSelectProps> =
               }}
               onMouseEnter={() => setHighlightedIndex(0)}
             >
-              <span>-- অপারেটর খালি রাখুন --</span>
+              <span>{t('-- অপারেটর খালি রাখুন --')}</span>
               {!value && <span style={{ color: 'var(--accent)', fontWeight: 700 }}>✓</span>}
             </div>
 
@@ -393,8 +396,8 @@ export const SearchableOperatorSelect: React.FC<SearchableOperatorSelectProps> =
                           textOverflow: 'ellipsis',
                         }}
                       >
-                        {op.shift ? `শিফট ${op.shift}` : ''}
-                        {op.machine_assigned ? ` · মেশিন ${op.machine_assigned}` : ''}
+                        {op.shift ? `${language === 'en' ? 'Shift ' : 'শিফট '}${op.shift}` : ''}
+                        {op.machine_assigned ? ` · ${language === 'en' ? 'Machine ' : 'মেশিন '}${op.machine_assigned}` : ''}
                         {op.mobile ? ` · ${op.mobile}` : ''}
                       </div>
                     </div>
@@ -423,7 +426,7 @@ export const SearchableOperatorSelect: React.FC<SearchableOperatorSelectProps> =
                   fontSize: '0.82rem',
                 }}
               >
-                কোন অপারেটর পাওয়া যায়নি
+                {t('কোন অপারেটর পাওয়া যায়নি')}
               </div>
             )}
           </div>

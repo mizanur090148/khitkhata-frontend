@@ -6,7 +6,7 @@ import { bnNum, pct } from '@/utils/formatters';
 export const FactoryOrderDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { orders, yarns, qcLogs, prodLogs, selectedOrderId, deleteOrder, role } = useApp();
+  const { orders, yarns, qcLogs, prodLogs, selectedOrderId, deleteOrder, role, t, language, tkSymbol } = useApp();
   const isVendor = role === 'vendor' || (role as string) === 'ven';
 
   const activeOrder =
@@ -17,9 +17,9 @@ export const FactoryOrderDetailPage: React.FC = () => {
   if (!activeOrder) {
     return (
       <div className="card">
-        <p>কোনো অর্ডার পাওয়া যায়নি।</p>
+        <p>{language === 'en' ? 'No order found.' : 'কোনো অর্ডার পাওয়া যায়নি।'}</p>
         <button className="btn sm" onClick={() => navigate('/dashboard/orders')}>
-          ← অর্ডারের তালিকায় ফিরুন
+          ← {language === 'en' ? 'Back to Orders List' : 'অর্ডারের তালিকায় ফিরুন'}
         </button>
       </div>
     );
@@ -108,44 +108,44 @@ export const FactoryOrderDetailPage: React.FC = () => {
               window.scrollTo(0, 0);
             }}
           >
-            ← সব অর্ডার
+            ← {t('সব অর্ডার')}
           </button>
           <h2 style={{ marginTop: 8 }}>
             {o.id} · {primaryLine.fabric || o.style || 'Single Jersey'}
             {primaryLine.gsm ? ` ${primaryLine.gsm} GSM` : ''}
           </h2>
           <p>
-            {o.party || o.buyer || 'ABC Knit Composite'} · শুরু {o.orderDate || '০১ মে ২০২৬'}
+            {o.party || o.buyer || 'ABC Knit Composite'} · {language === 'en' ? 'Started ' : 'শুরু '}{o.orderDate || (language === 'en' ? '01 May 2026' : '০১ মে ২০২৬')}
           </p>
         </div>
         <div className="row" style={{ alignItems: 'center', gap: 8 }}>
           <button
             className="btn sm"
             onClick={() => {
-              navigate('/dashboard/jobcard');
+              navigate(`/dashboard/jobcard/${o.id}`);
               window.scrollTo(0, 0);
             }}
           >
-            জব কার্ড
+            {t('জব কার্ড')}
           </button>
           <button
             className="btn sm"
             style={{ color: 'var(--err)', borderColor: 'var(--err)' }}
             onClick={() => {
-              if (window.confirm(`আপনি কি এই অর্ডারটি (${o.id}) মুছে ফেলতে চান?`)) {
+              if (window.confirm(language === 'en' ? `Do you want to delete order ${o.id}?` : `আপনি কি এই অর্ডারটি (${o.id}) মুছে ফেলতে চান?`)) {
                 deleteOrder(o.id);
                 navigate('/dashboard/orders');
               }
             }}
           >
-            অর্ডার মুছুন
+            {language === 'en' ? 'Delete Order' : 'অর্ডার মুছুন'}
           </button>
           {isDone ? (
-            <span className="pill p-ok">ডেলিভারি সম্পন্ন</span>
+            <span className="pill p-ok">{t('ডেলিভারি সম্পন্ন')}</span>
           ) : isWait ? (
-            <span className="pill p-yarn">সুতার অপেক্ষায়</span>
+            <span className="pill p-yarn">{t('সুতার অপেক্ষায়')}</span>
           ) : (
-            <span className="pill p-acc">চলছে</span>
+            <span className="pill p-acc">{t('চলছে')}</span>
           )}
         </div>
       </div>
@@ -154,12 +154,12 @@ export const FactoryOrderDetailPage: React.FC = () => {
       <div className="card">
         <div className="facts">
           <div>
-            <span>ফেব্রিক</span>
+            <span>{t('ফেব্রিক')}</span>
             <b>{primaryLine.fabric || o.style || 'Single Jersey'}</b>
           </div>
           {o.buyer && (
             <div>
-              <span>বায়ার</span>
+              <span>{t('বায়ার')}</span>
               <b>{o.buyer}</b>
             </div>
           )}
@@ -176,30 +176,30 @@ export const FactoryOrderDetailPage: React.FC = () => {
             <b className="mono">{primaryLine.dia || '30" × 24G'}</b>
           </div>
           <div>
-            <span>রং</span>
+            <span>{t('কালার')}</span>
             <b>{o.color || 'Grey (RFD)'}</b>
           </div>
           <div>
-            <span>সুতা</span>
+            <span>{t('সুতা')}</span>
             <b>{primaryLine.yarn || '30/1 Combed Cotton'}</b>
           </div>
           <div>
-            <span>নিটিং চার্জ</span>
-            <b className="mono">৳{ratePerKg}/kg</b>
+            <span>{language === 'en' ? 'Knitting Rate' : 'নিটিং চার্জ'}</span>
+            <b className="mono">{tkSymbol}{ratePerKg}/kg</b>
           </div>
           <div>
-            <span>অর্ডারের তারিখ</span>
-            <b className="mono">{o.orderDate || '০১ মে ২০২৬'}</b>
+            <span>{language === 'en' ? 'Order Date' : 'অর্ডারের তারিখ'}</span>
+            <b className="mono">{o.orderDate || (language === 'en' ? '01 May 2026' : '০১ মে ২০২৬')}</b>
           </div>
           <div>
-            <span>ডেলিভারির তারিখ</span>
-            <b className="mono">{o.delivDate || '১৮ মে ২০২৬'}</b>
+            <span>{language === 'en' ? 'Delivery Date' : 'ডেলিভারির তারিখ'}</span>
+            <b className="mono">{o.delivDate || (language === 'en' ? '18 May 2026' : '১৮ মে ২০২৬')}</b>
           </div>
         </div>
 
         <div style={{ marginTop: 16 }}>
           <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-            <b>অগ্রগতি</b>
+            <b>{t('অগ্রগতি')}</b>
             <span className="mono">
               {bnNum(knitKg.toLocaleString('en-IN'))} / {bnNum(totalKg.toLocaleString('en-IN'))} kg ·{' '}
               {bnNum(progressPct)}%
@@ -214,49 +214,36 @@ export const FactoryOrderDetailPage: React.FC = () => {
       {/* ETA Calculation card matching KnitKhata.html */}
       {isRun && (
         <div className="card">
-          <h3>কবে শেষ হবে? (হিসাব)</h3>
+          <h3>{language === 'en' ? 'Completion Estimate (Calculation)' : 'কবে শেষ হবে? (হিসাব)'}</h3>
           <div className="eta">
             <label className="f">
-              মেশিন সংখ্যা
+              {t('মোট মেশিন')}
               <input type="number" min="1" defaultValue={assignedMachines.length || 4} />
             </label>
             <label className="f">
-              প্রতি মেশিন/দিন (kg)
+              {language === 'en' ? 'Per Machine/Day (kg)' : 'প্রতি মেশিন/দিন (kg)'}
               <input type="number" min="1" defaultValue={350} />
             </label>
             <div className="out">
-              <span className="small muted">বাকি</span>
+              <span className="small muted">{language === 'en' ? 'Remaining' : 'বাকি'}</span>
               <b>{bnNum(Math.max(0, totalKg - knitKg).toLocaleString('en-IN'))} kg</b>
             </div>
             <div className="out">
-              <span className="small muted">দৈনিক মোট</span>
+              <span className="small muted">{language === 'en' ? 'Daily Total' : 'দৈনিক মোট'}</span>
               <b>{bnNum(((assignedMachines.length || 4) * 350).toLocaleString('en-IN'))} kg</b>
             </div>
             <div className="out">
-              <span className="small muted">সম্ভাব্য শেষ</span>
-              <b>{o.delivDate || '১৮ মে ২০২৬'}</b>
+              <span className="small muted">{language === 'en' ? 'Est. Finish' : 'সম্ভাব্য শেষ'}</span>
+              <b>{o.delivDate || (language === 'en' ? '18 May 2026' : '১৮ মে ২০২৬')}</b>
             </div>
           </div>
-          <p className="small muted" style={{ margin: '8px 0 0' }}>
-            চলমান মেশিন:{' '}
-            {assignedMachines.length ? (
-              assignedMachines.map((m) => (
-                <span key={m} className="pill p-acc" style={{ marginRight: 4 }}>
-                  {m}
-                </span>
-              ))
-            ) : (
-              <span className="pill p-acc">M-01</span>
-            )}{' '}
-            — মেশিন বাড়ালে/কমালে তারিখ নিজে থেকেই বদলাবে।
-          </p>
         </div>
       )}
 
       {/* Fabric item lines matching KnitKhata.html */}
       {o.lines && o.lines.length > 0 && (
         <div className="card">
-          <h3>অংশ ও ফেব্রিক অনুযায়ী ভাগ</h3>
+          <h3>{language === 'en' ? 'Parts & Fabric Breakdown' : 'অংশ ও ফেব্রিক অনুযায়ী ভাগ'}</h3>
           <div className="tw">
             <table>
               <thead>
@@ -266,10 +253,10 @@ export const FactoryOrderDetailPage: React.FC = () => {
                   <th>Fabrication</th>
                   <th>Color</th>
                   <th className="n">Qty (kg)</th>
-                  <th>সুতা (Count · Brand · Lot)</th>
+                  <th>{t('সুতা')} (Count · Brand · Lot)</th>
                   <th>GSM</th>
-                  <th>M/C Dia × Gauge</th>
-                  <th>মেশিন</th>
+                  <th>Dia × Gauge</th>
+                  <th>{t('মেশিন')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -304,15 +291,15 @@ export const FactoryOrderDetailPage: React.FC = () => {
       {/* 2-column Grid: Yarn Inward & QC */}
       <div className="grid g2">
         <div className="card">
-          <h3>সুতা গ্রহণ (Yarn Receive)</h3>
+          <h3>{language === 'en' ? 'Yarn Inward' : 'সুতা গ্রহণ (Yarn Receive)'}</h3>
           <div className="tw">
             <table>
               <thead>
                 <tr>
-                  <th>কাউন্ট</th>
-                  <th>স্পিনার</th>
-                  <th>লট</th>
-                  <th className="n">ব্যাগ</th>
+                  <th>{t('কাউন্ট')}</th>
+                  <th>{t('ব্র্যান্ড')}</th>
+                  <th>{t('লট')}</th>
+                  <th className="n">{language === 'en' ? 'Bags' : 'ব্যাগ'}</th>
                   <th className="n">kg</th>
                 </tr>
               </thead>
@@ -330,7 +317,7 @@ export const FactoryOrderDetailPage: React.FC = () => {
                 ) : (
                   <tr>
                     <td colSpan={5} style={{ textAlign: 'center', padding: '16px', color: 'var(--muted)' }}>
-                      এই অর্ডারে এখনো কোনো সুতা ইনওয়ার্ড এন্ট্রি করা হয়নি।
+                      {language === 'en' ? 'No yarn inward records for this order yet.' : 'এই অর্ডারে এখনো কোনো সুতা ইনওয়ার্ড এন্ট্রি করা হয়নি।'}
                     </td>
                   </tr>
                 )}
@@ -339,32 +326,32 @@ export const FactoryOrderDetailPage: React.FC = () => {
           </div>
           <div className="facts" style={{ marginTop: 12 }}>
             <div>
-              <span>মোট সুতা পাওয়া</span>
+              <span>{t('প্রাপ্ত সুতা')}</span>
               <b className="mono">{bnNum(totalYarnRcv.toLocaleString('en-IN'))} kg</b>
             </div>
             <div>
-              <span>প্রসেস লস ধরে ({lossPct}%)</span>
+              <span>{t('অনুমোদিত প্রসেস লস')} ({lossPct}%)</span>
               <b className="mono">{bnNum(allowedKg.toLocaleString('en-IN'))} kg</b>
             </div>
             <div>
-              <span>সুতা ব্যালেন্স</span>
+              <span>{t('ব্যালেন্স')}</span>
               <b className="mono">{bnNum(yarnBalance.toLocaleString('en-IN'))} kg</b>
             </div>
           </div>
         </div>
 
         <div className="card">
-          <h3>QC ও কাপড়ের সমস্যা</h3>
+          <h3>{t('QC ও কাপড়ের সমস্যা')}</h3>
           <div className="tw">
             <table>
               <thead>
                 <tr>
-                  <th>তারিখ</th>
-                  <th>রোল</th>
-                  <th>মেশিন</th>
-                  <th>সমস্যা</th>
+                  <th>{t('তারিখ')}</th>
+                  <th>{t('রোল')}</th>
+                  <th>{t('মেশিন')}</th>
+                  <th>{language === 'en' ? 'Issue' : 'সমস্যা'}</th>
                   <th className="n">kg</th>
-                  <th>অবস্থা</th>
+                  <th>{t('অবস্থা')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -387,10 +374,10 @@ export const FactoryOrderDetailPage: React.FC = () => {
                           }`}
                         >
                           {q.status === 'ok'
-                            ? 'পাস'
+                            ? t('পাস')
                             : q.status === 'bad'
-                            ? 'বাতিল'
-                            : 'তদন্তাধীন'}
+                            ? t('বাতিল')
+                            : (language === 'en' ? 'Pending' : 'তদন্তাধীন')}
                         </span>
                       </td>
                     </tr>
@@ -398,7 +385,7 @@ export const FactoryOrderDetailPage: React.FC = () => {
                 ) : (
                   <tr>
                     <td colSpan={6} style={{ textAlign: 'center', padding: '16px', color: 'var(--muted)' }}>
-                      কোনো ত্রুটি বা QC রিজেকশন পাওয়া যায়নি। সব রোল নিখুঁত।
+                      {language === 'en' ? 'No defects or QC rejections found. All rolls defect-free.' : 'কোনো ত্রুটি বা QC রিজেকশন পাওয়া যায়নি। সব রোল নিখুঁত।'}
                     </td>
                   </tr>
                 )}
@@ -410,17 +397,17 @@ export const FactoryOrderDetailPage: React.FC = () => {
 
       {/* Production Log */}
       <div className="card">
-        <h3>দৈনিক প্রোডাকশন লগ</h3>
+        <h3>{language === 'en' ? 'Daily Production Log' : 'দৈনিক প্রোডাকশন লগ'}</h3>
         <div className="tw">
           <table>
             <thead>
               <tr>
-                <th>তারিখ</th>
-                <th>শিফট</th>
-                <th>মেশিন</th>
+                <th>{t('তারিখ')}</th>
+                <th>{t('শিফট')}</th>
+                <th>{t('মেশিন')}</th>
                 <th className="n">kg</th>
-                <th className="n">রোল</th>
-                <th>অপারেটর</th>
+                <th className="n">{t('রোল')}</th>
+                <th>{t('অপারেটর')}</th>
               </tr>
             </thead>
             <tbody>
@@ -438,7 +425,7 @@ export const FactoryOrderDetailPage: React.FC = () => {
               ) : (
                 <tr>
                   <td colSpan={6} style={{ textAlign: 'center', padding: '16px', color: 'var(--muted)' }}>
-                    এই অর্ডারে কোনো প্রোডাকশন লগ এন্ট্রি পাওয়া যায়নি।
+                    {language === 'en' ? 'No production logs found for this order.' : 'এই অর্ডারে কোনো প্রোডাকশন লগ এন্ট্রি পাওয়া যায়নি।'}
                   </td>
                 </tr>
               )}
@@ -449,25 +436,25 @@ export const FactoryOrderDetailPage: React.FC = () => {
 
       {/* Vendor access */}
       <div className="card">
-        <h3>ভেন্ডর অ্যাক্সেস</h3>
+        <h3>{language === 'en' ? 'Vendor Access' : 'ভেন্ডর অ্যাক্সেস'}</h3>
         <p className="small muted" style={{ marginTop: -4 }}>
-          {o.party || 'ABC Knit Composite'}-এর যারা এই অর্ডার দেখতে পারেন
+          {language === 'en' ? 'Those from ' + (o.party || 'ABC Knit Composite') + ' who can view this order' : (o.party || 'ABC Knit Composite') + '-এর যারা এই অর্ডার দেখতে পারেন'}
         </p>
         <div
           className="row"
           style={{ justifyContent: 'space-between', padding: '6px 0', alignItems: 'center' }}
         >
           <div>
-            <b>মো. কামরুল হাসান</b> <span className="small muted">· Knitting Merchandiser</span>
+            <b>{language === 'en' ? 'Md. Kamrul Hasan' : 'মো. কামরুল হাসান'}</b> <span className="small muted">· Knitting Merchandiser</span>
           </div>
-          <span className="pill p-ok">সক্রিয়</span>
+          <span className="pill p-ok">{t('সক্রিয়')}</span>
         </div>
         <div className="row" style={{ marginTop: 8, gap: 8 }}>
           <button className="btn sm" onClick={() => navigate('/dashboard/users')}>
-            পারমিশন বদলান
+            {language === 'en' ? 'Change Permissions' : 'পারমিশন বদলান'}
           </button>
           <button className="btn sm" onClick={() => navigate('/dashboard/wa')}>
-            WhatsApp রিপোর্ট সেটিং
+            {language === 'en' ? 'WhatsApp Settings' : 'WhatsApp রিপোর্ট সেটিং'}
           </button>
         </div>
       </div>

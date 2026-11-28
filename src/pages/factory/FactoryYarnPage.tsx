@@ -20,6 +20,14 @@ interface YarnRowItem {
   pct: string;
 }
 
+const getStatusMeta = (lang: 'bn' | 'en'): Record<string, [string, string]> => ({
+  ok: ['p-acc', lang === 'en' ? 'Running' : 'চলছে'],
+  done: ['p-idle', lang === 'en' ? 'Done' : 'শেষ'],
+  wait: ['p-yarn', lang === 'en' ? 'Yarn Pending' : 'সুতা আসেনি'],
+  short: ['p-bad', lang === 'en' ? 'Shortage' : 'সুতা কম'],
+  left: ['p-warn', lang === 'en' ? 'Return Leftover Yarn' : 'বাড়তি সুতা ফেরত দিন'],
+});
+
 const SP: Record<string, [string, string]> = {
   ok: ['p-acc', 'চলছে'],
   done: ['p-idle', 'শেষ'],
@@ -41,6 +49,8 @@ export const FactoryYarnPage: React.FC = () => {
     createYarnReturnChallan,
     addToast,
     openPrintModal,
+    t,
+    language,
   } = useApp();
 
   const isVendor = role === 'vendor' || (role as string) === 'ven';
@@ -355,10 +365,9 @@ export const FactoryYarnPage: React.FC = () => {
       {/* Header */}
       <div className="head">
         <div>
-          <h2>{isVendor ? 'সুতা ব্যালেন্স' : 'সুতা ট্র্যাকার'}</h2>
+          <h2>{isVendor ? t('সুতা ব্যালেন্স') : t('সুতা ট্র্যাকার')}</h2>
           <p>
-            সুতা এসেছে → কাপড় নিট হয়েছে → সুতার স্টক। কাপড়ে প্রতিটা সুতার ভাগ (%) অর্ডার এন্ট্রি থেকে নেওয়া,
-            তাই লাইক্রা আর কটন আলাদা হিসাব হয়।
+            {language === 'en' ? 'Yarn Inward → Fabric Knitted → Yarn Stock & Balance Tracking' : 'সুতা এসেছে → কাপড় নিট হয়েছে → সুতার স্টক। কাপড়ে প্রতিটা সুতার ভাগ (%) অর্ডার এন্ট্রি থেকে নেওয়া, তাই লাইক্রা আর কটন আলাদা হিসাব হয়।'}
           </p>
         </div>
         <div className="row" style={{ gap: 8 }}>
@@ -366,10 +375,10 @@ export const FactoryYarnPage: React.FC = () => {
             className="btn no-pdf prn-btn"
             type="button"
             onClick={() =>
-              openPrintModal('jobcard', `সুতা ব্যালেন্স · ${factoryProfile?.name || 'ফ্যাক্টরি'}`, { rows: filteredRows })
+              openPrintModal('jobcard', `${isVendor ? t('সুতা ব্যালেন্স') : t('সুতা ট্র্যাকার')} · ${factoryProfile?.name || ''}`, { rows: filteredRows })
             }
           >
-            প্রিন্ট
+            {t('প্রিন্ট')}
           </button>
           {!isVendor && (
             <button
@@ -377,7 +386,7 @@ export const FactoryYarnPage: React.FC = () => {
               id="ytAddB"
               onClick={() => setYtAdd(!ytAdd)}
             >
-              {ytAdd ? '✕ বন্ধ করুন' : '+ সুতা গ্রহণ'}
+              {ytAdd ? (language === 'en' ? '✕ Close' : '✕ বন্ধ করুন') : (language === 'en' ? '+ Receive Yarn' : '+ সুতা গ্রহণ')}
             </button>
           )}
         </div>
@@ -386,10 +395,10 @@ export const FactoryYarnPage: React.FC = () => {
       {/* Add Yarn Receive Form */}
       {ytAdd && !isVendor && (
         <form className="card" id="ytf" onSubmit={handleAddYarn} noValidate>
-          <h3>সুতা গ্রহণ (Yarn Receive)</h3>
+          <h3>{language === 'en' ? 'Yarn Inward (Receive)' : 'সুতা গ্রহণ (Yarn Receive)'}</h3>
           <div className="no-grid" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12 }}>
             <label className="no-f">
-              <span>অর্ডার</span>
+              <span>{t('অর্ডার')}</span>
               <SearchableSelect
                 value={yaO}
                 onChange={(val) => setYaO(val)}
@@ -397,42 +406,42 @@ export const FactoryYarnPage: React.FC = () => {
                   value: o.id,
                   label: `${o.id} (${o.buyer || '—'})`,
                 }))}
-                searchPlaceholder="অর্ডার খুঁজুন..."
+                searchPlaceholder={language === 'en' ? 'Search order...' : 'অর্ডার খুঁজুন...'}
               />
             </label>
 
             <label className="no-f">
-              <span>কাউন্ট</span>
+              <span>{t('কাউন্ট')}</span>
               <input
                 id="yaC"
-                placeholder="যেমন: 30/1 Combed Cotton"
+                placeholder={language === 'en' ? 'e.g. 30/1 Combed Cotton' : 'যেমন: 30/1 Combed Cotton'}
                 value={yaC}
                 onChange={(e) => setYaC(e.target.value)}
               />
             </label>
 
             <label className="no-f">
-              <span>ব্র্যান্ড / স্পিনার</span>
+              <span>{t('ব্র্যান্ড')}</span>
               <input
                 id="yaB"
-                placeholder="মিলের নাম"
+                placeholder={language === 'en' ? 'Mill Name' : 'মিলের নাম'}
                 value={yaB}
                 onChange={(e) => setYaB(e.target.value)}
               />
             </label>
 
             <label className="no-f">
-              <span>লট</span>
+              <span>{t('লট')}</span>
               <input
                 id="yaL"
-                placeholder="যেমন: SQ-88501"
+                placeholder="SQ-88501"
                 value={yaL}
                 onChange={(e) => setYaL(e.target.value)}
               />
             </label>
 
             <label className="no-f">
-              <span>ব্যাগ</span>
+              <span>{language === 'en' ? 'Bags' : 'ব্যাগ'}</span>
               <input
                 id="yaG"
                 inputMode="numeric"
@@ -442,7 +451,7 @@ export const FactoryYarnPage: React.FC = () => {
             </label>
 
             <label className="no-f">
-              <span>ওজন (kg)</span>
+              <span>{t('ওজন (kg)')}</span>
               <input
                 id="yaK"
                 inputMode="decimal"
@@ -454,10 +463,10 @@ export const FactoryYarnPage: React.FC = () => {
 
           <div className="row" style={{ marginTop: 14, alignItems: 'center' }}>
             <button className="btn pri" type="submit">
-              সেভ করুন
+              {t('সেভ করুন')}
             </button>
             <span className="small muted">
-              কাউন্ট অর্ডারের সুতার সাথে মিললে নিজে থেকে হিসাবে ঢুকবে। সেভ করলে ভেন্ডরও দেখবে।
+              {language === 'en' ? 'Matches order yarn specification automatically. Visible to vendors once saved.' : 'কাউন্ট অর্ডারের সুতার সাথে মিললে নিজে থেকে হিসাবে ঢুকবে। সেভ করলে ভেন্ডরও দেখবে।'}
             </span>
           </div>
         </form>
@@ -466,19 +475,19 @@ export const FactoryYarnPage: React.FC = () => {
       {/* 4 KPIs */}
       <div className="kpis">
         <div className="kpi">
-          <span>সুতা এসেছে</span>
+          <span>{language === 'en' ? 'Yarn Received' : 'সুতা এসেছে'}</span>
           <b>{bnNum(totalRecv)} kg</b>
         </div>
         <div className="kpi">
-          <span>সুতা খরচ (কাপড় নিট হয়ে)</span>
+          <span>{language === 'en' ? 'Yarn Consumed (Knitted)' : 'সুতা খরচ (কাপড় নিট হয়ে)'}</span>
           <b>{bnNum(totalUsed)} kg</b>
         </div>
         <div className="kpi">
-          <span>ফেরত দেওয়া</span>
+          <span>{language === 'en' ? 'Yarn Returned' : 'ফেরত দেওয়া'}</span>
           <b>{bnNum(totalRet)} kg</b>
         </div>
         <div className="kpi">
-          <span>সুতার স্টক</span>
+          <span>{language === 'en' ? 'Yarn Balance Stock' : 'সুতার স্টক'}</span>
           <b style={{ color: totalBal < 0 ? 'var(--bad)' : 'inherit' }}>
             {bnNum(totalBal)} kg
           </b>
@@ -489,12 +498,12 @@ export const FactoryYarnPage: React.FC = () => {
       <div className="no-grid" style={{ gridTemplateColumns: isVendor ? 'repeat(3, 1fr)' : 'repeat(4, 1fr)', gap: 12, margin: '14px 0' }}>
         {!isVendor && (
           <label className="no-f">
-            <span>ভেন্ডর</span>
+            <span>{t('ভেন্ডর')}</span>
             <SearchableSelect
               value={ytV}
               onChange={(val) => setYtV(val)}
               options={[
-                { value: 'all', label: 'সব ভেন্ডর' },
+                { value: 'all', label: language === 'en' ? 'All Vendors' : 'সব ভেন্ডর' },
                 ...parties
                   .filter((p) => p.type === 'ven' || p.type === 'vendor' || (p as any).category === 'vendor')
                   .map((p) => ({
@@ -502,15 +511,15 @@ export const FactoryYarnPage: React.FC = () => {
                     label: p.name,
                   })),
               ]}
-              searchPlaceholder="ভেন্ডর খুঁজুন..."
+              searchPlaceholder={language === 'en' ? 'Search vendor...' : 'ভেন্ডর খুঁজুন...'}
             />
           </label>
         )}
 
         <label className="no-f">
-          <span>কাউন্ট</span>
+          <span>{t('কাউন্ট')}</span>
           <select value={ytC} onChange={(e) => setYtC(e.target.value)}>
-            <option value="all">সব কাউন্ট</option>
+            <option value="all">{language === 'en' ? 'All Counts' : 'সব কাউন্ট'}</option>
             {counts.map((c) => (
               <option key={c} value={c}>
                 {c}
@@ -520,23 +529,23 @@ export const FactoryYarnPage: React.FC = () => {
         </label>
 
         <label className="no-f">
-          <span>অবস্থা</span>
+          <span>{t('অবস্থা')}</span>
           <select value={ytSt} onChange={(e) => setYtSt(e.target.value)}>
-            <option value="all">সব অবস্থা</option>
-            <option value="ok">চলছে</option>
-            <option value="done">শেষ</option>
-            <option value="short">সুতা কম</option>
-            <option value="left">বাড়তি সুতা</option>
-            <option value="wait">সুতা আসেনি</option>
+            <option value="all">{language === 'en' ? 'All Status' : 'সব অবস্থা'}</option>
+            <option value="ok">{t('চলছে')}</option>
+            <option value="done">{language === 'en' ? 'Done' : 'শেষ'}</option>
+            <option value="short">{language === 'en' ? 'Shortage' : 'সুতা কম'}</option>
+            <option value="left">{language === 'en' ? 'Surplus' : 'বাড়তি সুতা'}</option>
+            <option value="wait">{language === 'en' ? 'Awaiting Yarn' : 'সুতা আসেনি'}</option>
           </select>
         </label>
 
         <label className="no-f">
-          <span>খুঁজুন</span>
+          <span>{language === 'en' ? 'Search' : 'খুঁজুন'}</span>
           <input
             id="ytQ"
             value={ytQ}
-            placeholder="অর্ডার, লট বা ব্র্যান্ড"
+            placeholder={language === 'en' ? 'Order, lot or brand' : 'অর্ডার, লট বা ব্র্যান্ড'}
             onChange={(e) => setYtQ(e.target.value)}
           />
         </label>
@@ -547,18 +556,18 @@ export const FactoryYarnPage: React.FC = () => {
         <table>
           <thead>
             <tr>
-              <th>ভেন্ডর</th>
-              <th>অর্ডার</th>
-              <th>কাউন্ট</th>
-              <th>ব্র্যান্ড</th>
-              <th>লট</th>
-              <th className="n">কাপড়ে ভাগ</th>
-              <th className="n">সুতা এসেছে</th>
-              <th className="n">কাপড় নিট হয়েছে</th>
-              <th className="n">সুতা খরচ</th>
-              <th className="n">ফেরত</th>
-              <th className="n">সুতার স্টক</th>
-              <th>অবস্থা</th>
+              <th>{t('ভেন্ডর')}</th>
+              <th>{t('অর্ডার')}</th>
+              <th>{t('কাউন্ট')}</th>
+              <th>{t('ব্র্যান্ড')}</th>
+              <th>{t('লট')}</th>
+              <th className="n">{language === 'en' ? 'Fabric Share' : 'কাপড়ে ভাগ'}</th>
+              <th className="n">{language === 'en' ? 'Received (kg)' : 'সুতা এসেছে'}</th>
+              <th className="n">{language === 'en' ? 'Knitted (kg)' : 'কাপড় নিট হয়েছে'}</th>
+              <th className="n">{language === 'en' ? 'Used (kg)' : 'সুতা খরচ'}</th>
+              <th className="n">{language === 'en' ? 'Returned (kg)' : 'ফেরত'}</th>
+              <th className="n">{language === 'en' ? 'Stock (kg)' : 'সুতার স্টক'}</th>
+              <th>{t('অবস্থা')}</th>
               <th className="no-pdf"></th>
             </tr>
           </thead>
@@ -566,7 +575,7 @@ export const FactoryYarnPage: React.FC = () => {
             {filteredRows.length ? (
               filteredRows.map((r, idx) => {
                 const st = stOf(r);
-                const s2 = SP[st] || ['p-idle', '—'];
+                const s2 = getStatusMeta(language)[st] || ['p-idle', '—'];
                 const isDone = (r.o.status as string) === 'done' || r.o.status === 'Completed';
 
                 const orderRequests = r.o.yarnRequests || r.o.yarn_requests_json || {};
@@ -594,13 +603,13 @@ export const FactoryYarnPage: React.FC = () => {
                       {r.bal > 0 && r.recv > 0 && isDone ? (
                         isVendor ? (
                           hasReq ? (
-                            <span className="pill p-yarn">ফেরত চাওয়া হয়েছে</span>
+                            <span className="pill p-yarn">{language === 'en' ? 'Return Requested' : 'ফেরত চাওয়া হয়েছে'}</span>
                           ) : (
                             <button
                               className="btn sm"
                               onClick={() => handleRequestReturn(r)}
                             >
-                              ফেরত চাই
+                              {language === 'en' ? 'Request Return' : 'ফেরত চাই'}
                             </button>
                           )
                         ) : (
@@ -608,7 +617,7 @@ export const FactoryYarnPage: React.FC = () => {
                             className="btn sm"
                             onClick={() => handleReturnChallan(r)}
                           >
-                            ফেরত চালান{hasReq ? ' · ভেন্ডর চেয়েছে' : ''}
+                            {language === 'en' ? `Return Challan${hasReq ? ' · Vendor requested' : ''}` : `ফেরত চালান${hasReq ? ' · ভেন্ডর চেয়েছে' : ''}`}
                           </button>
                         )
                       ) : null}
@@ -619,14 +628,14 @@ export const FactoryYarnPage: React.FC = () => {
             ) : (
               <tr>
                 <td colSpan={13} className="muted" style={{ textAlign: 'center', padding: '24px 0' }}>
-                  এই ফিল্টারে কোনো সুতার রেকর্ড নেই
+                  {language === 'en' ? 'No yarn records found in this filter' : 'এই ফিল্টারে কোনো সুতার রেকর্ড নেই'}
                 </td>
               </tr>
             )}
 
             <tr>
               <td colSpan={6}>
-                <b>মোট ({filteredRows.length} লট)</b>
+                <b>{language === 'en' ? `Total (${filteredRows.length} Lots)` : `মোট (${filteredRows.length} লট)`}</b>
               </td>
               <td className="n">
                 <b>{bnNum(totalRecv)} kg</b>
@@ -648,9 +657,9 @@ export const FactoryYarnPage: React.FC = () => {
       </div>
 
       <p className="small muted" style={{ marginTop: 12, lineHeight: 1.6 }}>
-        হিসাবের নিয়ম: সুতা খরচ = কাপড় নিট হয়েছে × কাপড়ে ওই সুতার ভাগ। যেমন 1×1 Rib Lycra 100 kg নিট হলে 20D
-        Spandex (৫%) খরচ 5 kg, 30/1 কটন (৯৫%) খরচ 95 kg। একই কাউন্টের কয়েকটা লট থাকলে আগে আসা লট আগে শেষ হয়।
-        কলার-কাফের কাপড় পিস × প্রতি পিসের ওজন থেকে kg-তে হিসাব হয়। প্রসেস লস এখনো ধরা হয়নি।
+        {language === 'en'
+          ? 'Calculation Rule: Yarn Consumption = Fabric Knitted × Yarn Share in Fabric. E.g., for 100 kg 1x1 Rib Lycra knitted, 20D Spandex (5%) consumed = 5 kg, 30/1 Cotton (95%) consumed = 95 kg. When multiple lots exist for the same count, earlier arrived lots are consumed first (FIFO). Collar/cuff fabric is converted from pieces × piece weight to kg. Process loss not yet factored.'
+          : 'হিসাবের নিয়ম: সুতা খরচ = কাপড় নিট হয়েছে × কাপড়ে ওই সুতার ভাগ। যেমন 1×1 Rib Lycra 100 kg নিট হলে 20D Spandex (৫%) খরচ 5 kg, 30/1 কটন (৯৫%) খরচ 95 kg। একই কাউন্টের কয়েকটা লট থাকলে আগে আসা লট আগে শেষ হয়। কলার-কাফের কাপড় পিস × প্রতি পিসের ওজন থেকে kg-তে হিসাব হয়। প্রসেস লস এখনো ধরা হয়নি।'}
       </p>
     </div>
   );

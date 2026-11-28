@@ -25,7 +25,7 @@ interface ThreadItem {
 
 export const FactoryMessagesPage: React.FC = () => {
   const navigate = useNavigate();
-  const { role, openCallModal, users, threads: appThreads, parties, orders, fetchOrders } = useApp();
+  const { role, openCallModal, users, threads: appThreads, parties, orders, fetchOrders, t, language } = useApp();
 
   const isVendor = role === 'vendor' || (role as string) === 'ven';
   const meSide = isVendor ? 'ven' : 'fac';
@@ -141,18 +141,18 @@ export const FactoryMessagesPage: React.FC = () => {
 
   const quickReplies = isVendor
     ? [
-        'দেরি কেন?',
-        'আজ কত kg হলো?',
-        'QC রিপোর্ট পাঠান',
-        'চালান কবে বের হবে?',
-        'সুতা পাঠিয়েছি লট চেক করুন',
+        language === 'en' ? 'Why the delay?' : 'দেরি কেন?',
+        language === 'en' ? 'How many kg produced today?' : 'আজ কত kg হলো?',
+        language === 'en' ? 'Send QC report' : 'QC রিপোর্ট পাঠান',
+        language === 'en' ? 'When will the delivery challan be out?' : 'চালান কবে বের হবে?',
+        language === 'en' ? 'Yarn dispatched, please check the lot' : 'সুতা পাঠিয়েছি লট চেক করুন',
       ]
     : [
-        'সুতা পৌঁছেছে?',
-        'ল্যাবের অনুমোদন বাকি',
-        'আজ ৮ রোল নামবে',
-        'QC সাইন বাকি',
-        'ডেলিভারি চালান রেডি',
+        language === 'en' ? 'Has yarn arrived?' : 'সুতা পৌঁছেছে?',
+        language === 'en' ? 'Lab approval pending' : 'ল্যাবের অনুমোদন বাকি',
+        language === 'en' ? '8 rolls will be ready today' : 'আজ ৮ রোল নামবে',
+        language === 'en' ? 'QC signature pending' : 'QC সাইন বাকি',
+        language === 'en' ? 'Delivery challan ready' : 'ডেলিভারি চালান রেডি',
       ];
 
   const handleSendMessage = (textToSend?: string) => {
@@ -162,10 +162,10 @@ export const FactoryMessagesPage: React.FC = () => {
     const newMsg: ChatMessage = {
       s: meSide,
       n: isVendor
-        ? 'মো. কামরুল হাসান (ভেন্ডর)'
-        : `${activeStaff.name} (${activeStaff.designation || 'ম্যানেজার'})`,
+        ? (language === 'en' ? 'Md. Kamrul Hasan (Vendor)' : 'মো. কামরুল হাসান (ভেন্ডর)')
+        : `${activeStaff.name} (${activeStaff.designation || (language === 'en' ? 'Manager' : 'ম্যানেজার')})`,
       txt: text,
-      t: 'এখন',
+      t: language === 'en' ? 'Now' : 'এখন',
     };
 
     setThreads((prev) =>
@@ -188,10 +188,10 @@ export const FactoryMessagesPage: React.FC = () => {
       s: meSide,
       n: isVendor
         ? 'মো. কামরুল হাসান'
-        : `${activeStaff.name} (${activeStaff.designation || 'ম্যানেজার'})`,
+        : `${activeStaff.name} (${activeStaff.designation || (language === 'en' ? 'Manager' : 'ম্যানেজার')})`,
       voice: true,
       voiceSec: 14,
-      t: 'এখন',
+      t: language === 'en' ? 'Now' : 'এখন',
     };
 
     setThreads((prev) =>
@@ -209,22 +209,25 @@ export const FactoryMessagesPage: React.FC = () => {
     <div style={{ maxWidth: '100%', width: '100%' }}>
       {isVendor && (
         <div className="vbanner" style={{ marginBottom: 16 }}>
-          ভেন্ডর হিসেবে আপনি শুধু নিজের অর্ডারের আলোচনা দেখেন।
+          {language === 'en'
+            ? 'As a vendor, you only see message threads relevant to your assigned orders.'
+            : 'ভেন্ডর হিসেবে আপনি শুধু নিজের অর্ডারের আলোচনা দেখেন।'}
         </div>
       )}
 
       {/* Header */}
       <div className="head">
         <div>
-          <h2>নিটখাতা মেসেজ</h2>
+          <h2>{language === 'en' ? 'KnitKhata Messages' : 'নিটখাতা মেসেজ'}</h2>
           <p>
-            প্রতিটা অর্ডারের আলাদা আলোচনা।{' '}
-            {isVendor
-              ? 'ফ্যাক্টরি আর দুই পক্ষের QC একই জায়গায়, WhatsApp-এ হারায় না।'
-              : 'ভেন্ডরের মার্চেন্ডাইজার আর দুই পক্ষের QC একই জায়গায়, WhatsApp-এ হারায় না।'}
+            {language === 'en'
+              ? 'Dedicated thread per order. Factory management, merchandising, and mutual QC in one transparent chat.'
+              : isVendor
+              ? 'প্রতিটা অর্ডারের আলাদা আলোচনা। ফ্যাক্টরি আর দুই পক্ষের QC একই জায়গায়, WhatsApp-এ হারায় না।'
+              : 'প্রতিটা অর্ডারের আলাদা আলোচনা। ভেন্ডরের মার্চেন্ডাইজার আর দুই পক্ষের QC একই জায়গায়, WhatsApp-এ হারায় না।'}
           </p>
         </div>
-        <span className="pill p-ok">সরাসরি সংযোগ</span>
+        <span className="pill p-ok">{language === 'en' ? 'Live Connected' : 'সরাসরি সংযোগ'}</span>
       </div>
 
       {/* Main Chat Interface */}
@@ -237,11 +240,11 @@ export const FactoryMessagesPage: React.FC = () => {
             color: 'var(--muted)',
           }}
         >
-          <h3 style={{ fontSize: '1.15rem', marginBottom: 8 }}>কোনো মেসেজ থ্রেড নেই</h3>
+          <h3 style={{ fontSize: '1.15rem', marginBottom: 8 }}>{language === 'en' ? 'No Message Threads' : 'কোনো মেসেজ থ্রেড নেই'}</h3>
           <p>
             {isVendor
-              ? 'আপনার কোনো অর্ডারের আলোচনা শুরু হলে এখানে দেখা যাবে।'
-              : 'নতুন অর্ডার তৈরি হলে সংশ্লিষ্ট পার্টির সাথে আলোচনা থ্রেড এখানে স্বয়ংক্রিয়ভাবে যুক্ত হবে।'}
+              ? (language === 'en' ? 'When an order discussion starts, it will appear here.' : 'আপনার কোনো অর্ডারের আলোচনা শুরু হলে এখানে দেখা যাবে।')
+              : (language === 'en' ? 'When a new order is registered, a dedicated thread is created automatically.' : 'নতুন অর্ডার তৈরি হলে সংশ্লিষ্ট পার্টির সাথে আলোচনা থ্রেড এখানে স্বয়ংক্রিয়ভাবে যুক্ত হবে।')}
           </p>
         </div>
       ) : (
@@ -276,7 +279,7 @@ export const FactoryMessagesPage: React.FC = () => {
                 letterSpacing: '.06em',
               }}
             >
-              অর্ডার সংক্রান্ত থ্রেড
+              {language === 'en' ? 'Order Threads' : 'অর্ডার সংক্রান্ত থ্রেড'}
             </div>
             {visibleThreads.map((t) => {
               const last = t.msgs[t.msgs.length - 1];
@@ -325,7 +328,7 @@ export const FactoryMessagesPage: React.FC = () => {
                         textOverflow: 'ellipsis',
                       }}
                     >
-                      {isVendor ? 'রহমান নিটিং' : t.vName}
+                      {isVendor ? (language === 'en' ? 'Rahman Knitting' : 'রহমান নিটিং') : t.vName}
                     </b>
                     <span
                       className="mono small"
@@ -347,7 +350,7 @@ export const FactoryMessagesPage: React.FC = () => {
                         textOverflow: 'ellipsis',
                       }}
                     >
-                      {last?.txt || (last?.voice ? 'ভয়েস মেসেজ' : 'মেসেজ')}
+                      {last?.txt || (last?.voice ? (language === 'en' ? 'Voice note' : 'ভয়েস মেসেজ') : (language === 'en' ? 'Message' : 'মেসেজ'))}
                     </small>
                   </div>
                   {t.unread > 0 && (
@@ -372,8 +375,8 @@ export const FactoryMessagesPage: React.FC = () => {
             }}
           >
             <div style={{ paddingBottom: 8, borderBottom: '1px solid var(--line)', marginBottom: 8 }}>
-              <b style={{ display: 'block', fontSize: '.84rem' }}>কে লিখছেন</b>
-              <small style={{ color: 'var(--muted)' }}>রহমান নিটিং-এর টিম</small>
+              <b style={{ display: 'block', fontSize: '.84rem' }}>{language === 'en' ? 'Who is Typing' : 'কে লিখছেন'}</b>
+              <small style={{ color: 'var(--muted)' }}>{language === 'en' ? 'Factory Team' : 'রহমান নিটিং-এর টিম'}</small>
             </div>
             {facStaff.map((u, idx) => {
               const isOn = idx === currentUserIdx;
@@ -400,7 +403,7 @@ export const FactoryMessagesPage: React.FC = () => {
                   <span style={{ fontSize: '.84rem' }}>
                     <b style={{ display: 'block' }}>{u.name}</b>
                     <small style={{ color: 'var(--muted)', display: 'block' }}>
-                      {u.designation || 'স্টাফ'}
+                      {u.designation || (language === 'en' ? 'Staff' : 'স্টাফ')}
                     </small>
                   </span>
                 </label>
@@ -410,7 +413,9 @@ export const FactoryMessagesPage: React.FC = () => {
               className="small muted"
               style={{ fontSize: '.72rem', marginTop: 12, lineHeight: 1.4 }}
             >
-              যিনি নির্বাচিত হবেন, ভেন্ডর দেখবে তাঁর নাম ও পদবী।
+              {language === 'en'
+                ? 'The selected staff member will be shown as sender to the vendor.'
+                : 'যিনি নির্বাচিত হবেন, ভেন্ডর দেখবে তাঁর নাম ও পদবী।'}
             </p>
           </div>
         )}
@@ -438,7 +443,7 @@ export const FactoryMessagesPage: React.FC = () => {
           >
             <div>
               <b style={{ fontSize: '1.05rem' }}>
-                {isVendor ? 'রহমান নিটিং ইন্ডাস্ট্রিজ' : activeThread.vName}
+                {isVendor ? (language === 'en' ? 'Rahman Knitting Industries' : 'রহমান নিটিং ইন্ডাস্ট্রিজ') : activeThread.vName}
               </b>
               <div className="small muted">
                 <span className="mono">{activeThread.o}</span> ·{' '}
@@ -449,7 +454,7 @@ export const FactoryMessagesPage: React.FC = () => {
                   style={{ background: 'none', border: 0, color: 'var(--accent)', cursor: 'pointer', textDecoration: 'underline' }}
                   onClick={() => navigate(`/dashboard/orders/${activeThread.o}`)}
                 >
-                  অর্ডার দেখুন
+                  {language === 'en' ? 'View Order' : 'অর্ডার দেখুন'}
                 </button>
               </div>
             </div>
@@ -461,7 +466,7 @@ export const FactoryMessagesPage: React.FC = () => {
                 className="btn sm"
                 onClick={() =>
                   openCallModal({
-                    title: 'অডিও কল',
+                    title: language === 'en' ? 'Audio Call' : 'অডিও কল',
                     subtitle: `${activeThread.vName} · ${activeThread.o}`,
                     phone: '01711-234567',
                     whatsapp: '01711-234567',
@@ -469,14 +474,14 @@ export const FactoryMessagesPage: React.FC = () => {
                   })
                 }
               >
-                📞 কল
+                📞 {language === 'en' ? 'Call' : 'কল'}
               </button>
               <button
                 type="button"
                 className="btn sm pri"
                 onClick={() =>
                   openCallModal({
-                    title: 'ভিডিও কল · লাইভ ফ্লোর বা স্যাম্পল যাচাই',
+                    title: language === 'en' ? 'Video Call · Live Floor Inspection' : 'ভিডিও কল · লাইভ ফ্লোর বা স্যাম্পল যাচাই',
                     subtitle: `${activeThread.vName} · ${activeThread.o}`,
                     phone: '01711-234567',
                     whatsapp: '01711-234567',
@@ -484,7 +489,7 @@ export const FactoryMessagesPage: React.FC = () => {
                   })
                 }
               >
-                📹 ভিডিও
+                📹 {language === 'en' ? 'Video' : 'ভিডিও'}
               </button>
             </div>
           </div>
@@ -618,8 +623,8 @@ export const FactoryMessagesPage: React.FC = () => {
                 borderTop: '1px solid var(--line)',
               }}
             >
-              আপনি লিখছেন: <b>{activeStaff.name}</b> · {activeStaff.designation || 'মালিক'}
-              <span className="muted"> — ভেন্ডর দেখবে &quot;রহমান নিটিং / {activeStaff.name}&quot;</span>
+              {language === 'en' ? 'Replying as:' : 'আপনি লিখছেন:'} <b>{activeStaff.name}</b> · {activeStaff.designation || (language === 'en' ? 'Owner' : 'মালিক')}
+              <span className="muted"> — {language === 'en' ? `Vendor will see "Rahman Knitting / ${activeStaff.name}"` : `ভেন্ডর দেখবে "রহমান নিটিং / ${activeStaff.name}"`}</span>
             </div>
           )}
 
@@ -641,20 +646,20 @@ export const FactoryMessagesPage: React.FC = () => {
             <button
               type="button"
               className="btn sm"
-              title="ভয়েস রেকর্ড পাঠান"
+              title={language === 'en' ? 'Send voice message' : 'ভয়েস রেকর্ড পাঠান'}
               onClick={handleSendVoiceNote}
             >
               🎙️
             </button>
             <input
               type="text"
-              placeholder="মেসেজ লিখুন..."
+              placeholder={language === 'en' ? 'Type a message...' : 'মেসেজ লিখুন...'}
               style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--line)' }}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
             />
             <button type="submit" className="btn pri sm">
-              পাঠান
+              {language === 'en' ? 'Send' : 'পাঠান'}
             </button>
           </form>
         </div>

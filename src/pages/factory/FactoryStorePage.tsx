@@ -33,6 +33,9 @@ export const FactoryStorePage: React.FC = () => {
     addStoreItem,
     machines,
     addToast,
+    t,
+    language,
+    tkSymbol,
   } = useApp();
 
   // Loading state
@@ -282,10 +285,11 @@ export const FactoryStorePage: React.FC = () => {
       {/* Header */}
       <div className="head">
         <div>
-          <h2>স্টোর ও স্পেয়ার পার্টস</h2>
+          <h2>{t('স্টোর ও স্পেয়ার পার্টস')}</h2>
           <p>
-            নিডল, সিংকার, অয়েল আর পার্টসের স্টক। কোন মেশিনে কী গেল তার হিসাব। স্টক কমলে এক চাপে সাপ্লায়ারদের কাছে
-            কোটেশন চান।
+            {t(
+              'নিডল, সিংকার, অয়েল আর পার্টসের স্টক। কোন মেশিনে কী গেল তার হিসাব। স্টক কমলে এক চাপে সাপ্লায়ারদের কাছে কোটেশন চান।'
+            )}
           </p>
         </div>
         <button
@@ -296,74 +300,74 @@ export const FactoryStorePage: React.FC = () => {
             setStForm(null);
           }}
         >
-          {showNewItem ? '✕ বন্ধ করুন' : '+ নতুন আইটেম'}
+          {showNewItem ? t('✕ বন্ধ করুন') : t('+ নতুন আইটেম')}
         </button>
       </div>
 
       {/* New Item Form */}
       {showNewItem && (
         <form className="card" onSubmit={handleCreateNewItem} noValidate style={{ margin: '14px 0' }}>
-          <h3>নতুন স্টোর আইটেম যোগ করুন</h3>
+          <h3>{t('নতুন স্টোর আইটেম যোগ করুন')}</h3>
           <div className="no-grid" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12 }}>
             <label className="no-f">
-              <span>আইটেমের নাম</span>
+              <span>{t('আইটেমের নাম')}</span>
               <input
-                placeholder="যেমন: নিডল Groz-Beckert 74.41"
+                placeholder={t('যেমন: নিডল Groz-Beckert 74.41')}
                 value={newItemName}
                 onChange={(e) => setNewItemName(e.target.value)}
               />
             </label>
 
             <label className="no-f">
-              <span>ক্যাটাগরি / ধরন</span>
+              <span>{t('ক্যাটাগরি / ধরন')}</span>
               <select value={newItemCategory} onChange={(e) => setNewItemCategory(e.target.value)}>
-                <option value="নিডল ও সিংকার">নিডল ও সিংকার</option>
-                <option value="নিটিং অয়েল">নিটিং অয়েল</option>
-                <option value="স্পেয়ার পার্টস">স্পেয়ার পার্টস</option>
-                <option value="ইলেকট্রিক গুডস">ইলেকট্রিক গুডস</option>
+                <option value="নিডল ও সিংকার">{t('নিডল ও সিংকার')}</option>
+                <option value="নিটিং অয়েল">{t('নিটিং অয়েল')}</option>
+                <option value="স্পেয়ার পার্টস">{t('স্পেয়ার পার্টস')}</option>
+                <option value="ইলেকট্রিক গুডস">{t('ইলেকট্রিক গুডস')}</option>
               </select>
             </label>
 
             <label className="no-f">
-              <span>একক (Unit)</span>
+              <span>{t('একক (Unit)')}</span>
               <select value={newItemUnit} onChange={(e) => setNewItemUnit(e.target.value)}>
-                <option value="পিস">পিস</option>
-                <option value="সেট">সেট</option>
-                <option value="ক্যান">ক্যান</option>
-                <option value="লিটার">লিটার</option>
-                <option value="কেজি">কেজি</option>
+                <option value="পিস">{t('পিস')}</option>
+                <option value="সেট">{t('সেট')}</option>
+                <option value="ক্যান">{t('ক্যান')}</option>
+                <option value="লিটার">{t('লিটার')}</option>
+                <option value="কেজি">{t('কেজি')}</option>
               </select>
             </label>
 
             <label className="no-f">
-              <span>প্রাথমিক স্টক</span>
+              <span>{t('প্রাথমিক স্টক')}</span>
               <input
                 type="number"
                 min="0"
-                placeholder="যেমন: 500"
+                placeholder={t('যেমন: 500')}
                 value={newItemStock}
                 onChange={(e) => setNewItemStock(e.target.value)}
               />
             </label>
 
             <label className="no-f">
-              <span>ন্যূনতম স্টক (ওয়ার্নিং লেভেল)</span>
+              <span>{t('ন্যূনতম স্টক (ওয়ার্নিং লেভেল)')}</span>
               <input
                 type="number"
                 min="0"
-                placeholder="যেমন: 200"
+                placeholder={t('যেমন: 200')}
                 value={newItemMin}
                 onChange={(e) => setNewItemMin(e.target.value)}
               />
             </label>
 
             <label className="no-f">
-              <span>একক মূল্য (৳)</span>
+              <span>{language === 'en' ? `Unit Price (${tkSymbol})` : 'একক মূল্য (৳)'}</span>
               <input
                 type="number"
                 min="0"
                 step="0.5"
-                placeholder="যেমন: 45"
+                placeholder={t('যেমন: 45')}
                 value={newItemPrice}
                 onChange={(e) => setNewItemPrice(e.target.value)}
               />
@@ -372,10 +376,10 @@ export const FactoryStorePage: React.FC = () => {
 
           <div className="row" style={{ marginTop: 14, gap: 10 }}>
             <button className="btn pri" type="submit">
-              আইটেম সেভ করুন
+              {t('আইটেম সেভ করুন')}
             </button>
             <button className="btn" type="button" onClick={() => setShowNewItem(false)}>
-              বাতিল
+              {t('বাতিল')}
             </button>
           </div>
         </form>
@@ -384,20 +388,20 @@ export const FactoryStorePage: React.FC = () => {
       {/* 4 KPIs */}
       <div className="kpis">
         <div className="kpi">
-          <span>মোট আইটেম</span>
-          <b>{items.length}</b>
+          <span>{t('মোট আইটেম')}</span>
+          <b>{bnNum(items.length)}</b>
         </div>
         <div className="kpi" style={{ borderColor: lowStockItems.length ? 'var(--bad)' : 'inherit' }}>
-          <span>স্টক কম</span>
-          <b style={{ color: lowStockItems.length ? 'var(--bad)' : 'inherit' }}>{lowStockItems.length}</b>
+          <span>{t('স্টক কম')}</span>
+          <b style={{ color: lowStockItems.length ? 'var(--bad)' : 'inherit' }}>{bnNum(lowStockItems.length)}</b>
         </div>
         <div className="kpi">
-          <span>স্টকের দাম</span>
-          <b>৳ {bnNum(totalStockVal)}</b>
+          <span>{t('স্টকের দাম')}</span>
+          <b>{tkSymbol} {bnNum(totalStockVal)}</b>
         </div>
         <div className="kpi">
-          <span>এ সপ্তাহে নিডল গেছে</span>
-          <b>{bnNum(totalNeedlesWeek)} পিস</b>
+          <span>{t('এ সপ্তাহে নিডল গেছে')}</span>
+          <b>{bnNum(totalNeedlesWeek)} {language === 'en' ? 'Pcs' : 'পিস'}</b>
         </div>
       </div>
 
@@ -405,24 +409,24 @@ export const FactoryStorePage: React.FC = () => {
       {stForm && activeFormItem && (
         <form className="card" id="stf" onSubmit={handleFormSubmit} noValidate style={{ margin: '14px 0' }}>
           <h3>
-            {stForm.t === 'in' ? 'স্টকে যোগ' : 'মেশিনে দিন'} · {activeFormItem.name}
+            {stForm.t === 'in' ? t('স্টকে যোগ') : t('মেশিনে দিন')} · {activeFormItem.name}
           </h3>
           <div className="no-grid" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12 }}>
             <label className="no-f">
-              <span>পরিমাণ ({activeFormItem.unit})</span>
+              <span>{t('পরিমাণ')} ({t(activeFormItem.unit)})</span>
               <input
                 id="stQ"
                 inputMode="numeric"
                 value={stQ}
                 onChange={(e) => setStQ(e.target.value)}
-                placeholder={`যেমন: ${stForm.t === 'out' ? '20' : '100'}`}
+                placeholder={`${language === 'en' ? 'e.g.' : 'যেমন:'} ${stForm.t === 'out' ? '20' : '100'}`}
               />
             </label>
 
             {stForm.t === 'in' ? (
               <>
                 <label className="no-f">
-                  <span>দাম (প্রতি একক, ৳)</span>
+                  <span>{language === 'en' ? `Price (per unit, ${tkSymbol})` : 'দাম (প্রতি একক, ৳)'}</span>
                   <input
                     id="stP"
                     inputMode="decimal"
@@ -432,10 +436,10 @@ export const FactoryStorePage: React.FC = () => {
                   />
                 </label>
                 <label className="no-f">
-                  <span>সাপ্লায়ার</span>
+                  <span>{t('সাপ্লায়ার')}</span>
                   <input
                     id="stS"
-                    placeholder="যেমন: নিডল ও স্পেয়ার সাপ্লায়ার"
+                    placeholder={t('যেমন: নিডল ও স্পেয়ার সাপ্লায়ার')}
                     value={stS}
                     onChange={(e) => setStS(e.target.value)}
                   />
@@ -444,22 +448,22 @@ export const FactoryStorePage: React.FC = () => {
             ) : (
               <>
                 <label className="no-f">
-                  <span>মেশিন</span>
+                  <span>{t('মেশিন')}</span>
                   <SearchableSelect
                     value={stM}
                     onChange={(val) => setStM(val)}
                     options={[
                       ...machineList.map((m) => ({ value: m, label: m })),
-                      { value: 'সব মেশিন', label: 'সব মেশিন' },
+                      { value: 'সব মেশিন', label: t('সব মেশিন') },
                     ]}
-                    searchPlaceholder="মেশিন খুঁজুন..."
+                    searchPlaceholder={t('মেশিন খুঁজুন...')}
                   />
                 </label>
                 <label className="no-f">
-                  <span>কে নিল</span>
+                  <span>{t('কে নিল')}</span>
                   <input
                     value={stB}
-                    placeholder="কর্মকর্তার নাম"
+                    placeholder={t('কর্মকর্তার নাম')}
                     onChange={(e) => setStB(e.target.value)}
                   />
                 </label>
@@ -469,10 +473,10 @@ export const FactoryStorePage: React.FC = () => {
 
           <div className="row" style={{ marginTop: 14 }}>
             <button className="btn pri" type="submit">
-              সেভ করুন
+              {t('সেভ করুন')}
             </button>
             <button className="btn" type="button" onClick={() => setStForm(null)}>
-              বাতিল
+              {t('বাতিল')}
             </button>
           </div>
         </form>
@@ -484,7 +488,7 @@ export const FactoryStorePage: React.FC = () => {
           className={stCat === 'all' ? 'on' : ''}
           onClick={() => setStCat('all')}
         >
-          সব
+          {t('সব')}
         </button>
         {categories.map((c) => (
           <button
@@ -492,7 +496,7 @@ export const FactoryStorePage: React.FC = () => {
             className={stCat === c ? 'on' : ''}
             onClick={() => setStCat(c)}
           >
-            {c}
+            {t(c)}
           </button>
         ))}
       </div>
@@ -502,12 +506,12 @@ export const FactoryStorePage: React.FC = () => {
         <table>
           <thead>
             <tr>
-              <th>আইটেম</th>
-              <th>ধরন</th>
-              <th className="n">স্টক</th>
-              <th className="n">ন্যূনতম</th>
-              <th className="n">দাম</th>
-              <th>অবস্থা</th>
+              <th>{t('আইটেম')}</th>
+              <th>{t('ধরন')}</th>
+              <th className="n">{t('স্টক')}</th>
+              <th className="n">{t('ন্যূনতম')}</th>
+              <th className="n">{t('দাম')}</th>
+              <th>{t('অবস্থা')}</th>
               <th></th>
             </tr>
           </thead>
@@ -522,17 +526,17 @@ export const FactoryStorePage: React.FC = () => {
                     <td>
                       <b>{x.name}</b>
                     </td>
-                    <td className="small">{x.cat}</td>
+                    <td className="small">{t(x.cat)}</td>
                     <td className="n" style={{ color: isLow ? 'var(--bad)' : 'inherit' }}>
-                      <b>{bnNum(x.stock)}</b> {x.unit}
+                      <b>{bnNum(x.stock)}</b> {t(x.unit)}
                     </td>
                     <td className="n">{bnNum(x.min)}</td>
-                    <td className="n">৳{bnNum(x.price)}</td>
+                    <td className="n">{tkSymbol}{bnNum(x.price)}</td>
                     <td>
                       {isLow ? (
-                        <span className="pill p-bad">কম</span>
+                        <span className="pill p-bad">{t('কম')}</span>
                       ) : (
-                        <span className="pill p-ok">ঠিক আছে</span>
+                        <span className="pill p-ok">{t('ঠিক আছে')}</span>
                       )}
                     </td>
                     <td>
@@ -545,7 +549,7 @@ export const FactoryStorePage: React.FC = () => {
                             setShowNewItem(false);
                           }}
                         >
-                          মেশিনে দিন
+                          {t('মেশিনে দিন')}
                         </button>
                         <button
                           className="btn sm"
@@ -556,17 +560,17 @@ export const FactoryStorePage: React.FC = () => {
                             setShowNewItem(false);
                           }}
                         >
-                          স্টকে যোগ
+                          {t('স্টকে যোগ')}
                         </button>
                         {isLow &&
                           (hasRfq ? (
-                            <span className="pill p-acc">কোটেশন চাওয়া হয়েছে</span>
+                            <span className="pill p-acc">{t('কোটেশন চাওয়া হয়েছে')}</span>
                           ) : (
                             <button
                               className="btn sm pri"
                               onClick={() => handleRfq(x.id)}
                             >
-                              কোটেশন চান
+                              {t('কোটেশন চান')}
                             </button>
                           ))}
                       </div>
@@ -577,7 +581,7 @@ export const FactoryStorePage: React.FC = () => {
             ) : (
               <tr>
                 <td colSpan={7} className="muted" style={{ textAlign: 'center', padding: '24px 0' }}>
-                  এই ক্যাটাগরিতে কোনো স্টোর আইটেম পাওয়া যায়নি
+                  {t('এই ক্যাটাগরিতে কোনো স্টোর আইটেম পাওয়া যায়নি')}
                 </td>
               </tr>
             )}
@@ -588,16 +592,16 @@ export const FactoryStorePage: React.FC = () => {
       {/* Grid: Recent Issue Logs & Needles per Machine */}
       <div className="grid g2" style={{ marginTop: 18 }}>
         <div className="card">
-          <h3>সাম্প্রতিক খরচ</h3>
+          <h3>{t('সাম্প্রতিক খরচ')}</h3>
           <div className="tw">
             <table>
               <thead>
                 <tr>
-                  <th>তারিখ</th>
-                  <th>আইটেম</th>
-                  <th>মেশিন</th>
-                  <th className="n">পরিমাণ</th>
-                  <th>নিয়েছে</th>
+                  <th>{t('তারিখ')}</th>
+                  <th>{t('আইটেম')}</th>
+                  <th>{t('মেশিন')}</th>
+                  <th className="n">{t('পরিমাণ')}</th>
+                  <th>{t('নিয়েছে')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -610,7 +614,7 @@ export const FactoryStorePage: React.FC = () => {
                         <td className="small">{item?.name || l.id}</td>
                         <td className="mono">{l.m}</td>
                         <td className="n">
-                          {l.q} {item?.unit || 'পিস'}
+                          {bnNum(l.q)} {item ? t(item.unit) : (language === 'en' ? 'Pcs' : 'পিস')}
                         </td>
                         <td>{l.by}</td>
                       </tr>
@@ -619,7 +623,7 @@ export const FactoryStorePage: React.FC = () => {
                 ) : (
                   <tr>
                     <td colSpan={5} className="muted" style={{ textAlign: 'center', padding: '16px 0' }}>
-                      এখনো কোনো খরচের লগ নেই
+                      {t('এখনো কোনো খরচের লগ নেই')}
                     </td>
                   </tr>
                 )}
@@ -629,7 +633,7 @@ export const FactoryStorePage: React.FC = () => {
         </div>
 
         <div className="card">
-          <h3>মেশিন অনুযায়ী নিডল খরচ</h3>
+          <h3>{t('মেশিন অনুযায়ী নিডল খরচ')}</h3>
           {Object.entries(needlesPerMachine).length ? (
             Object.entries(needlesPerMachine)
               .sort((a, b) => b[1] - a[1])
@@ -646,17 +650,17 @@ export const FactoryStorePage: React.FC = () => {
                     <i style={{ width: `${(q / maxNeedlesPerMachine) * 100}%` }} />
                   </div>
                   <span className="mono small" style={{ width: 70, textAlign: 'right' }}>
-                    {q} পিস
+                    {bnNum(q)} {language === 'en' ? 'Pcs' : 'পিস'}
                   </span>
                 </div>
               ))
           ) : (
             <p className="small muted" style={{ textAlign: 'center', padding: '16px 0' }}>
-              এখনো কোনো মেশিনে নিডল ইস্যু করা হয়নি
+              {t('এখনো কোনো মেশিনে নিডল ইস্যু করা হয়নি')}
             </p>
           )}
           <p className="small muted" style={{ marginTop: 12 }}>
-            কোনো মেশিনে বেশি নিডল ভাঙলে মেশিনটা মেকানিক দিয়ে দেখানো ভালো।
+            {t('কোনো মেশিনে বেশি নিডল ভাঙলে মেশিনটা মেকানিক দিয়ে দেখানো ভালো।')}
           </p>
         </div>
       </div>

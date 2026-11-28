@@ -17,7 +17,7 @@ export const PrintDialog: React.FC<PrintDialogProps> = ({
   documentType,
   data,
 }) => {
-  const { factoryProfile } = useApp();
+  const { factoryProfile, t, language, tkSymbol } = useApp();
 
   if (!isOpen || !data) return null;
 
@@ -37,11 +37,11 @@ export const PrintDialog: React.FC<PrintDialogProps> = ({
           <div style={{ display: 'flex', gap: 10 }}>
             <button onClick={handlePrint} className="btn btn-primary btn-sm">
               <Printer size={16} />
-              <span>প্রিন্ট করুন</span>
+              <span>{t('প্রিন্ট করুন')}</span>
             </button>
             <button onClick={onClose} className="btn btn-secondary btn-sm">
               <X size={16} />
-              <span>বন্ধ করুন</span>
+              <span>{t('বন্ধ করুন')}</span>
             </button>
           </div>
         </div>
@@ -61,22 +61,22 @@ export const PrintDialog: React.FC<PrintDialogProps> = ({
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '2px solid #0f172a', paddingBottom: 16, marginBottom: 20 }}>
             <div>
-              <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0d6e4f' }}>{factoryProfile?.name || 'রহমান নিটিং ইন্ডাস্ট্রিজ'}</h1>
-              <p style={{ fontSize: 13, color: '#475569' }}>{factoryProfile?.address || factoryProfile?.area || 'কোনাবাড়ি, গাজীপুর'}{factoryProfile?.phone ? ` · ফোন: ${factoryProfile.phone}` : ''}</p>
-              <p style={{ fontSize: 12, color: '#64748b' }}>{factoryProfile?.email ? `ই-মেইল: ${factoryProfile.email} · ` : ''}BIN: {factoryProfile?.bin || '001234567-0101'}</p>
+              <h1 style={{ fontSize: 22, fontWeight: 800, color: '#0d6e4f' }}>{factoryProfile?.name || (language === 'en' ? 'Rahman Knitting Industries' : 'রহমান নিটিং ইন্ডাস্ট্রিজ')}</h1>
+              <p style={{ fontSize: 13, color: '#475569' }}>{factoryProfile?.address || factoryProfile?.area || (language === 'en' ? 'Konabari, Gazipur' : 'কোনাবাড়ি, গাজীপুর')}{factoryProfile?.phone ? ` · ${language === 'en' ? 'Phone:' : 'ফোন:'} ${factoryProfile.phone}` : ''}</p>
+              <p style={{ fontSize: 12, color: '#64748b' }}>{factoryProfile?.email ? `${language === 'en' ? 'Email:' : 'ই-মেইল:'} ${factoryProfile.email} · ` : ''}BIN: {factoryProfile?.bin || '001234567-0101'}</p>
             </div>
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: 16, fontWeight: 800, textTransform: 'uppercase', color: '#0f172a' }}>
-                {documentType === 'challan' && 'ডেলিভারি চালান (Gate Pass)'}
-                {documentType === 'bill' && 'সাব-কন্ট্রাক্ট নিটিং বিল (Tax Invoice)'}
-                {documentType === 'jobcard' && (data.rows ? 'সুতা ব্যালেন্স বিবরণী' : 'ফ্যাক্টরি প্রোডাকশন জব কার্ড')}
-                {documentType === 'qcreport' && '৪-পয়েন্ট ফ্যাব্রিক QC সার্টিফিকেট'}
-                {documentType === 'rolltag' && 'বারকোড রোল ট্যাগ (Roll Label)'}
+                {documentType === 'challan' && t('ডেলিভারি চালান (Gate Pass)')}
+                {documentType === 'bill' && t('সাব-কন্ট্রাক্ট নিটিং বিল (Tax Invoice)')}
+                {documentType === 'jobcard' && (data.rows ? t('সুতা ব্যালেন্স বিবরণী') : t('ফ্যাক্টরি প্রোডাকশন জব কার্ড'))}
+                {documentType === 'qcreport' && t('৪-পয়েন্ট ফ্যাব্রিক QC সার্টিফিকেট')}
+                {documentType === 'rolltag' && t('বারকোড রোল ট্যাগ (Roll Label)')}
               </div>
               <div style={{ fontSize: 13, fontWeight: 600, color: '#c85a14', marginTop: 4 }}>
-                নং: {data.no || data.id || data.rollId || 'N/A'}
+                {t('নং')}: {data.no || data.id || data.rollId || 'N/A'}
               </div>
-              <div style={{ fontSize: 12, color: '#64748b' }}>তারিখ: {data.date || new Date().toLocaleDateString('bn-BD')}</div>
+              <div style={{ fontSize: 12, color: '#64748b' }}>{t('তারিখ')}: {data.date || new Date().toLocaleDateString(language === 'en' ? 'en-US' : 'bn-BD')}</div>
             </div>
           </div>
 
@@ -87,16 +87,16 @@ export const PrintDialog: React.FC<PrintDialogProps> = ({
                 <table style={{ width: '100%', marginBottom: 16, borderCollapse: 'collapse' }}>
                   <tbody>
                     <tr>
-                      <td style={{ padding: '6px 0', width: '50%' }}><strong>প্রাপক / বায়ার:</strong> {data.party}</td>
-                      <td style={{ padding: '6px 0', width: '50%' }}><strong>ওয়ার্ক অর্ডার নং:</strong> {data.orderId}</td>
+                      <td style={{ padding: '6px 0', width: '50%' }}><strong>{t('প্রাপক / বায়ার')}:</strong> {data.party}</td>
+                      <td style={{ padding: '6px 0', width: '50%' }}><strong>{t('ওয়ার্ক অর্ডার নং')}:</strong> {data.orderId}</td>
                     </tr>
                     <tr>
-                      <td style={{ padding: '6px 0' }}><strong>গাড়ি নম্বর:</strong> {data.vehicle}</td>
-                      <td style={{ padding: '6px 0' }}><strong>ড্রাইভার:</strong> {data.driver} ({data.driverPhone})</td>
+                      <td style={{ padding: '6px 0' }}><strong>{t('গাড়ি নম্বর')}:</strong> {data.vehicle}</td>
+                      <td style={{ padding: '6px 0' }}><strong>{t('ড্রাইভার')}:</strong> {data.driver} ({data.driverPhone})</td>
                     </tr>
                     <tr>
-                      <td style={{ padding: '6px 0' }}><strong>গেট পাস রেফারেন্স:</strong> {data.gatePass}</td>
-                      <td style={{ padding: '6px 0' }}><strong>অবস্থা:</strong> {data.status}</td>
+                      <td style={{ padding: '6px 0' }}><strong>{t('গেট পাস রেফারেন্স')}:</strong> {data.gatePass}</td>
+                      <td style={{ padding: '6px 0' }}><strong>{t('অবস্থা')}:</strong> {data.status}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -106,10 +106,10 @@ export const PrintDialog: React.FC<PrintDialogProps> = ({
                     <thead>
                       <tr style={{ background: '#f1f5f9' }}>
                         <th>#</th>
-                        <th>রোল নম্বর</th>
-                        <th>মেশিন</th>
-                        <th>সুতা লট</th>
-                        <th style={{ textAlign: 'right' }}>ওজন (কেজি)</th>
+                        <th>{t('রোল নম্বর')}</th>
+                        <th>{t('মেশিন')}</th>
+                        <th>{t('সুতা লট')}</th>
+                        <th style={{ textAlign: 'right' }}>{t('ওজন (কেজি)')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -123,8 +123,8 @@ export const PrintDialog: React.FC<PrintDialogProps> = ({
                         </tr>
                       ))}
                       <tr style={{ fontWeight: 'bold', background: '#f8fafc' }}>
-                        <td colSpan={4}>মোট {data.rolls || data.rollItems.length} রোল</td>
-                        <td style={{ textAlign: 'right' }}>{data.netKg || data.grossKg} কেজি</td>
+                        <td colSpan={4}>{language === 'en' ? `Total ${data.rolls || data.rollItems.length} Rolls` : `মোট ${data.rolls || data.rollItems.length} রোল`}</td>
+                        <td style={{ textAlign: 'right' }}>{data.netKg || data.grossKg} {language === 'en' ? 'kg' : 'কেজি'}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -132,20 +132,20 @@ export const PrintDialog: React.FC<PrintDialogProps> = ({
                   <table className="data-table" style={{ width: '100%', border: '1px solid #cbd5e1' }}>
                     <thead>
                       <tr style={{ background: '#f1f5f9' }}>
-                        <th>আইটেম ও কাপড়ের বিবরণ</th>
-                        <th>ডায়া ও গেজ</th>
-                        <th>রোল সংখ্যা</th>
-                        <th>গ্রস ওজন (কেজি)</th>
-                        <th>নেট ওজন (কেজি)</th>
+                        <th>{t('আইটেম ও কাপড়ের বিবরণ')}</th>
+                        <th>{t('ডায়া ও গেজ')}</th>
+                        <th>{t('রোল সংখ্যা')}</th>
+                        <th>{t('গ্রস ওজন (কেজি)')}</th>
+                        <th>{t('নেট ওজন (কেজি)')}</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr>
                         <td>{data.fabric}</td>
                         <td>{data.dia}</td>
-                        <td>{data.rolls} টি</td>
-                        <td>{data.grossKg} কেজি</td>
-                        <td><strong>{data.netKg} কেজি</strong></td>
+                        <td>{data.rolls} {language === 'en' ? 'Rolls' : 'টি'}</td>
+                        <td>{data.grossKg} {language === 'en' ? 'kg' : 'কেজি'}</td>
+                        <td><strong>{data.netKg} {language === 'en' ? 'kg' : 'কেজি'}</strong></td>
                       </tr>
                     </tbody>
                   </table>
@@ -158,12 +158,12 @@ export const PrintDialog: React.FC<PrintDialogProps> = ({
                 <table style={{ width: '100%', marginBottom: 16, borderCollapse: 'collapse' }}>
                   <tbody>
                     <tr>
-                      <td style={{ padding: '6px 0', width: '50%' }}><strong>বিল প্রাপক:</strong> {data.party}</td>
-                      <td style={{ padding: '6px 0', width: '50%' }}><strong>অর্ডার রেফারেন্স:</strong> {data.orderId}</td>
+                      <td style={{ padding: '6px 0', width: '50%' }}><strong>{t('বিল প্রাপক')}:</strong> {data.party}</td>
+                      <td style={{ padding: '6px 0', width: '50%' }}><strong>{t('অর্ডার রেফারেন্স')}:</strong> {data.orderId}</td>
                     </tr>
                     <tr>
-                      <td style={{ padding: '6px 0' }}><strong>বিল ইস্যুর তারিখ:</strong> {data.date}</td>
-                      <td style={{ padding: '6px 0' }}><strong>পরিশোধের শেষ তারিখ:</strong> {data.dueDate}</td>
+                      <td style={{ padding: '6px 0' }}><strong>{t('বিল ইস্যুর তারিখ')}:</strong> {data.date}</td>
+                      <td style={{ padding: '6px 0' }}><strong>{t('পরিশোধের শেষ তারিখ')}:</strong> {data.dueDate}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -171,22 +171,22 @@ export const PrintDialog: React.FC<PrintDialogProps> = ({
                 <table className="data-table" style={{ width: '100%', border: '1px solid #cbd5e1', marginBottom: 16 }}>
                   <thead>
                     <tr style={{ background: '#f1f5f9' }}>
-                      <th>বিবরণ</th>
-                      <th>মোট বিল (টাকা)</th>
-                      <th>ছাড় (টাকা)</th>
-                      <th>অগ্রিম সমন্বয়</th>
-                      <th>পরিশোধিত</th>
-                      <th>অবশিষ্ট বকেয়া</th>
+                      <th>{t('বিবরণ')}</th>
+                      <th>{t('মোট বিল (টাকা)')}</th>
+                      <th>{t('ছাড় (টাকা)')}</th>
+                      <th>{t('অগ্রিম সমন্বয়')}</th>
+                      <th>{t('পরিশোধিত')}</th>
+                      <th>{t('অবশিষ্ট বকেয়া')}</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td>নিটিং সাব-কন্ট্রাক্ট চার্জ ({data.orderId})</td>
-                      <td>৳ {data.grossAmt?.toLocaleString('en-IN')}</td>
-                      <td>৳ {data.discount?.toLocaleString('en-IN') || 0}</td>
-                      <td>৳ {data.advance?.toLocaleString('en-IN') || 0}</td>
-                      <td>৳ {data.paidAmt?.toLocaleString('en-IN') || 0}</td>
-                      <td><strong>৳ {(data.grossAmt - (data.discount || 0) - (data.paidAmt || 0))?.toLocaleString('en-IN')}</strong></td>
+                      <td>{language === 'en' ? `Knitting Sub-contract Charge (${data.orderId})` : `নিটিং সাব-কন্ট্রাক্ট চার্জ (${data.orderId})`}</td>
+                      <td>{tkSymbol} {data.grossAmt?.toLocaleString('en-IN')}</td>
+                      <td>{tkSymbol} {data.discount?.toLocaleString('en-IN') || 0}</td>
+                      <td>{tkSymbol} {data.advance?.toLocaleString('en-IN') || 0}</td>
+                      <td>{tkSymbol} {data.paidAmt?.toLocaleString('en-IN') || 0}</td>
+                      <td><strong>{tkSymbol} {(data.grossAmt - (data.discount || 0) - (data.paidAmt || 0))?.toLocaleString('en-IN')}</strong></td>
                     </tr>
                   </tbody>
                 </table>
@@ -196,21 +196,21 @@ export const PrintDialog: React.FC<PrintDialogProps> = ({
             {(documentType === 'jobcard' || (data.rows && Array.isArray(data.rows))) && (
               <div>
                 <h4 style={{ margin: '0 0 10px', fontSize: 16, fontWeight: 700, color: '#0f172a' }}>
-                  সুতা ব্যালেন্স ও খরচ বিবরণী
+                  {t('সুতা ব্যালেন্স ও খরচ বিবরণী')}
                 </h4>
                 <table className="data-table" style={{ width: '100%', border: '1px solid #cbd5e1', fontSize: 12 }}>
                   <thead>
                     <tr style={{ background: '#f1f5f9' }}>
                       <th>#</th>
-                      <th>অর্ডার</th>
-                      <th>কাউন্ট</th>
-                      <th>স্পিনার</th>
-                      <th>লট</th>
-                      <th style={{ textAlign: 'right' }}>এসেছে (কেজি)</th>
-                      <th style={{ textAlign: 'right' }}>নিট (কেজি)</th>
-                      <th style={{ textAlign: 'right' }}>খরচ (কেজি)</th>
-                      <th style={{ textAlign: 'right' }}>ফেরত (কেজি)</th>
-                      <th style={{ textAlign: 'right' }}>স্টক ব্যালেন্স</th>
+                      <th>{t('অর্ডার')}</th>
+                      <th>{t('কাউন্ট')}</th>
+                      <th>{t('স্পিনার')}</th>
+                      <th>{t('লট')}</th>
+                      <th style={{ textAlign: 'right' }}>{t('এসেছে (কেজি)')}</th>
+                      <th style={{ textAlign: 'right' }}>{t('নিট (কেজি)')}</th>
+                      <th style={{ textAlign: 'right' }}>{t('খরচ (কেজি)')}</th>
+                      <th style={{ textAlign: 'right' }}>{t('ফেরত (কেজি)')}</th>
+                      <th style={{ textAlign: 'right' }}>{t('স্টক ব্যালেন্স')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -231,7 +231,7 @@ export const PrintDialog: React.FC<PrintDialogProps> = ({
                       </tr>
                     ))}
                     <tr style={{ fontWeight: 800, background: '#f8fafc' }}>
-                      <td colSpan={5}>মোট ({data.rows.length} লট)</td>
+                      <td colSpan={5}>{language === 'en' ? `Total (${data.rows.length} Lots)` : `মোট (${data.rows.length} লট)`}</td>
                       <td style={{ textAlign: 'right' }}>
                         {data.rows.reduce((a: number, r: any) => a + (Number(r.recv) || 0), 0)?.toLocaleString('en-IN')}
                       </td>
@@ -257,13 +257,13 @@ export const PrintDialog: React.FC<PrintDialogProps> = ({
           {/* Signatures */}
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 40, paddingTop: 30, borderTop: '1px dashed #cbd5e1', fontSize: 13 }}>
             <div style={{ textAlign: 'center', width: 140 }}>
-              <div style={{ borderTop: '1px solid #0f172a', paddingTop: 6 }}>প্রস্তুতকারী / স্টোর</div>
+              <div style={{ borderTop: '1px solid #0f172a', paddingTop: 6 }}>{t('প্রস্তুতকারী / স্টোর')}</div>
             </div>
             <div style={{ textAlign: 'center', width: 140 }}>
-              <div style={{ borderTop: '1px solid #0f172a', paddingTop: 6 }}>ফ্যাক্টরি ইনচার্জ</div>
+              <div style={{ borderTop: '1px solid #0f172a', paddingTop: 6 }}>{t('ফ্যাক্টরি ইনচার্জ')}</div>
             </div>
             <div style={{ textAlign: 'center', width: 140 }}>
-              <div style={{ borderTop: '1px solid #0f172a', paddingTop: 6 }}>গ্রহণকারী স্বাক্ষর ও সিল</div>
+              <div style={{ borderTop: '1px solid #0f172a', paddingTop: 6 }}>{t('গ্রহণকারী স্বাক্ষর ও সিল')}</div>
             </div>
           </div>
         </div>

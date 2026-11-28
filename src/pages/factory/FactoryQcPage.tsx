@@ -16,6 +16,13 @@ export const QC_ACT = [
   'সার্টিং করে ভালো অংশ নেওয়া হবে',
 ];
 
+export const getQcAct = (lang?: string) => [
+  lang === 'en' ? 'Will Re-knit' : 'রিনিট হবে',
+  lang === 'en' ? 'Reject — Will Scrap' : 'রিজেক্ট — বাদ যাবে',
+  lang === 'en' ? 'Accept with Discount' : 'ছাড় দিয়ে নেওয়া হবে (ডিসকাউন্ট)',
+  lang === 'en' ? 'Sort & Keep Good Parts' : 'সার্টিং করে ভালো অংশ নেওয়া হবে',
+];
+
 export const ISSUES = [
   { val: '', label: 'কোনো ফল্ট নেই' },
   { val: 'Hole', label: 'Hole (হোল)' },
@@ -60,17 +67,17 @@ export interface QcItem {
   act?: string;
 }
 
-export function qcState(q: QcItem) {
+export function qcState(q: QcItem, lang = 'bn') {
   const f = q.fac?.v;
   const v = q.ven?.v;
   if (f && v && f === v) {
     return f === 'ok'
-      ? { k: 'agree', s: 'ok', t: 'উভয় পক্ষ একমত · কাপড় ঠিক আছে' }
-      : { k: 'agree', s: 'bad', t: 'উভয় পক্ষ একমত · কাপড় খারাপ' + (q.act ? ' — ' + q.act : '') };
+      ? { k: 'agree', s: 'ok', t: (lang === 'en' ? 'Both sides agreed · Fabric OK' : 'উভয় পক্ষ একমত · কাপড় ঠিক আছে') }
+      : { k: 'agree', s: 'bad', t: (lang === 'en' ? 'Both sides agreed · Fabric Bad' + (q.act ? ' — ' + q.act : '') : 'উভয় পক্ষ একমত · কাপড় খারাপ' + (q.act ? ' — ' + q.act : '')) };
   }
-  if (f && v) return { k: 'dispute', s: 'bad', t: 'দ্বিমত · যৌথ পরিদর্শন দরকার' };
-  if (!f && !v) return { k: 'pend', s: 'warn', t: 'দুই পক্ষেরই মতামত বাকি' };
-  return { k: 'pend', s: 'warn', t: f ? 'ভেন্ডর QC-র মতামত বাকি' : 'ফ্যাক্টরি QC-র মতামত বাকি' };
+  if (f && v) return { k: 'dispute', s: 'bad', t: (lang === 'en' ? 'Dispute · Joint inspection needed' : 'দ্বিমত · যৌথ পরিদর্শন দরকার') };
+  if (!f && !v) return { k: 'pend', s: 'warn', t: (lang === 'en' ? 'Pending both sides review' : 'দুই পক্ষেরই মতামত বাকি') };
+  return { k: 'pend', s: 'warn', t: lang === 'en' ? (f ? 'Pending Vendor QC review' : 'Pending Factory QC review') : (f ? 'ভেন্ডর QC-র মতামত বাকি' : 'ফ্যাক্টরি QC-র মতামত বাকি') };
 }
 
 export const FactoryQcPage: React.FC = () => {
@@ -86,6 +93,8 @@ export const FactoryQcPage: React.FC = () => {
     signQcInspection,
     updateQcAction,
     addToast,
+    t,
+    language,
   } = useApp();
 
   const isVendorRole = (role as string) === 'vendor' || (role as string) === 'ven';
@@ -229,8 +238,8 @@ export const FactoryQcPage: React.FC = () => {
     () => allQcItems.filter(({ q }) => q[mySide]?.v && !q[theirSide]?.v),
     [allQcItems, mySide, theirSide]
   );
-  const disp = useMemo(() => allQcItems.filter(({ q }) => qcState(q).k === 'dispute'), [allQcItems]);
-  const agr = useMemo(() => allQcItems.filter(({ q }) => qcState(q).k === 'agree'), [allQcItems]);
+  const disp = useMemo(() => allQcItems.filter(({ q }) => qcState(q, language).k === 'dispute'), [allQcItems, language]);
+  const agr = useMemo(() => allQcItems.filter(({ q }) => qcState(q, language).k === 'agree'), [allQcItems, language]);
   const passCount = useMemo(() => agr.filter(({ q }) => q.fac?.v === 'ok' && q.ven?.v === 'ok').length, [agr]);
 
   // Filtered List
@@ -440,9 +449,9 @@ export const FactoryQcPage: React.FC = () => {
 
   // Helper render for sign pill
   const renderPill = (v: 'ok' | 'bad' | null | undefined) => {
-    if (v === 'ok') return <span className="pill p-ok">কাপড় ঠিক আছে</span>;
-    if (v === 'bad') return <span className="pill p-bad">কাপড় খারাপ</span>;
-    return <span className="pill p-idle">মতামত বাকি</span>;
+    if (v === 'ok') return <span className="pill p-ok">{language === 'en' ? 'Fabric OK' : 'কাপড় ঠিক আছে'}</span>;
+    if (v === 'bad') return <span className="pill p-bad">{language === 'en' ? 'Fabric Bad' : 'কাপড় খারাপ'}</span>;
+    return <span className="pill p-idle">{language === 'en' ? 'Pending Review' : 'মতামত বাকি'}</span>;
   };
 
   // Helper render for individual side (Factory or Vendor)
@@ -482,31 +491,31 @@ export const FactoryQcPage: React.FC = () => {
                 className="btn sm qok"
                 onClick={() => handleStartSign(q.id, 'ok', sideKey)}
               >
-                ✓ ঠিক আছে
+                {language === 'en' ? '✓ OK' : '✓ ঠিক আছে'}
               </button>
               <button
                 type="button"
                 className="btn sm qbad"
                 onClick={() => handleStartSign(q.id, 'bad', sideKey)}
               >
-                ✗ খারাপ
+                {language === 'en' ? '✗ Bad' : '✗ খারাপ'}
               </button>
             </div>
-            {s.v && <p className="small muted" style={{ margin: '4px 0 0' }}>আবার দেখে মত বদলাতে পারেন</p>}
+            {s.v && <p className="small muted" style={{ margin: '4px 0 0' }}>{language === 'en' ? 'You can re-inspect and change opinion' : 'আবার দেখে মত বদলাতে পারেন'}</p>}
           </>
         )}
 
         {/* Inline signature form */}
         {signing && (
           <div className="qs-form" style={{ marginTop: 8 }}>
-            <div className="small">আপনার মত: {renderPill(qcSignTarget.v)}</div>
+            <div className="small">{language === 'en' ? 'Your opinion: ' : 'আপনার মত: '}{renderPill(qcSignTarget.v)}</div>
             <label className="no-f" style={{ marginTop: 6 }}>
-              <span>মন্তব্য {qcSignTarget.v === 'bad' && <b className="req">*</b>}</span>
+              <span>{language === 'en' ? 'Remarks' : 'মন্তব্য'} {qcSignTarget.v === 'bad' && <b className="req">*</b>}</span>
               <input
                 type="text"
                 value={signNote}
                 onChange={(e) => setSignNote(e.target.value)}
-                placeholder={qcSignTarget.v === 'bad' ? 'কী সমস্যা দেখলেন — যেমন: ৩ জায়গায় হোল' : 'ঐচ্ছিক মন্তব্য'}
+                placeholder={qcSignTarget.v === 'bad' ? (language === 'en' ? 'What issues did you see — e.g., 3 holes' : 'কী সমস্যা দেখলেন — যেমন: ৩ জায়গায় হোল') : (language === 'en' ? 'Optional remarks' : 'ঐচ্ছিক মন্তব্য')}
                 style={{ width: '100%' }}
                 autoFocus
               />
@@ -528,7 +537,7 @@ export const FactoryQcPage: React.FC = () => {
                 onClick={handleConfirmSign}
                 disabled={submittingSign}
               >
-                {submittingSign ? 'সংরক্ষণ হচ্ছে...' : 'সাইন করে জমা দিন'}
+                {submittingSign ? (language === 'en' ? 'Saving...' : 'সংরক্ষণ হচ্ছে...') : (language === 'en' ? 'Sign & Submit' : 'সাইন করে জমা দিন')}
               </button>
               <button
                 type="button"
@@ -536,7 +545,7 @@ export const FactoryQcPage: React.FC = () => {
                 onClick={() => setQcSignTarget(null)}
                 disabled={submittingSign}
               >
-                বাতিল
+                {language === 'en' ? 'Cancel' : 'বাতিল'}
               </button>
             </div>
           </div>
@@ -550,16 +559,18 @@ export const FactoryQcPage: React.FC = () => {
       {/* Top Banner if Vendor Role */}
       {isVendorRole && (
         <div className="vbanner" style={{ marginBottom: 16 }}>
-          আপনি <b>{currentUser?.name || 'ভেন্ডর QC'}</b> হিসেবে দেখছেন। রহমান নিটিং-এ আপনাদের কাপড়ের সব QC রেকর্ড এখানে। ফ্যাক্টরি যা লেখে আপনিও তা-ই দেখেন।
+          {language === 'en'
+            ? <>Viewing as <b>{currentUser?.name || 'Vendor QC'}</b>. All QC records for your fabric appear here live.</>
+            : <>আপনি <b>{currentUser?.name || 'ভেন্ডর QC'}</b> হিসেবে দেখছেন। রহমান নিটিং-এ আপনাদের কাপড়ের সব QC রেকর্ড এখানে। ফ্যাক্টরি যা লেখে আপনিও তা-ই দেখেন।</>}
         </div>
       )}
 
       {/* Header */}
       <div className="head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h2 style={{ margin: 0 }}>QC ও কাপড়ের সমস্যা</h2>
+          <h2 style={{ margin: 0 }}>{t('QC ও কাপড়ের সমস্যা')}</h2>
           <p style={{ margin: '4px 0 0', color: 'var(--muted)' }}>
-            প্রতিটা রোলে ফ্যাক্টরি QC আর ভেন্ডর QC দুজনেই মত দেবেন ও সাইন করবেন। দুজন একমত হলে তবেই রেকর্ড চূড়ান্ত।
+            {language === 'en' ? 'Both factory QC and vendor QC inspect and sign each roll. The record is finalized once both agree.' : 'প্রতিটা রোলে ফ্যাক্টরি QC আর ভেন্ডর QC দুজনেই মত দেবেন ও সাইন করবেন। দুজন একমত হলে তবেই রেকর্ড চূড়ান্ত।'}
           </p>
         </div>
         <button
@@ -570,7 +581,7 @@ export const FactoryQcPage: React.FC = () => {
             setFormError('');
           }}
         >
-          {qcFormOpen ? '✕ বন্ধ করুন' : '+ QC এন্ট্রি / সমস্যা জানান'}
+          {qcFormOpen ? (language === 'en' ? '✕ Close' : '✕ বন্ধ করুন') : (language === 'en' ? '+ QC Entry / Report Defect' : '+ QC এন্ট্রি / সমস্যা জানান')}
         </button>
       </div>
 
@@ -578,28 +589,28 @@ export const FactoryQcPage: React.FC = () => {
       <div className="kpis" style={{ marginTop: 16 }}>
         {!isVendorRole && (
           <div className="kpi">
-            <span>মোট পরিদর্শন</span>
-            <b>{toBn(allQcItems.length)} রোল</b>
-            <i>উভয় পক্ষের পাস {toBn(passCount)}</i>
+            <span>{language === 'en' ? 'Total Inspected' : 'মোট পরিদর্শন'}</span>
+            <b>{toBn(allQcItems.length)} {language === 'en' ? 'rolls' : 'রোল'}</b>
+            <i>{language === 'en' ? 'Mutually passed ' : 'উভয় পক্ষের পাস '}{toBn(passCount)}</i>
           </div>
         )}
         <div className="kpi">
-          <span>আপনার সাইন বাকি</span>
+          <span>{language === 'en' ? 'Your Sign Pending' : 'আপনার সাইন বাকি'}</span>
           <b>{toBn(myPend.length)}</b>
         </div>
         <div className="kpi">
-          <span>{mySide === 'fac' ? 'ভেন্ডরের' : 'ফ্যাক্টরির'} সাইন বাকি</span>
+          <span>{language === 'en' ? (mySide === 'fac' ? 'Vendor Sign Pending' : 'Factory Sign Pending') : `${mySide === 'fac' ? 'ভেন্ডরের' : 'ফ্যাক্টরির'} সাইন বাকি`}</span>
           <b>{toBn(theirPend.length)}</b>
         </div>
         <div
           className="kpi"
           style={disp.length ? { borderColor: 'var(--bad)' } : undefined}
         >
-          <span>দ্বিমত</span>
+          <span>{language === 'en' ? 'Dispute' : 'দ্বিমত'}</span>
           <b style={disp.length ? { color: 'var(--bad)' } : undefined}>{toBn(disp.length)}</b>
         </div>
         <div className="kpi">
-          <span>উভয় পক্ষ একমত</span>
+          <span>{language === 'en' ? 'Both Agreed' : 'উভয় পক্ষ একমত'}</span>
           <b>{toBn(agr.length)}</b>
         </div>
       </div>
@@ -607,11 +618,11 @@ export const FactoryQcPage: React.FC = () => {
       {/* New QC Entry Expandable Form */}
       {qcFormOpen && (
         <form className="card" onSubmit={handleCreateQc} style={{ marginTop: 16 }}>
-          <h3 style={{ marginTop: 0 }}>নতুন QC এন্ট্রি</h3>
+          <h3 style={{ marginTop: 0 }}>{language === 'en' ? 'New QC Entry' : 'নতুন QC এন্ট্রি'}</h3>
           <div className="no-grid g3">
             {!isVendorRole && (
               <label className="no-f">
-                <span>ভেন্ডর</span>
+                <span>{language === 'en' ? 'Vendor' : 'ভেন্ডর'}</span>
                 <SearchableSelect
                   value={activeVendorCode}
                   onChange={(val) => {
@@ -623,13 +634,13 @@ export const FactoryQcPage: React.FC = () => {
                     value: v.code,
                     label: v.name,
                   }))}
-                  searchPlaceholder="ভেন্ডর খুঁজুন..."
+                  searchPlaceholder={language === 'en' ? 'Search vendor...' : 'ভেন্ডর খুঁজুন...'}
                 />
               </label>
             )}
 
             <label className="no-f">
-              <span>অর্ডার নং</span>
+              <span>{language === 'en' ? 'Order No.' : 'অর্ডার নং'}</span>
               <SearchableSelect
                 value={activeSelectedOrder ? ((activeSelectedOrder as any).id || (activeSelectedOrder as any).order_no) : ''}
                 onChange={(val) => {
@@ -643,12 +654,12 @@ export const FactoryQcPage: React.FC = () => {
                     label: `${id}${o.buyer ? ` · ${o.buyer}` : ''}`,
                   };
                 })}
-                searchPlaceholder="অর্ডার খুঁজুন..."
+                searchPlaceholder={language === 'en' ? 'Search order...' : 'অর্ডার খুঁজুন...'}
               />
             </label>
 
             <label className="no-f">
-              <span>অংশ (Placement)</span>
+              <span>{language === 'en' ? 'Part (Placement)' : 'অংশ (Placement)'}</span>
               <SearchableSelect
                 value={String(newPlIndex)}
                 onChange={(val) => setNewPlIndex(Number(val))}
@@ -656,46 +667,46 @@ export const FactoryQcPage: React.FC = () => {
                   value: String(i),
                   label: `${l.place || 'Body'} · ${l.fab || l.fabric || 'Single Jersey'}`,
                 }))}
-                searchPlaceholder="অংশ খুঁজুন..."
+                searchPlaceholder={language === 'en' ? 'Search part...' : 'অংশ খুঁজুন...'}
               />
             </label>
 
             <label className="no-f">
               <span>
-                রোল নং <b className="req">*</b>
+                {language === 'en' ? 'Roll No.' : 'রোল নং'} <b className="req">*</b>
               </span>
               <input
                 type="text"
                 value={newRollNo}
                 onChange={(e) => setNewRollNo(e.target.value)}
-                placeholder="যেমন: M-03/007"
+                placeholder={language === 'en' ? 'e.g. M-03/007' : 'যেমন: M-03/007'}
                 required
               />
             </label>
 
             <label className="no-f">
-              <span>মেশিন</span>
+              <span>{language === 'en' ? 'Machine' : 'মেশিন'}</span>
               <SearchableSelect
                 value={newMachine}
                 onChange={(val) => setNewMachine(val)}
                 options={availableMachineOptions}
-                searchPlaceholder="মেশিন খুঁজুন..."
+                searchPlaceholder={language === 'en' ? 'Search machine...' : 'মেশিন খুঁজুন...'}
               />
             </label>
 
             <label className="no-f">
-              <span>ওজন (kg)</span>
+              <span>{language === 'en' ? 'Weight (kg)' : 'ওজন (kg)'}</span>
               <input
                 type="text"
                 inputMode="decimal"
                 value={newWeightKg}
                 onChange={(e) => setNewWeightKg(e.target.value)}
-                placeholder="যেমন: 22"
+                placeholder={language === 'en' ? 'e.g. 22' : 'যেমন: 22'}
               />
             </label>
 
             <label className="no-f">
-              <span>ফল্ট / সমস্যা</span>
+              <span>{language === 'en' ? 'Fault / Issue' : 'ফল্ট / সমস্যা'}</span>
               <SearchableSelect
                 value={newIssue}
                 onChange={(val) => setNewIssue(val)}
@@ -703,28 +714,28 @@ export const FactoryQcPage: React.FC = () => {
                   value: iss.val,
                   label: iss.label,
                 }))}
-                searchPlaceholder="ফল্ট খুঁজুন..."
+                searchPlaceholder={language === 'en' ? 'Search fault...' : 'ফল্ট খুঁজুন...'}
               />
             </label>
 
             <label className="no-f">
-              <span>আপনার মত</span>
+              <span>{language === 'en' ? 'Your Opinion' : 'আপনার মত'}</span>
               <select
                 value={newVerdict}
                 onChange={(e) => setNewVerdict(e.target.value as 'bad' | 'ok')}
               >
-                <option value="bad">✗ কাপড় খারাপ</option>
-                <option value="ok">✓ কাপড় ঠিক আছে</option>
+                <option value="bad">{language === 'en' ? '✗ Fabric Bad' : '✗ কাপড় খারাপ'}</option>
+                <option value="ok">{language === 'en' ? '✓ Fabric OK' : '✓ কাপড় ঠিক আছে'}</option>
               </select>
             </label>
 
             <label className="no-f">
-              <span>বিবরণ / মন্তব্য</span>
+              <span>{language === 'en' ? 'Details / Remarks' : 'বিবরণ / মন্তব্য'}</span>
               <input
                 type="text"
                 value={newNote}
                 onChange={(e) => setNewNote(e.target.value)}
-                placeholder="যেমন: ৩ জায়গায় হোল, রোলের শুরুতে"
+                placeholder={language === 'en' ? 'e.g. 3 holes, at start of roll' : 'যেমন: ৩ জায়গায় হোল, রোলের শুরুতে'}
               />
             </label>
           </div>
@@ -748,7 +759,7 @@ export const FactoryQcPage: React.FC = () => {
 
           <div className="row" style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
             <button className="btn pri" type="submit" disabled={isSubmittingForm}>
-              {isSubmittingForm ? 'জমা হচ্ছে...' : 'সাইন করে জমা দিন'}
+              {isSubmittingForm ? (language === 'en' ? 'Submitting...' : 'জমা হচ্ছে...') : (language === 'en' ? 'Sign & Submit' : 'সাইন করে জমা দিন')}
             </button>
             <span className="small muted">
               জমা দিলেই {mySide === 'fac' ? 'ভেন্ডর' : 'ফ্যাক্টরি'} এটা দেখতে পাবে এবং তাদের মত দিতে বলা হবে।
@@ -764,35 +775,35 @@ export const FactoryQcPage: React.FC = () => {
           className={qcFilter === 'all' ? 'on' : ''}
           onClick={() => setQcFilter('all')}
         >
-          সব ({toBn(allQcItems.length)})
+          {language === 'en' ? `All (${toBn(allQcItems.length)})` : `সব (${toBn(allQcItems.length)})`}
         </button>
         <button
           type="button"
           className={qcFilter === 'mine' ? 'on' : ''}
           onClick={() => setQcFilter('mine')}
         >
-          আমার সাইন বাকি ({toBn(myPend.length)})
+          {language === 'en' ? `My Sign Pending (${toBn(myPend.length)})` : `আমার সাইন বাকি (${toBn(myPend.length)})`}
         </button>
         <button
           type="button"
           className={qcFilter === 'theirs' ? 'on' : ''}
           onClick={() => setQcFilter('theirs')}
         >
-          {mySide === 'fac' ? 'ভেন্ডরের সাইন বাকি' : 'ফ্যাক্টরির সাইন বাকি'} ({toBn(theirPend.length)})
+          {language === 'en' ? (mySide === 'fac' ? `Vendor Sign Pending (${toBn(theirPend.length)})` : `Factory Sign Pending (${toBn(theirPend.length)})`) : (mySide === 'fac' ? `ভেন্ডরের সাইন বাকি (${toBn(theirPend.length)})` : `ফ্যাক্টরির সাইন বাকি (${toBn(theirPend.length)})`)}
         </button>
         <button
           type="button"
           className={qcFilter === 'disp' ? 'on' : ''}
           onClick={() => setQcFilter('disp')}
         >
-          দ্বিমত ({toBn(disp.length)})
+          {language === 'en' ? `Disputed (${toBn(disp.length)})` : `দ্বিমত (${toBn(disp.length)})`}
         </button>
         <button
           type="button"
           className={qcFilter === 'agree' ? 'on' : ''}
           onClick={() => setQcFilter('agree')}
         >
-          একমত ({toBn(agr.length)})
+          {language === 'en' ? `Agreed (${toBn(agr.length)})` : `একমত (${toBn(agr.length)})`}
         </button>
       </div>
 
@@ -820,11 +831,11 @@ export const FactoryQcPage: React.FC = () => {
         <div className="qc-list">
           {filteredList.length === 0 ? (
             <div className="card muted" style={{ padding: 24, textAlign: 'center' }}>
-              এই তালিকায় কোনো QC রেকর্ড পাওয়া যায়নি।
+              {language === 'en' ? 'No QC records found in this list.' : 'এই তালিকায় কোনো QC রেকর্ড পাওয়া যায়নি।'}
             </div>
           ) : (
             filteredList.map(({ q, o }) => {
-              const st = qcState(q);
+              const st = qcState(q, language);
               const line = (o.lines || [])[q.pl || 0];
               const partyName = o.party || o.party_name || o.party_code || 'ABC';
 
@@ -860,17 +871,17 @@ export const FactoryQcPage: React.FC = () => {
                     </span>
                     <span>{line ? `${line.place || 'Body'} · ${line.fab || line.fabric || 'Single Jersey'}` : '—'}</span>
                     <span>
-                      রোল <b className="mono">{q.roll}</b>
+                      {language === 'en' ? 'Roll' : 'রোল'} <b className="mono">{q.roll}</b>
                     </span>
-                    <span>মেশিন {q.m}</span>
+                    <span>{language === 'en' ? `Machine ${q.m}` : `মেশিন ${q.m}`}</span>
                     <span>{toBn(q.kg)} kg</span>
                     <span>
-                      জানিয়েছে:{' '}
+                      {language === 'en' ? 'Reported by: ' : 'জানিয়েছে: '}
                       {q.src === 'ven'
-                        ? 'ভেন্ডর QC'
+                        ? (language === 'en' ? 'Vendor QC' : 'ভেন্ডর QC')
                         : q.src === 'floor'
-                        ? 'প্রোডাকশন ফ্লোর'
-                        : 'ফ্যাক্টরি QC'}
+                        ? (language === 'en' ? 'Production Floor' : 'প্রোডাকশন ফ্লোর')
+                        : (language === 'en' ? 'Factory QC' : 'ফ্যাক্টরি QC')}
                     </span>
                   </div>
 
@@ -883,7 +894,9 @@ export const FactoryQcPage: React.FC = () => {
                   {/* Dispute Note */}
                   {st.k === 'dispute' && (
                     <div className="qc-note">
-                      দুই পক্ষের মত মেলেনি। দুই পক্ষের QC একসাথে রোলটা দেখে যেকোনো এক পক্ষ মত বদলালেই বিষয়টা মিটে যাবে। ততক্ষণ এই রোল ডেলিভারি ও বিলে আটকে থাকবে।
+                      {language === 'en'
+                        ? 'Dispute: Both parties disagreed. A joint re-inspection where one side changes their opinion will resolve this. Meanwhile, this roll will remain on hold from delivery and billing.'
+                        : 'দুই পক্ষের মত মেলেনি। দুই পক্ষের QC একসাথে রোলটা দেখে যেকোনো এক পক্ষ মত বদলালেই বিষয়টা মিটে যাবে। ততক্ষণ এই রোল ডেলিভারি ও বিলে আটকে থাকবে।'}
                     </div>
                   )}
 
@@ -893,13 +906,13 @@ export const FactoryQcPage: React.FC = () => {
                       {!isVendorRole ? (
                         <div className="qc-act" style={{ marginTop: 8 }}>
                           <label className="no-f">
-                            <span>এখন কী হবে?</span>
+                            <span>{language === 'en' ? 'What Next?' : 'এখন কী হবে?'}</span>
                             <select
                               value={q.act || ''}
                               onChange={(e) => handleActionChange(q.id, e.target.value)}
                             >
-                              <option value="">বাছুন</option>
-                              {QC_ACT.map((a) => (
+                              <option value="">{language === 'en' ? 'Select' : 'বাছুন'}</option>
+                              {getQcAct(language).map((a) => (
                                 <option key={a} value={a}>
                                   {a}
                                 </option>
@@ -909,7 +922,7 @@ export const FactoryQcPage: React.FC = () => {
                         </div>
                       ) : q.act ? (
                         <div className="qc-act small" style={{ marginTop: 6, color: 'var(--muted)' }}>
-                          ফ্যাক্টরির সিদ্ধান্ত: <b>{q.act}</b>
+                          {language === 'en' ? 'Factory Decision:' : 'ফ্যাক্টরির সিদ্ধান্ত:'} <b>{q.act}</b>
                         </div>
                       ) : null}
                     </>

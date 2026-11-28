@@ -11,12 +11,12 @@ export const toBn = (n: number | string | undefined | null): string => {
 
 export const qU = (v: number | string, u: string): string => `${toBn(v)} ${u}`;
 
-export const sumU = (rs: any[], k: string): string => {
+export const sumU = (rs: any[], k: string, lang = 'bn'): string => {
   const kg = rs.filter((r) => r.u === 'kg').reduce((a, r) => a + (Number(r[k]) || 0), 0);
   const pc = rs.filter((r) => r.u !== 'kg').reduce((a, r) => a + (Number(r[k]) || 0), 0);
   const parts = [
     kg || !pc ? `${toBn(kg)} kg` : '',
-    pc ? `${toBn(pc)} পিস` : '',
+    pc ? (lang === 'en' ? `${toBn(pc)} pcs` : `${toBn(pc)} পিস`) : '',
   ].filter(Boolean);
   return parts.length > 0 ? parts.join(' / ') : '—';
 };
@@ -45,19 +45,20 @@ function qcStatusFor(
   dq: QcItem[],
   pq: QcItem[],
   rd: number,
-  u: string
+  u: string,
+  lang = 'bn'
 ): { st: [string, string]; held: number } {
   const dk = dq.reduce((a, q) => a + (Number(q.kg) || 0), 0);
   const pk = pq.reduce((a, q) => a + (Number(q.kg) || 0), 0);
   const totalHeld = dk + pk;
 
   const st: [string, string] = dq.length > 0
-    ? ['p-bad', `QC দ্বিমত · ${dk > 0 ? qU(dk, u) : `${toBn(dq.length)}টা রোল`} আটকে`]
+    ? ['p-bad', lang === 'en' ? `QC Dispute · ${dk > 0 ? qU(dk, u) : `${toBn(dq.length)} roll(s)`} held` : `QC দ্বিমত · ${dk > 0 ? qU(dk, u) : `${toBn(dq.length)}টা রোল`} আটকে`]
     : pq.length > 0
-    ? ['p-warn', `QC বাকি · ${pk > 0 ? qU(pk, u) : `${toBn(pq.length)}টা রোল`} দেখা বাকি`]
+    ? ['p-warn', lang === 'en' ? `QC Pending · ${pk > 0 ? qU(pk, u) : `${toBn(pq.length)} roll(s)`} pending` : `QC বাকি · ${pk > 0 ? qU(pk, u) : `${toBn(pq.length)}টা রোল`} দেখা বাকি`]
     : rd > 0
-    ? ['p-ok', `QC পাস · ${qU(rd, u)} নেওয়ার জন্য রেডি`]
-    : ['p-idle', 'রেডি স্টক নেই'];
+    ? ['p-ok', lang === 'en' ? `QC Passed · ${qU(rd, u)} ready for delivery` : `QC পাস · ${qU(rd, u)} নেওয়ার জন্য রেডি`]
+    : ['p-idle', lang === 'en' ? 'No ready stock' : 'রেডি স্টক নেই'];
 
   return { st, held: totalHeld };
 }
@@ -72,6 +73,8 @@ export const FactoryReadyFabricPage: React.FC = () => {
     fetchOrders,
     fetchRolls,
     fetchQcInspections,
+    t,
+    language,
   } = useApp();
 
   const isVendorRole = (role as string) === 'vendor' || (role as string) === 'ven';
@@ -189,7 +192,7 @@ export const FactoryReadyFabricPage: React.FC = () => {
         return lines.map((l: any, i: number) => {
           const isFlat = l.kt === 'f' || l.unit === 'pcs' || (l.place && l.place.toLowerCase().includes('collar'));
           const isYd = Boolean(l.yd || (l.fab && (l.fab.toLowerCase().includes('y/d') || l.fab.toLowerCase().includes('yarn dyed'))));
-          const u = isFlat ? 'পিস' : 'kg';
+          const u = isFlat ? (language === 'en' ? 'pcs' : 'পিস') : 'kg';
 
           // Knitted done and target qty
           const qty = Math.round(Number(l.qty || l.orderKg || 0));
@@ -213,14 +216,14 @@ export const FactoryReadyFabricPage: React.FC = () => {
 
           // QC status and held quantity
           const lineQcs = qcs.filter((q) => (q.pl || 0) === i);
-          const disputeQcs = lineQcs.filter((q) => qcState(q).k === 'dispute');
-          const pendingQcs = lineQcs.filter((q) => qcState(q).k === 'pend');
-          const { st, held } = qcStatusFor(disputeQcs, pendingQcs, rd, u);
+          const disputeQcs = lineQcs.filter((q) => qcState(q, language).k === 'dispute');
+          const pendingQcs = lineQcs.filter((q) => qcState(q, language).k === 'pend');
+          const { st, held } = qcStatusFor(disputeQcs, pendingQcs, rd, u, language);
 
           const badge = (
             <>
-              {isFlat ? <span className="kb kb-f" style={{ marginRight: 4 }}>ফ্ল্যাট নিট</span> : null}
-              {isYd ? <span className="kb kb-y" style={{ marginRight: 4 }}>Y/D</span> : <span className="kb" style={{ marginRight: 4 }}>গ্রে</span>}
+              {isFlat ? <span className="kb kb-f" style={{ marginRight: 4 }}>{language === 'en' ? 'Flat Knit' : 'ফ্ল্যাট নিট'}</span> : null}
+              {isYd ? <span className="kb kb-y" style={{ marginRight: 4 }}>Y/D</span> : <span className="kb" style={{ marginRight: 4 }}>{language === 'en' ? 'Grey' : 'গ্রে'}</span>}
             </>
           );
 
@@ -247,7 +250,7 @@ export const FactoryReadyFabricPage: React.FC = () => {
           };
         });
       });
-  }, [orders, rolls, qcInspections, isVendorRole]);
+  }, [orders, rolls, qcInspections, isVendorRole, language]);
 
   // Filtered rows by fabric type
   const filteredRows = useMemo(() => {
@@ -304,14 +307,14 @@ export const FactoryReadyFabricPage: React.FC = () => {
       {/* Header */}
       <div className="head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8, marginBottom: 2 }}>
         <div>
-          <h2 style={{ margin: 0 }}>রেডি কাপড়</h2>
+          <h2 style={{ margin: 0 }}>{t('রেডি কাপড়')}</h2>
           <p style={{ margin: '2px 0 0', color: 'var(--muted)' }}>
-            অর্ডার ধরে মোট পরিমাণ, তৈরি, ডেলিভারি, রেডি স্টক আর বাকি। গ্রে আর Y/D kg-তে, ফ্ল্যাট নিট (কলার-কাফ) পিসে।
+            {language === 'en' ? 'Order-wise quantity, knitted, delivered, ready stock & remaining balance.' : 'অর্ডার ধরে মোট পরিমাণ, তৈরি, ডেলিভারি, রেডি স্টক আর বাকি। গ্রে আর Y/D kg-তে, ফ্ল্যাট নিট (কলার-কাফ) পিসে।'}
           </p>
         </div>
         <div className="row" style={{ gap: 8 }}>
           <button type="button" className="btn sm" onClick={handlePrint}>
-            🖨️ প্রিন্ট / PDF
+            🖨️ {t('প্রিন্ট / PDF')}
           </button>
         </div>
       </div>
@@ -319,24 +322,24 @@ export const FactoryReadyFabricPage: React.FC = () => {
       {/* KPIs exact from live database with minimized compact gaps */}
       <div className="kpis" style={{ marginTop: 8, marginBottom: 10 }}>
         <div className="kpi">
-          <span>গ্রে কাপড় রেডি</span>
+          <span>{language === 'en' ? 'Grey Fabric Ready' : 'গ্রে কাপড় রেডি'}</span>
           <b>{toBn(sumByType('grey', 'rd'))} kg</b>
-          <i>বাকি {toBn(sumByType('grey', 'run'))} kg মেশিনে</i>
+          <i>{language === 'en' ? 'Remaining ' : 'বাকি '}{toBn(sumByType('grey', 'run'))} kg {language === 'en' ? 'on machine' : 'মেশিনে'}</i>
         </div>
         <div className="kpi" style={{ borderColor: 'var(--yarn)' }}>
-          <span>ইয়ার্ন ডাইড (Y/D) রেডি</span>
+          <span>{language === 'en' ? 'Yarn Dyed (Y/D) Ready' : 'ইয়ার্ন ডাইড (Y/D) রেডি'}</span>
           <b style={{ color: 'var(--yarn)' }}>{toBn(sumByType('yd', 'rd'))} kg</b>
-          <i>বাকি {toBn(sumByType('yd', 'run'))} kg মেশিনে</i>
+          <i>{language === 'en' ? 'Remaining ' : 'বাকি '}{toBn(sumByType('yd', 'run'))} kg {language === 'en' ? 'on machine' : 'মেশিনে'}</i>
         </div>
         <div className="kpi" style={{ borderColor: 'var(--accent)' }}>
-          <span>ফ্ল্যাট নিট (কলার-কাফ) রেডি</span>
-          <b style={{ color: 'var(--accent)' }}>{toBn(sumByType('flat', 'rd'))} পিস</b>
-          <i>বাকি {toBn(sumByType('flat', 'run'))} পিস মেশিনে</i>
+          <span>{language === 'en' ? 'Flat Knit Ready' : 'ফ্ল্যাট নিট (কলার-কাফ) রেডি'}</span>
+          <b style={{ color: 'var(--accent)' }}>{toBn(sumByType('flat', 'rd'))} {language === 'en' ? 'pcs' : 'পিস'}</b>
+          <i>{language === 'en' ? 'Remaining ' : 'বাকি '}{toBn(sumByType('flat', 'run'))} {language === 'en' ? 'pcs on machine' : 'পিস মেশিনে'}</i>
         </div>
         <div className="kpi" style={{ borderColor: 'var(--bad)' }}>
-          <span>QC-তে আটকে</span>
+          <span>{language === 'en' ? 'Held in QC' : 'QC-তে আটকে'}</span>
           <b style={{ color: 'var(--bad)' }}>{sumU(heldRows, 'held')}</b>
-          <i>দ্বিমত বা দেখা বাকি</i>
+          <i>{language === 'en' ? 'Dispute or pending' : 'দ্বিমত বা দেখা বাকি'}</i>
         </div>
       </div>
 
@@ -347,28 +350,28 @@ export const FactoryReadyFabricPage: React.FC = () => {
           className={fabricTypeFilter === 'all' ? 'on' : ''}
           onClick={() => setFabricTypeFilter('all')}
         >
-          সব ({toBn(allRows.length)})
+          {t('সব')} ({toBn(allRows.length)})
         </button>
         <button
           type="button"
           className={fabricTypeFilter === 'grey' ? 'on' : ''}
           onClick={() => setFabricTypeFilter('grey')}
         >
-          গ্রে ({toBn(allRows.filter((r) => r.type === 'grey').length)})
+          {language === 'en' ? 'Grey' : 'গ্রে'} ({toBn(allRows.filter((r) => r.type === 'grey').length)})
         </button>
         <button
           type="button"
           className={fabricTypeFilter === 'yd' ? 'on' : ''}
           onClick={() => setFabricTypeFilter('yd')}
         >
-          ইয়ার্ন ডাইড ({toBn(allRows.filter((r) => r.type === 'yd').length)})
+          {language === 'en' ? `Yarn Dyed (${toBn(allRows.filter((r) => r.type === 'yd').length)})` : `ইয়ার্ন ডাইড (${toBn(allRows.filter((r) => r.type === 'yd').length)})`}
         </button>
         <button
           type="button"
           className={fabricTypeFilter === 'flat' ? 'on' : ''}
           onClick={() => setFabricTypeFilter('flat')}
         >
-          ফ্ল্যাট নিট ({toBn(allRows.filter((r) => r.type === 'flat').length)})
+          {language === 'en' ? `Flat Knit (${toBn(allRows.filter((r) => r.type === 'flat').length)})` : `ফ্ল্যাট নিট (${toBn(allRows.filter((r) => r.type === 'flat').length)})`}
         </button>
       </div>
 
@@ -397,25 +400,25 @@ export const FactoryReadyFabricPage: React.FC = () => {
           {/* Party / Vendor Breakdown Card (only for factory role) */}
           {!isVendorRole && (
             <div className="card" style={{ marginTop: 0 }}>
-              <h3 style={{ marginTop: 0 }}>পার্টি (ভেন্ডর) অনুযায়ী সারাংশ</h3>
+              <h3 style={{ marginTop: 0 }}>{language === 'en' ? 'Party (Vendor) Wise Summary' : 'পার্টি (ভেন্ডর) অনুযায়ী সারাংশ'}</h3>
               <div className="tw" style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr>
-                      <th style={{ textAlign: 'left' }}>পার্টি</th>
-                      <th className="n">মোট অর্ডার</th>
-                      <th className="n">গ্রে রেডি</th>
-                      <th className="n">Y/D রেডি</th>
-                      <th className="n">ফ্ল্যাট রেডি</th>
-                      <th className="n">QC-তে আটকে</th>
-                      <th className="n">বাকি (মেশিনে)</th>
+                      <th style={{ textAlign: 'left' }}>{language === 'en' ? 'Party' : 'পার্টি'}</th>
+                      <th className="n">{language === 'en' ? 'Total Order' : 'মোট অর্ডার'}</th>
+                      <th className="n">{language === 'en' ? 'Grey Ready' : 'গ্রে রেডি'}</th>
+                      <th className="n">{language === 'en' ? 'Y/D Ready' : 'Y/D রেডি'}</th>
+                      <th className="n">{language === 'en' ? 'Flat Ready' : 'ফ্ল্যাট রেডি'}</th>
+                      <th className="n">{language === 'en' ? 'QC Held' : 'QC-তে আটকে'}</th>
+                      <th className="n">{language === 'en' ? 'Balance (Machine)' : 'বাকি (মেশিনে)'}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {partyList.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="muted" style={{ textAlign: 'center', padding: 16 }}>
-                          কোনো পার্টির রেকর্ড পাওয়া যায়নি।
+                          {language === 'en' ? 'No party records found.' : 'কোনো পার্টির রেকর্ড পাওয়া যায়নি।'}
                         </td>
                       </tr>
                     ) : (
@@ -451,27 +454,27 @@ export const FactoryReadyFabricPage: React.FC = () => {
 
           {/* Order & Line Breakdown Detailed Table Card */}
           <div className="card" style={{ marginTop: isVendorRole ? 0 : 14 }}>
-            <h3 style={{ marginTop: 0 }}>অর্ডার ও অংশ অনুযায়ী বিস্তারিত রেডি স্টক</h3>
+            <h3 style={{ marginTop: 0 }}>{language === 'en' ? 'Detailed Ready Stock by Order & Placement' : 'অর্ডার ও অংশ অনুযায়ী বিস্তারিত রেডি স্টক'}</h3>
             <div className="tw" style={{ overflowX: 'auto' }}>
               <table className="rt" style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
-                    {!isVendorRole && <th style={{ textAlign: 'left' }}>পার্টি</th>}
-                    <th style={{ textAlign: 'left' }}>অর্ডার</th>
-                    <th style={{ textAlign: 'left' }}>অংশ ও ধরন</th>
-                    <th className="n">অর্ডার পরিমাণ</th>
-                    <th className="n">তৈরি হয়েছে</th>
-                    <th className="n">ডেলিভারি গেছে</th>
-                    <th className="n">রেডি স্টক</th>
-                    <th className="n">বাকি (মেশিনে চলছে)</th>
-                    <th style={{ textAlign: 'left' }}>QC অবস্থা</th>
+                    {!isVendorRole && <th style={{ textAlign: 'left' }}>{language === 'en' ? 'Party' : 'পার্টি'}</th>}
+                    <th style={{ textAlign: 'left' }}>{language === 'en' ? 'Order' : 'অর্ডার'}</th>
+                    <th style={{ textAlign: 'left' }}>{language === 'en' ? 'Part & Type' : 'অংশ ও ধরন'}</th>
+                    <th className="n">{language === 'en' ? 'Order Qty' : 'অর্ডার পরিমাণ'}</th>
+                    <th className="n">{language === 'en' ? 'Produced' : 'তৈরি হয়েছে'}</th>
+                    <th className="n">{language === 'en' ? 'Delivered' : 'ডেলিভারি গেছে'}</th>
+                    <th className="n">{language === 'en' ? 'Ready Stock' : 'রেডি স্টক'}</th>
+                    <th className="n">{language === 'en' ? 'Balance (Running)' : 'বাকি (মেশিনে চলছে)'}</th>
+                    <th style={{ textAlign: 'left' }}>{language === 'en' ? 'QC Status' : 'QC অবস্থা'}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {orderIds.length === 0 ? (
                     <tr>
                       <td colSpan={!isVendorRole ? 9 : 8} className="muted" style={{ textAlign: 'center', padding: 20 }}>
-                        এই ফিল্টারে কোনো কাপড় পাওয়া যায়নি।
+                        {language === 'en' ? 'No fabric found in this filter.' : 'এই ফিল্টারে কোনো কাপড় পাওয়া যায়নি।'}
                       </td>
                     </tr>
                   ) : (
@@ -505,7 +508,7 @@ export const FactoryReadyFabricPage: React.FC = () => {
                           <tr className="rt-sub">
                             {!isVendorRole && <td></td>}
                             <td colSpan={2}>
-                              মোট · <span className="mono">{id}</span>
+                              {language === 'en' ? 'Total' : 'মোট'} · <span className="mono">{id}</span>
                             </td>
                             <td className="n">{sumU(rowsForOrder, 'qty')}</td>
                             <td className="n">{sumU(rowsForOrder, 'done')}</td>
@@ -517,7 +520,7 @@ export const FactoryReadyFabricPage: React.FC = () => {
                             <td>
                               {rowsForOrder.some((r) => r.held > 0) && (
                                 <span className="small" style={{ color: 'var(--bad)', fontWeight: 600 }}>
-                                  QC-তে আটকে {sumU(rowsForOrder.filter((r) => r.held > 0), 'held')}
+                                  {language === 'en' ? 'QC Held: ' : 'QC-তে আটকে '}{sumU(rowsForOrder.filter((r) => r.held > 0), 'held')}
                                 </span>
                               )}
                             </td>

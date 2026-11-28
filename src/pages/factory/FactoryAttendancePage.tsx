@@ -25,7 +25,7 @@ const INITIAL_PEOPLE: WorkerAttendanceRow[] = [
 const DAYS = ['২৭', '২৮', '২৯', '৩০', '০১', '০২', '০৩'];
 
 export const FactoryAttendancePage: React.FC = () => {
-  const { punchAttendance, attendance, operators } = useApp();
+  const { punchAttendance, attendance, operators, t, language } = useApp();
   const [people, setPeople] = useState<WorkerAttendanceRow[]>(() => {
     if (attendance && attendance.length > 0) {
       return attendance.map((a) => {
@@ -121,32 +121,32 @@ export const FactoryAttendancePage: React.FC = () => {
       {/* Header */}
       <div className="head">
         <div>
-          <h2>হাজিরা ও বেতন</h2>
-          <p>শিফট অনুযায়ী দৈনিক হাজিরা, মাস শেষে বেতন শিট নিজে থেকেই তৈরি</p>
+          <h2>{t('হাজিরা ও বেতন')}</h2>
+          <p>{language === 'en' ? 'Shift-wise daily attendance, payroll generated automatically at month end' : 'শিফট অনুযায়ী দৈনিক হাজিরা, মাস শেষে বেতন শিট নিজে থেকেই তৈরি'}</p>
         </div>
       </div>
 
       {/* 4 KPI Cards */}
       <div className="kpis">
         <div className="kpi">
-          <span>মোট কর্মী</span>
-          <b>{bnNum(people.length)} জন</b>
-          <i>তালিকাভুক্ত</i>
+          <span>{language === 'en' ? 'Total Workers' : 'মোট কর্মী'}</span>
+          <b>{bnNum(people.length)} {language === 'en' ? 'workers' : 'জন'}</b>
+          <i>{language === 'en' ? 'Enrolled' : 'তালিকাভুক্ত'}</i>
         </div>
         <div className="kpi">
-          <span>আজ উপস্থিত</span>
-          <b style={{ color: 'var(--ok)' }}>{bnNum(presentCount)} জন</b>
-          <i>ফ্লোরে কর্মরত</i>
+          <span>{t('উপস্থিত')}</span>
+          <b style={{ color: 'var(--ok)' }}>{bnNum(presentCount)} {language === 'en' ? 'present' : 'জন'}</b>
+          <i>{language === 'en' ? 'On floor' : 'ফ্লোরে কর্মরত'}</i>
         </div>
         <div className="kpi">
-          <span>ছুটিতে</span>
-          <b style={{ color: 'var(--yarn)' }}>{bnNum(leaveCount)} জন</b>
-          <i>অনুমোদিত ছুটি</i>
+          <span>{t('ছুটি')}</span>
+          <b style={{ color: 'var(--yarn)' }}>{bnNum(leaveCount)} {language === 'en' ? 'on leave' : 'জন'}</b>
+          <i>{language === 'en' ? 'Approved leave' : 'অনুমোদিত ছুটি'}</i>
         </div>
         <div className="kpi">
-          <span>অনুপস্থিত</span>
-          <b style={{ color: 'var(--bad)' }}>{bnNum(absentCount)} জন</b>
-          <i>আজ অনুপস্থিত</i>
+          <span>{t('অনুপস্থিত')}</span>
+          <b style={{ color: 'var(--bad)' }}>{bnNum(absentCount)} {language === 'en' ? 'absent' : 'জন'}</b>
+          <i>{language === 'en' ? 'Absent today' : 'আজ অনুপস্থিত'}</i>
         </div>
       </div>
 
@@ -157,21 +157,21 @@ export const FactoryAttendancePage: React.FC = () => {
           className={`btn sm ${shiftFilter === 'all' ? 'pri' : ''}`}
           onClick={() => setShiftFilter('all')}
         >
-          সব শিফট
+          {t('সব শিফট')}
         </button>
         <button
           type="button"
           className={`btn sm ${shiftFilter === 'A' ? 'pri' : ''}`}
           onClick={() => setShiftFilter('A')}
         >
-          শিফট A
+          {t('শিফট A')}
         </button>
         <button
           type="button"
           className={`btn sm ${shiftFilter === 'B' ? 'pri' : ''}`}
           onClick={() => setShiftFilter('B')}
         >
-          শিফট B
+          {t('শিফট B')}
         </button>
       </div>
 
@@ -181,15 +181,15 @@ export const FactoryAttendancePage: React.FC = () => {
           <table>
             <thead>
               <tr>
-                <th>নাম</th>
-                <th>পদবী</th>
-                <th>শিফট</th>
+                <th>{t('নাম')}</th>
+                <th>{t('পদবী')}</th>
+                <th>{t('শিফট')}</th>
                 {DAYS.map((d, i) => (
                   <th key={i} style={{ textAlign: 'center' }}>
-                    {d} Oct {i === DAYS.length - 1 && '(আজ)'}
+                    {bnNum(d)} Oct {i === DAYS.length - 1 && (language === 'en' ? '(Today)' : '(আজ)')}
                   </th>
                 ))}
-                <th style={{ textAlign: 'center' }}>আজকের হাজিরা বদল</th>
+                <th style={{ textAlign: 'center' }}>{language === 'en' ? 'Change Attendance' : 'আজকের হাজিরা বদল'}</th>
               </tr>
             </thead>
             <tbody>
@@ -198,7 +198,7 @@ export const FactoryAttendancePage: React.FC = () => {
                 return (
                   <tr key={p.name}>
                     <td style={{ fontWeight: 600 }}>{p.name}</td>
-                    <td>{p.role}</td>
+                    <td>{t(p.role)}</td>
                     <td>
                       <span className="pill p-acc">{p.shift}</span>
                     </td>
@@ -212,13 +212,13 @@ export const FactoryAttendancePage: React.FC = () => {
                         type="button"
                         className="btn sm"
                         onClick={() => toggleTodayStatus(p.name)}
-                        title="ক্লিক করে আজকের হাজিরা বদলান"
+                        title={language === 'en' ? 'Click to toggle status' : 'ক্লিক করে আজকের হাজিরা বদলান'}
                       >
                         {todayStatus === 1
-                          ? 'অনুপস্থিত করুন'
+                          ? (language === 'en' ? 'Mark Absent' : 'অনুপস্থিত করুন')
                           : todayStatus === 0
-                          ? 'ছুটি করুন'
-                          : 'উপস্থিত করুন'}
+                          ? (language === 'en' ? 'Mark Leave' : 'ছুটি করুন')
+                          : (language === 'en' ? 'Mark Present' : 'উপস্থিত করুন')}
                       </button>
                     </td>
                   </tr>
@@ -228,8 +228,7 @@ export const FactoryAttendancePage: React.FC = () => {
           </table>
         </div>
         <p className="small muted" style={{ marginTop: 14 }}>
-          P = উপস্থিত (Present), A = অনুপস্থিত (Absent), L = ছুটি (Leave)। পরে
-          ফিঙ্গারপ্রিন্ট মেশিনের ডেটা সরাসরি আনা যাবে।
+          {language === 'en' ? 'P = Present, A = Absent, L = Leave. Direct biometric machine sync supported.' : 'P = উপস্থিত (Present), A = অনুপস্থিত (Absent), L = ছুটি (Leave)। পরে ফিঙ্গারপ্রিন্ট মেশিনের ডেটা সরাসরি আনা যাবে।'}
         </p>
       </div>
     </div>

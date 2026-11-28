@@ -19,7 +19,7 @@ const INITIAL_REFERRALS: ReferralRecord[] = [
 ];
 
 export const FactoryPartnerPage: React.FC = () => {
-  const { addToast, partner, requestPartnerPayout } = useApp();
+  const { addToast, partner, requestPartnerPayout, t, language, tkSymbol } = useApp();
   const [payoutAmt, setPayoutAmt] = useState<string>('');
   const [payoutMethod, setPayoutMethod] = useState<string>('bkash');
   const [accountNo, setAccountNo] = useState<string>('01711000000');
@@ -50,11 +50,9 @@ export const FactoryPartnerPage: React.FC = () => {
       {/* Header */}
       <div className="head">
         <div>
-          <h2>পার্টনার প্রোগ্রাম</h2>
+          <h2>{t('পার্টনার প্রোগ্রাম')}</h2>
           <p>
-            অন্য কোনো নিটিং ফ্যাক্টরি বা ভেন্ডরকে নিটখাতা রেফার করুন। তারা
-            সাবস্ক্রিপশন নিলে তাদের প্রথম ৩ মাসের সাবস্ক্রিপশন ফির ২০% আপনি
-            কমিশন পাবেন।
+            {t('অন্য কোনো নিটিং ফ্যাক্টরি বা ভেন্ডরকে নিটখাতা রেফার করুন। তারা সাবস্ক্রিপশন নিলে তাদের প্রথম ৩ মাসের সাবস্ক্রিপশন ফির ২০% আপনি কমিশন পাবেন।')}
           </p>
         </div>
       </div>
@@ -62,34 +60,34 @@ export const FactoryPartnerPage: React.FC = () => {
       {/* 4 KPIs */}
       <div className="kpis">
         <div className="kpi">
-          <span>মোট রেফারেল</span>
-          <b>{bnNum(partner.totalReferrals || 12)}টি প্রতিষ্ঠান</b>
-          <i>আপনার লিংকে যুক্ত</i>
+          <span>{t('মোট রেফারেল')}</span>
+          <b>{bnNum(partner.totalReferrals || 12)} {language === 'en' ? 'factories' : 'টি প্রতিষ্ঠান'}</b>
+          <i>{t('আপনার লিংকে যুক্ত')}</i>
         </div>
         <div className="kpi">
-          <span>সক্রিয় পেইড ফ্যাক্টরি</span>
-          <b>{bnNum(partner.activeFactoriesCount || 8)}টি</b>
-          <i>মাসিক সাবস্ক্রিপশন চলছে</i>
+          <span>{t('সক্রিয় পেইড ফ্যাক্টরি')}</span>
+          <b>{bnNum(partner.activeFactoriesCount || 8)} {language === 'en' ? 'factories' : 'টি'}</b>
+          <i>{t('মাসিক সাবস্ক্রিপশন চলছে')}</i>
         </div>
         <div className="kpi">
-          <span>মোট অর্জিত কমিশন</span>
-          <b>৳ {bnNum(partner.totalCommissionTk || 42500)}</b>
-          <i>জীবনকাল মোট</i>
+          <span>{t('মোট অর্জিত কমিশন')}</span>
+          <b>{tkSymbol} {bnNum(partner.totalCommissionTk || 42500)}</b>
+          <i>{t('জীবনকাল মোট')}</i>
         </div>
         <div className="kpi">
-          <span>উত্তোলনযোগ্য ব্যালেন্স</span>
+          <span>{t('উত্তোলনযোগ্য ব্যালেন্স')}</span>
           <b style={{ color: 'var(--ok)' }}>
-            ৳ {bnNum(partner.balanceCommissionTk || 18500)}
+            {tkSymbol} {bnNum(partner.balanceCommissionTk || 18500)}
           </b>
-          <i>সরাসরি বিকাশ / ব্যাংকে</i>
+          <i>{t('সরাসরি বিকাশ / ব্যাংকে')}</i>
         </div>
       </div>
 
       {/* Referral Link & Code Card */}
       <div className="card" style={{ marginBottom: 20 }}>
-        <h3>আপনার ইউনিক রেফারেল লিংক</h3>
+        <h3>{t('আপনার ইউনিক রেফারেল লিংক')}</h3>
         <p className="small muted">
-          এই লিংকটি ফেসবুক, হোয়াটসঅ্যাপ বা ফ্যাক্টরি মালিকদের সাথে শেয়ার করুন:
+          {t('এই লিংকটি ফেসবুক, হোয়াটসঅ্যাপ বা ফ্যাক্টরি মালিকদের সাথে শেয়ার করুন:')}
         </p>
         <div
           className="row"
@@ -106,7 +104,7 @@ export const FactoryPartnerPage: React.FC = () => {
             {refLink}
           </span>
           <button type="button" className="btn pri sm" onClick={copyRefLink}>
-            কপি করুন
+            {t('কপি করুন')}
           </button>
         </div>
       </div>
@@ -114,18 +112,18 @@ export const FactoryPartnerPage: React.FC = () => {
       <div className="grid g2" style={{ marginBottom: 20 }}>
         {/* Payout Request Form */}
         <form className="card" onSubmit={handlePayoutSubmit}>
-          <h3>কমিশন তোলার অনুরোধ</h3>
+          <h3>{t('কমিশন তোলার অনুরোধ')}</h3>
           <p className="small muted">
-            সর্বনিম্ন উত্তোলন ৫০০ টাকা। প্রতি সপ্তাহের রবিবার পেমেন্ট প্রসেস হয়।
+            {t('সর্বনিম্ন উত্তোলন ৫০০ টাকা। প্রতি সপ্তাহের রবিবার পেমেন্ট প্রসেস হয়।')}
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
             <label className="f">
-              টাকার পরিমাণ ৳
+              {language === 'en' ? `Amount (${tkSymbol})` : 'টাকার পরিমাণ (৳)'}
               <input
                 type="number"
                 required
-                placeholder="যেমন: ৫০০০"
+                placeholder={language === 'en' ? 'e.g. 5000' : 'যেমন: ৫০০০'}
                 value={payoutAmt}
                 onChange={(e) => setPayoutAmt(e.target.value)}
               />
@@ -133,19 +131,19 @@ export const FactoryPartnerPage: React.FC = () => {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <label className="f">
-                পেমেন্ট মাধ্যম
+                {t('উত্তোলনের মাধ্যম')}
                 <select
                   value={payoutMethod}
                   onChange={(e) => setPayoutMethod(e.target.value)}
                 >
-                  <option value="bkash">বিকাশ (Personal)</option>
-                  <option value="nagad">নগদ (Personal)</option>
-                  <option value="bank">ব্যাংক একাউন্ট</option>
+                  <option value="bkash">bKash (Personal)</option>
+                  <option value="nagad">Nagad (Personal)</option>
+                  <option value="bank">Bank Account</option>
                 </select>
               </label>
 
               <label className="f">
-                অ্যাকাউন্ট / মোবাইল নম্বর
+                {t('অ্যাকাউন্ট নম্বর')}
                 <input
                   type="text"
                   required
@@ -156,23 +154,23 @@ export const FactoryPartnerPage: React.FC = () => {
             </div>
 
             <button type="submit" className="btn pri" style={{ marginTop: 8 }}>
-              টাকা তোলার অনুরোধ পাঠান
+              {t('উত্তোলন রিকোয়েস্ট পাঠান')}
             </button>
           </div>
         </form>
 
         {/* Referrals List Table */}
         <div className="card">
-          <h3>রেফারেল হিস্ট্রি</h3>
+          <h3>{t('রেফারেল হিস্ট্রি')}</h3>
           <div className="tw" style={{ marginTop: 12 }}>
             <table>
               <thead>
                 <tr>
-                  <th>তারিখ</th>
-                  <th>প্রতিষ্ঠান</th>
-                  <th>প্ল্যান</th>
-                  <th className="n">কমিশন ৳</th>
-                  <th>অবস্থা</th>
+                  <th>{t('তারিখ')}</th>
+                  <th>{t('প্রতিষ্ঠান')}</th>
+                  <th>{t('প্ল্যান')}</th>
+                  <th className="n">{t('কমিশন')}</th>
+                  <th>{t('অবস্থা')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -184,12 +182,12 @@ export const FactoryPartnerPage: React.FC = () => {
                       <div className="small muted">{r.type}</div>
                     </td>
                     <td>{r.plan}</td>
-                    <td className="n">৳ {bnNum(r.commission)}</td>
+                    <td className="n">{tkSymbol} {bnNum(r.commission)}</td>
                     <td>
                       {r.status === 'paid' ? (
-                        <span className="pill p-ok">পরিশোধিত</span>
+                        <span className="pill p-ok">{t('পরিশোধিত')}</span>
                       ) : (
-                        <span className="pill p-yarn">প্রসেসিং</span>
+                        <span className="pill p-yarn">{t('অপেক্ষায়')}</span>
                       )}
                     </td>
                   </tr>

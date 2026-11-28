@@ -3,7 +3,7 @@ import { useApp } from '@/context/AppContext';
 import { bnNum } from '@/utils/formatters';
 
 export const FactoryAccountsPage: React.FC = () => {
-  const { expenses, addExpense } = useApp();
+  const { expenses, addExpense, t, language, tkSymbol } = useApp();
   const [tab, setTab] = useState<'exp' | 'util' | 'bank' | 'lc'>('exp');
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
 
@@ -24,7 +24,7 @@ export const FactoryAccountsPage: React.FC = () => {
       method,
       ref: `EX-${Date.now().toString().slice(-4)}`,
       date: new Date().toISOString().slice(0, 10),
-      createdBy: 'ম্যানেজার',
+      createdBy: language === 'en' ? 'Manager' : 'ম্যানেজার',
       notes,
     });
     setTitle('');
@@ -40,10 +40,9 @@ export const FactoryAccountsPage: React.FC = () => {
       {/* Header */}
       <div className="head">
         <div>
-          <h2>খরচ, ব্যাংক ও LC</h2>
+          <h2>{t('খরচ, ব্যাংক ও LC')}</h2>
           <p>
-            এক্সেলের আলাদা আলাদা শিটের জায়গায় এক জায়গায় সব। ভেন্ডরের বিল আর
-            পার্টি লেজার আলাদা মেনুতে।
+            {t('এক্সেলের আলাদা আলাদা শিটের জায়গায় এক জায়গায় সব। ভেন্ডরের বিল আর পার্টি লেজার আলাদা মেনুতে।')}
           </p>
         </div>
         <button
@@ -51,7 +50,7 @@ export const FactoryAccountsPage: React.FC = () => {
           type="button"
           onClick={() => setShowAddModal(true)}
         >
-          + নতুন খরচ এন্ট্রি
+          {t('+ নতুন খরচ এন্ট্রি')}
         </button>
       </div>
 
@@ -61,25 +60,25 @@ export const FactoryAccountsPage: React.FC = () => {
           className={tab === 'exp' ? 'on' : ''}
           onClick={() => setTab('exp')}
         >
-          দৈনিক খরচ
+          {t('দৈনিক খরচ')}
         </button>
         <button
           className={tab === 'util' ? 'on' : ''}
           onClick={() => setTab('util')}
         >
-          ইউটিলিটি বিল
+          {t('ইউটিলিটি বিল')}
         </button>
         <button
           className={tab === 'bank' ? 'on' : ''}
           onClick={() => setTab('bank')}
         >
-          ব্যাংক হিসাব
+          {t('ব্যাংক হিসাব')}
         </button>
         <button
           className={tab === 'lc' ? 'on' : ''}
           onClick={() => setTab('lc')}
         >
-          LC ও আমদানি
+          {t('LC ও আমদানি')}
         </button>
       </div>
 
@@ -88,19 +87,19 @@ export const FactoryAccountsPage: React.FC = () => {
         <>
           <div className="kpis" style={{ marginBottom: 16 }}>
             <div className="kpi">
-              <span>মোট খরচ এন্ট্রি</span>
-              <b>{bnNum(expenses.length)}টি</b>
-              <i>চলতি মাস</i>
+              <span>{t('মোট খরচ এন্ট্রি')}</span>
+              <b>{bnNum(expenses.length)} {language === 'en' ? 'entries' : 'টি'}</b>
+              <i>{t('চলতি মাস')}</i>
             </div>
             <div className="kpi">
-              <span>মোট খরচ</span>
-              <b>৳ {bnNum(totalExpense)}</b>
-              <i>ক্যাশ ও ব্যাংক মিলিয়ে</i>
+              <span>{t('মোট খরচ')}</span>
+              <b>{tkSymbol} {bnNum(totalExpense)}</b>
+              <i>{t('ক্যাশ ও ব্যাংক মিলিয়ে')}</i>
             </div>
             <div className="kpi">
-              <span>আজকের খরচ</span>
-              <b>৳ ৩,৫০০</b>
-              <i>ট্রান্সপোর্ট ও অন্যান্য</i>
+              <span>{t('আজকের খরচ')}</span>
+              <b>{tkSymbol} {bnNum(3500)}</b>
+              <i>{t('ট্রান্সপোর্ট ও অন্যান্য')}</i>
             </div>
           </div>
 
@@ -109,12 +108,12 @@ export const FactoryAccountsPage: React.FC = () => {
               <table>
                 <thead>
                   <tr>
-                    <th>তারিখ</th>
-                    <th>খাত</th>
-                    <th>বিবরণ</th>
-                    <th>মাধ্যম</th>
-                    <th>ভাউচার</th>
-                    <th className="n">টাকা ৳</th>
+                    <th>{t('তারিখ')}</th>
+                    <th>{t('খাত')}</th>
+                    <th>{t('বিবরণ')}</th>
+                    <th>{t('মাধ্যম')}</th>
+                    <th>{t('ভাউচার')}</th>
+                    <th className="n">{language === 'en' ? `Amount (${tkSymbol})` : 'টাকা ৳'}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -124,15 +123,15 @@ export const FactoryAccountsPage: React.FC = () => {
                       <td>
                         <span className="pill p-acc">
                           {e.category === 'electricity'
-                            ? 'বিদ্যুৎ'
+                            ? t('বিদ্যুৎ')
                             : e.category === 'maintenance'
-                            ? 'রক্ষণাবেক্ষণ'
+                            ? t('রক্ষণাবেক্ষণ')
                             : e.category === 'needle_oil'
-                            ? 'নিডল ও অয়েল'
+                            ? t('নিডল ও অয়েল')
                             : e.category === 'snacks'
-                            ? 'আপ্যায়ন'
+                            ? t('আপ্যায়ন')
                             : e.category === 'transport'
-                            ? 'পরিবহন'
+                            ? t('পরিবহন')
                             : e.category}
                         </span>
                       </td>
@@ -140,13 +139,13 @@ export const FactoryAccountsPage: React.FC = () => {
                       <td className="small">{e.method}</td>
                       <td className="mono small">{e.ref}</td>
                       <td className="n" style={{ fontWeight: 600 }}>
-                        ৳ {bnNum(e.amount)}
+                        {tkSymbol} {bnNum(e.amount)}
                       </td>
                     </tr>
                   ))}
                   <tr className="totrow" style={{ fontWeight: 700, background: 'var(--surface2)' }}>
-                    <td colSpan={5}>সর্বমোট</td>
-                    <td className="n">৳ {bnNum(totalExpense)}</td>
+                    <td colSpan={5}>{t('সর্বমোট')}</td>
+                    <td className="n">{tkSymbol} {bnNum(totalExpense)}</td>
                   </tr>
                 </tbody>
               </table>
@@ -162,49 +161,49 @@ export const FactoryAccountsPage: React.FC = () => {
             <table>
               <thead>
                 <tr>
-                  <th>মাস</th>
-                  <th className="n">গ্যাস বিল ৳</th>
-                  <th className="n">বিদ্যুৎ বিল ৳</th>
-                  <th className="n">ডিজেল (জেনারেটর) ৳</th>
-                  <th className="n">মোট ৳</th>
-                  <th>অবস্থা</th>
+                  <th>{t('মাস')}</th>
+                  <th className="n">{language === 'en' ? `Gas Bill (${tkSymbol})` : 'গ্যাস বিল ৳'}</th>
+                  <th className="n">{language === 'en' ? `Electricity Bill (${tkSymbol})` : 'বিদ্যুৎ বিল ৳'}</th>
+                  <th className="n">{language === 'en' ? `Diesel (${tkSymbol})` : 'ডিজেল (জেনারেটর) ৳'}</th>
+                  <th className="n">{language === 'en' ? `Total (${tkSymbol})` : 'মোট ৳'}</th>
+                  <th>{t('অবস্থা')}</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td className="mono">সেপ্টেম্বর ২০২৬</td>
-                  <td className="n">২,৪০,০০০</td>
-                  <td className="n">১,১৮,৫০০</td>
-                  <td className="n">৮৫,০০০</td>
+                  <td className="mono">{language === 'en' ? 'September 2026' : 'সেপ্টেম্বর ২০২৬'}</td>
+                  <td className="n">{bnNum(240000)}</td>
+                  <td className="n">{bnNum(118500)}</td>
+                  <td className="n">{bnNum(85000)}</td>
                   <td className="n" style={{ fontWeight: 600 }}>
-                    ৪,৪৩,৫০০
+                    {bnNum(443500)}
                   </td>
                   <td>
-                    <span className="pill p-ok">পরিশোধ</span>
+                    <span className="pill p-ok">{t('পরিশোধ')}</span>
                   </td>
                 </tr>
                 <tr>
-                  <td className="mono">আগস্ট ২০২৬</td>
-                  <td className="n">২,৫৫,০০০</td>
-                  <td className="n">১,১২,০০০</td>
-                  <td className="n">৯২,০০০</td>
+                  <td className="mono">{language === 'en' ? 'August 2026' : 'আগস্ট ২০২৬'}</td>
+                  <td className="n">{bnNum(255000)}</td>
+                  <td className="n">{bnNum(112000)}</td>
+                  <td className="n">{bnNum(92000)}</td>
                   <td className="n" style={{ fontWeight: 600 }}>
-                    ৪,৫৯,০০০
+                    {bnNum(459000)}
                   </td>
                   <td>
-                    <span className="pill p-ok">পরিশোধ</span>
+                    <span className="pill p-ok">{t('পরিশোধ')}</span>
                   </td>
                 </tr>
                 <tr>
-                  <td className="mono">জুলাই ২০২৬</td>
-                  <td className="n">২,২০,০০০</td>
-                  <td className="n">৯৮,০০০</td>
-                  <td className="n">৭৬,০০০</td>
+                  <td className="mono">{language === 'en' ? 'July 2026' : 'জুলাই ২০২৬'}</td>
+                  <td className="n">{bnNum(220000)}</td>
+                  <td className="n">{bnNum(98000)}</td>
+                  <td className="n">{bnNum(76000)}</td>
                   <td className="n" style={{ fontWeight: 600 }}>
-                    ৩,৯৪,০০০
+                    {bnNum(394000)}
                   </td>
                   <td>
-                    <span className="pill p-ok">পরিশোধ</span>
+                    <span className="pill p-ok">{t('পরিশোধ')}</span>
                   </td>
                 </tr>
               </tbody>
@@ -220,39 +219,39 @@ export const FactoryAccountsPage: React.FC = () => {
             <table>
               <thead>
                 <tr>
-                  <th>তারিখ</th>
-                  <th>অ্যাকাউন্ট</th>
-                  <th>বিবরণ</th>
-                  <th className="n">জমা ৳</th>
-                  <th className="n">খরচ ৳</th>
+                  <th>{t('তারিখ')}</th>
+                  <th>{t('অ্যাকাউন্ট')}</th>
+                  <th>{t('বিবরণ')}</th>
+                  <th className="n">{language === 'en' ? `Deposit (${tkSymbol})` : 'জমা ৳'}</th>
+                  <th className="n">{language === 'en' ? `Expense (${tkSymbol})` : 'খরচ ৳'}</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td className="mono small">03 Oct</td>
-                  <td>ব্যাংক A (চলতি)</td>
-                  <td>ABC Knit থেকে RV-0931 পেমেন্ট</td>
+                  <td>{language === 'en' ? 'Bank A (Current)' : 'ব্যাংক A (চলতি)'}</td>
+                  <td>{language === 'en' ? 'Payment RV-0931 from ABC Knit' : 'ABC Knit থেকে RV-0931 পেমেন্ট'}</td>
                   <td className="n" style={{ color: 'var(--ok)' }}>
-                    ৭০,০০০
+                    {bnNum(70000)}
                   </td>
                   <td className="n">—</td>
                 </tr>
                 <tr>
                   <td className="mono small">02 Oct</td>
-                  <td>ব্যাংক A (চলতি)</td>
-                  <td>সেপ্টেম্বর মাসের কর্মী বেতন</td>
+                  <td>{language === 'en' ? 'Bank A (Current)' : 'ব্যাংক A (চলতি)'}</td>
+                  <td>{language === 'en' ? 'Staff Salary for September' : 'সেপ্টেম্বর মাসের কর্মী বেতন'}</td>
                   <td className="n">—</td>
                   <td className="n" style={{ color: 'var(--bad)' }}>
-                    ১১,৪০,০০০
+                    {bnNum(1140000)}
                   </td>
                 </tr>
                 <tr>
                   <td className="mono small">01 Oct</td>
-                  <td>ব্যাংক B (LC)</td>
-                  <td>LC মার্জিন — নিডল ও স্পেয়ার পার্টস</td>
+                  <td>{language === 'en' ? 'Bank B (LC)' : 'ব্যাংক B (LC)'}</td>
+                  <td>{language === 'en' ? 'LC Margin — Needles & Spare Parts' : 'LC মার্জিন — নিডল ও স্পেয়ার পার্টস'}</td>
                   <td className="n">—</td>
                   <td className="n" style={{ color: 'var(--bad)' }}>
-                    ২,১০,০০০
+                    {bnNum(210000)}
                   </td>
                 </tr>
               </tbody>
@@ -268,36 +267,36 @@ export const FactoryAccountsPage: React.FC = () => {
             <table>
               <thead>
                 <tr>
-                  <th>LC নং</th>
-                  <th>পণ্য</th>
-                  <th>সাপ্লায়ার</th>
-                  <th className="n">মূল্য (USD)</th>
-                  <th>মার্জিন</th>
-                  <th>শিপমেন্ট</th>
-                  <th>অবস্থা</th>
+                  <th>{t('LC নং')}</th>
+                  <th>{t('পণ্য')}</th>
+                  <th>{t('সাপ্লায়ার')}</th>
+                  <th className="n">{t('মূল্য (USD)')}</th>
+                  <th>{t('মার্জিন')}</th>
+                  <th>{t('শিপমেন্ট')}</th>
+                  <th>{t('অবস্থা')}</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td className="mono">LC-26-0417</td>
-                  <td>সার্কুলার নিটিং মেশিন স্পেয়ার পার্টস</td>
-                  <td>(সাপ্লায়ার, চীন)</td>
+                  <td>{language === 'en' ? 'Circular Knitting Machine Spare Parts' : 'সার্কুলার নিটিং মেশিন স্পেয়ার পার্টস'}</td>
+                  <td>{language === 'en' ? '(Supplier, China)' : '(সাপ্লায়ার, চীন)'}</td>
                   <td className="n">$18,400</td>
                   <td>20%</td>
                   <td>20 Oct</td>
                   <td>
-                    <span className="pill p-acc">খোলা হয়েছে</span>
+                    <span className="pill p-acc">{t('খোলা হয়েছে')}</span>
                   </td>
                 </tr>
                 <tr>
                   <td className="mono">LC-26-0302</td>
-                  <td>ভোটা নিডল ও সিংকার</td>
-                  <td>(সাপ্লায়ার, জার্মানি)</td>
+                  <td>{language === 'en' ? 'Vota Needles & Sinkers' : 'ভোটা নিডল ও সিংকার'}</td>
+                  <td>{language === 'en' ? '(Supplier, Germany)' : '(সাপ্লায়ার, জার্মানি)'}</td>
                   <td className="n">$7,250</td>
                   <td>25%</td>
-                  <td>পৌঁছেছে</td>
+                  <td>{t('পৌঁছেছে')}</td>
                   <td>
-                    <span className="pill p-warn">ডকুমেন্ট বাকি</span>
+                    <span className="pill p-warn">{t('ডকুমেন্ট বাকি')}</span>
                   </td>
                 </tr>
               </tbody>
@@ -325,7 +324,7 @@ export const FactoryAccountsPage: React.FC = () => {
             onSubmit={handleAddExpense}
           >
             <div className="row" style={{ justifyContent: 'space-between' }}>
-              <h3 style={{ margin: 0 }}>নতুন খরচ এন্ট্রি</h3>
+              <h3 style={{ margin: 0 }}>{t('নতুন খরচ এন্ট্রি')}</h3>
               <button
                 type="button"
                 className="btn sm"
@@ -337,23 +336,23 @@ export const FactoryAccountsPage: React.FC = () => {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 14 }}>
               <label className="f">
-                খাত
+                {t('খাত')}
                 <select value={cat} onChange={(e) => setCat(e.target.value)}>
-                  <option value="maintenance">মেশিন রক্ষণাবেক্ষণ</option>
-                  <option value="needle_oil">নিডল ও নিটিং অয়েল</option>
-                  <option value="electricity">বিদ্যুৎ ও ইউটিলিটি</option>
-                  <option value="transport">পরিবহন ও চালান</option>
-                  <option value="snacks">নাস্তা ও ফ্লোর আপ্যায়ন</option>
-                  <option value="other">অন্যান্য অফিস খরচ</option>
+                  <option value="maintenance">{language === 'en' ? 'Machine Maintenance' : 'মেশিন রক্ষণাবেক্ষণ'}</option>
+                  <option value="needle_oil">{language === 'en' ? 'Needles & Knitting Oil' : 'নিডল ও নিটিং অয়েল'}</option>
+                  <option value="electricity">{language === 'en' ? 'Electricity & Utility' : 'বিদ্যুৎ ও ইউটিলিটি'}</option>
+                  <option value="transport">{language === 'en' ? 'Transport & Delivery' : 'পরিবহন ও চালান'}</option>
+                  <option value="snacks">{language === 'en' ? 'Snacks & Floor Refreshments' : 'নাস্তা ও ফ্লোর আপ্যায়ন'}</option>
+                  <option value="other">{language === 'en' ? 'Other Office Expenses' : 'অন্যান্য অফিস খরচ'}</option>
                 </select>
               </label>
 
               <label className="f">
-                খরচের বিবরণ *
+                {language === 'en' ? 'Expense Description *' : 'খরচের বিবরণ *'}
                 <input
                   type="text"
                   required
-                  placeholder="যেমন: M-03 ক্যাম অয়েল ও পার্টস ক্রয়"
+                  placeholder={language === 'en' ? 'e.g. M-03 cam oil & parts purchase' : 'যেমন: M-03 ক্যাম অয়েল ও পার্টস ক্রয়'}
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                 />
@@ -361,35 +360,35 @@ export const FactoryAccountsPage: React.FC = () => {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <label className="f">
-                  টাকা ৳ *
+                  {language === 'en' ? `Amount (${tkSymbol}) *` : 'টাকা ৳ *'}
                   <input
                     type="number"
                     required
-                    placeholder="যেমন: ২৫০০"
+                    placeholder={language === 'en' ? 'e.g. 2500' : 'যেমন: ২৫০০'}
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                   />
                 </label>
                 <label className="f">
-                  পেমেন্ট মাধ্যম
+                  {language === 'en' ? 'Payment Method' : 'পেমেন্ট মাধ্যম'}
                   <select
                     value={method}
                     onChange={(e) =>
                       setMethod(e.target.value as 'cash' | 'bank' | 'bkash')
                     }
                   >
-                    <option value="cash">নগদ (Cash)</option>
-                    <option value="bank">ব্যাংক (Bank)</option>
-                    <option value="bkash">বিকাশ (bKash)</option>
+                    <option value="cash">{t('নগদ (Cash)')}</option>
+                    <option value="bank">{t('ব্যাংক (Bank)')}</option>
+                    <option value="bkash">bKash</option>
                   </select>
                 </label>
               </div>
 
               <label className="f">
-                মন্তব্য (ঐচ্ছিক)
+                {language === 'en' ? 'Notes / Remarks (Optional)' : 'মন্তব্য (ঐচ্ছিক)'}
                 <textarea
                   rows={2}
-                  placeholder="অতিরিক্ত কোনো রেফারেন্স বা ভাউচার নোট..."
+                  placeholder={language === 'en' ? 'Additional voucher or reference notes...' : 'অতিরিক্ত কোনো রেফারেন্স বা ভাউচার নোট...'}
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                 />
@@ -402,10 +401,10 @@ export const FactoryAccountsPage: React.FC = () => {
                 className="btn"
                 onClick={() => setShowAddModal(false)}
               >
-                বাতিল
+                {t('বাতিল')}
               </button>
               <button type="submit" className="btn pri">
-                সংরক্ষণ করুন
+                {language === 'en' ? 'Save' : 'সংরক্ষণ করুন'}
               </button>
             </div>
           </form>

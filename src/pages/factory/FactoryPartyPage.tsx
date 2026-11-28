@@ -1,37 +1,31 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/context/AppContext';
+import { bnNum } from '@/utils/formatters';
 import { PartyItem } from '@/types/domain.types';
 
-// Convert number to Bengali digits with comma formatting
+// Convert number to localized digits
 function bn(num: number | string | undefined | null): string {
   if (num === undefined || num === null || isNaN(Number(num))) return '০';
-  const n = Math.round(Number(num));
-  const s = n.toLocaleString('en-US');
-  const enDigits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-  const bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
-  let res = '';
-  for (let i = 0; i < s.length; i++) {
-    const ch = s[i];
-    const idx = enDigits.indexOf(ch);
-    res += idx !== -1 ? bnDigits[idx] : ch;
-  }
-  return res;
+  return bnNum(num);
 }
 
-// Bengali date formatter matching KnitKhata
-function fd(dateStr?: string): string {
+// Localized date formatter
+function fd(dateStr?: string, language?: string): string {
   if (!dateStr) return '—';
   try {
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
+    if (language === 'en') {
+      return d.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
     const months = [
       'জানু', 'ফেব্রু', 'মার্চ', 'এপ্রিল', 'মে', 'জুন',
       'জুলাই', 'আগস্ট', 'সেপ্টে', 'অক্টো', 'নভে', 'ডিসে'
     ];
-    const day = bn(d.getDate());
+    const day = bnNum(d.getDate());
     const m = months[d.getMonth()];
-    const yr = bn(d.getFullYear());
+    const yr = bnNum(d.getFullYear());
     return `${day} ${m} ${yr}`;
   } catch {
     return dateStr;
@@ -40,7 +34,7 @@ function fd(dateStr?: string): string {
 
 export const FactoryPartyPage: React.FC = () => {
   const navigate = useNavigate();
-  const { parties, orders, bills, createParty, togglePartyStatus, addToast } = useApp();
+  const { parties, orders, bills, createParty, togglePartyStatus, addToast, t, language, tkSymbol } = useApp();
 
   // Search and filter state
   const [searchTerm, setSearchTerm] = useState('');
@@ -210,8 +204,8 @@ export const FactoryPartyPage: React.FC = () => {
       {/* HEADER MATCHING KnitKhata.html */}
       <div className="head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h2>পার্টি তালিকা</h2>
-          <p>যেসব কম্পোজিট/ভেন্ডর কাজ দেয়, আর যাদের কাছ থেকে মাল কেনেন — সবার একটাই তালিকা</p>
+          <h2>{t('পার্টি তালিকা')}</h2>
+          <p>{t('যেসব কম্পোজিট/ভেন্ডর কাজ দেয়, আর যাদের কাছ থেকে মাল কেনেন — সবার একটাই তালিকা')}</p>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <button
@@ -223,7 +217,7 @@ export const FactoryPartyPage: React.FC = () => {
               el?.scrollIntoView({ behavior: 'smooth' });
             }}
           >
-            + নতুন পার্টি যোগ
+            {t('+ নতুন পার্টি যোগ')}
           </button>
           <button
             type="button"
@@ -238,16 +232,16 @@ export const FactoryPartyPage: React.FC = () => {
       {/* KPIS MATCHING KnitKhata.html */}
       <div className="kpis">
         <div className="kpi">
-          <span>ভেন্ডর (কাজ দেয়)</span>
-          <b>{vendorCount}</b>
+          <span>{t('ভেন্ডর (কাজ দেয়)')}</span>
+          <b>{bnNum(vendorCount)}</b>
         </div>
         <div className="kpi">
-          <span>সাপ্লায়ার</span>
-          <b>{supplierCount}</b>
+          <span>{t('সাপ্লায়ার')}</span>
+          <b>{bnNum(supplierCount)}</b>
         </div>
         <div className="kpi">
-          <span>এ মাসে নতুন যোগ</span>
-          <b>{newThisMonthCount}</b>
+          <span>{t('এ মাসে নতুন যোগ')}</span>
+          <b>{bnNum(newThisMonthCount)}</b>
         </div>
       </div>
 
@@ -269,28 +263,28 @@ export const FactoryPartyPage: React.FC = () => {
             className={`btn sm ${filterType === 'all' ? 'pri' : ''}`}
             onClick={() => setFilterType('all')}
           >
-            সব ({partyStats.length})
+            {t('সব')} ({bnNum(partyStats.length)})
           </button>
           <button
             type="button"
             className={`btn sm ${filterType === 'ven' ? 'pri' : ''}`}
             onClick={() => setFilterType('ven')}
           >
-            ভেন্ডর ({vendorCount})
+            {t('ভেন্ডর')} ({bnNum(vendorCount)})
           </button>
           <button
             type="button"
             className={`btn sm ${filterType === 'sup' ? 'pri' : ''}`}
             onClick={() => setFilterType('sup')}
           >
-            সাপ্লায়ার ({supplierCount})
+            {t('সাপ্লায়ার')} ({bnNum(supplierCount)})
           </button>
         </div>
 
         <div style={{ minWidth: 260, maxWidth: 360, flex: '1 1 auto' }}>
           <input
             type="search"
-            placeholder="পার্টির নাম, ফোন বা ঠিকানা দিয়ে খুঁজুন..."
+            placeholder={t('পার্টির নাম, ফোন বা ঠিকানা দিয়ে খুঁজুন...')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
@@ -312,23 +306,25 @@ export const FactoryPartyPage: React.FC = () => {
           <table style={{ width: '100%' }}>
             <thead>
               <tr>
-                <th>পার্টি</th>
-                <th>ধরন</th>
-                <th>যোগাযোগ</th>
-                <th>মোবাইল</th>
-                <th className="n">ডিফল্ট রেট ৳/kg</th>
-                <th>পেমেন্টের শর্ত</th>
-                <th className="n">অর্ডার</th>
-                <th className="n">বাকি ৳</th>
-                <th>যোগ হয়েছে</th>
-                <th style={{ textAlign: 'center' }}>সক্রিয়</th>
+                <th>{t('পার্টি')}</th>
+                <th>{t('ধরন')}</th>
+                <th>{t('যোগাযোগ')}</th>
+                <th>{t('মোবাইল')}</th>
+                <th className="n">{language === 'en' ? `Default Rate ${tkSymbol}/kg` : 'ডিফল্ট রেট ৳/kg'}</th>
+                <th>{t('পেমেন্টের শর্ত')}</th>
+                <th className="n">{t('অর্ডার')}</th>
+                <th className="n">{language === 'en' ? `Due ${tkSymbol}` : 'বাকি ৳'}</th>
+                <th>{t('যোগ হয়েছে')}</th>
+                <th style={{ textAlign: 'center' }}>{t('সক্রিয়')}</th>
               </tr>
             </thead>
             <tbody>
               {filteredParties.length === 0 ? (
                 <tr>
                   <td colSpan={10} style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--muted)' }}>
-                    কোনো পার্টি পাওয়া যায়নি। নিচে ফর্ম পূরণ করে নতুন পার্টি যোগ করুন।
+                    {language === 'en'
+                      ? 'No parties found. Fill in the form below to add a new party.'
+                      : 'কোনো পার্টি পাওয়া যায়নি। নিচে ফর্ম পূরণ করে নতুন পার্টি যোগ করুন।'}
                   </td>
                 </tr>
               ) : (
@@ -346,7 +342,7 @@ export const FactoryPartyPage: React.FC = () => {
                           navigate(`/dashboard/ledger?party=${partyCode}`);
                         }
                       }}
-                      title={isVen ? 'ভেন্ডরের লেজার দেখতে ক্লিক করুন' : undefined}
+                      title={isVen ? (language === 'en' ? 'Click to view vendor ledger' : 'ভেন্ডরের লেজার দেখতে ক্লিক করুন') : undefined}
                       style={{ cursor: isVen ? 'pointer' : 'default' }}
                     >
                       <td>
@@ -355,22 +351,22 @@ export const FactoryPartyPage: React.FC = () => {
                       </td>
                       <td>
                         {isVen ? (
-                          <span className="pill p-acc">ভেন্ডর</span>
+                          <span className="pill p-acc">{t('ভেন্ডর')}</span>
                         ) : (
-                          <span className="pill p-yarn">সাপ্লায়ার</span>
+                          <span className="pill p-yarn">{t('সাপ্লায়ার')}</span>
                         )}
                       </td>
                       <td className="small">{p.contact || p.contact_person || '—'}</td>
                       <td className="mono small">{p.phone || '—'}</td>
                       <td className="n">
-                        {p.rate || p.default_rate_tk ? `${p.rate || p.default_rate_tk} ৳` : '—'}
+                        {p.rate || p.default_rate_tk ? `${tkSymbol} ${bnNum(p.rate || p.default_rate_tk)}` : '—'}
                       </td>
-                      <td className="small">{p.terms || p.payment_terms || '—'}</td>
-                      <td className="n">{p.computedOrderCount}</td>
+                      <td className="small">{t(p.terms || p.payment_terms || '—')}</td>
+                      <td className="n">{bnNum(p.computedOrderCount)}</td>
                       <td className="n" style={{ fontWeight: p.computedDue > 0 ? 700 : 400, color: p.computedDue > 0 ? 'var(--bad, #b91c1c)' : 'inherit' }}>
-                        ৳ {bn(p.computedDue)}
+                        {tkSymbol} {bnNum(p.computedDue)}
                       </td>
-                      <td className="mono small">{fd(p.added || p.added_date)}</td>
+                      <td className="mono small">{fd(p.added || p.added_date, language)}</td>
                       <td style={{ textAlign: 'center' }}>
                         <button
                           type="button"
@@ -379,8 +375,8 @@ export const FactoryPartyPage: React.FC = () => {
                             e.stopPropagation();
                             handleToggle(p);
                           }}
-                          aria-label={`${p.name} সক্রিয়/বন্ধ`}
-                          title={p.computedIsActive ? 'সক্রিয় (বন্ধ করতে ক্লিক করুন)' : 'বন্ধ (সক্রিয় করতে ক্লিক করুন)'}
+                          aria-label={`${p.name} ${p.computedIsActive ? t('সক্রিয়') : t('নিষ্ক্রিয়')}`}
+                          title={p.computedIsActive ? (language === 'en' ? 'Active (Click to disable)' : 'সক্রিয় (বন্ধ করতে ক্লিক করুন)') : (language === 'en' ? 'Disabled (Click to enable)' : 'বন্ধ (সক্রিয় করতে ক্লিক করুন)')}
                         />
                       </td>
                     </tr>
@@ -391,7 +387,9 @@ export const FactoryPartyPage: React.FC = () => {
           </table>
         </div>
         <p className="small muted" style={{ marginTop: 12 }}>
-          ভেন্ডরের সারিতে ক্লিক করলে তার লেজার খুলবে। বন্ধ করা পার্টির পুরোনো হিসাব থেকে যায়, শুধু নতুন অর্ডার বা বিলে তার নাম আসে না।
+          {language === 'en'
+            ? 'Click on any vendor row to open their ledger. Disabled parties retain all historical records, they are simply hidden from new order or billing pickers.'
+            : 'ভেন্ডরের সারিতে ক্লিক করলে তার লেজার খুলবে। বন্ধ করা পার্টির পুরোনো হিসাব থেকে যায়, শুধু নতুন অর্ডার বা বিলে তার নাম আসে না।'}
         </p>
       </div>
 
@@ -399,63 +397,63 @@ export const FactoryPartyPage: React.FC = () => {
       <div className="grid g2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
         {/* CREATE PARTY FORM (#npf) */}
         <form className="card" id="npf" onSubmit={handleSubmit}>
-          <h3 style={{ marginBottom: 16 }}>নতুন পার্টি যোগ করুন</h3>
+          <h3 style={{ marginBottom: 16 }}>{t('নতুন পার্টি যোগ করুন')}</h3>
 
           <div className="form" style={{ display: 'grid', gap: 12 }}>
             <label className="f" style={{ display: 'block' }}>
               <span style={{ display: 'block', marginBottom: 4, fontWeight: 600 }}>
-                পার্টির নাম <b style={{ color: 'var(--bad, #e11d48)' }}>*</b>
+                {t('পার্টির নাম')} <b style={{ color: 'var(--bad, #e11d48)' }}>*</b>
               </span>
               <input
                 id="np-name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="যেমন: DEF Knit Composite"
+                placeholder={language === 'en' ? 'e.g. DEF Knit Composite' : 'যেমন: DEF Knit Composite'}
                 required
                 style={{ width: '100%' }}
               />
             </label>
 
             <label className="f" style={{ display: 'block' }}>
-              <span style={{ display: 'block', marginBottom: 4, fontWeight: 600 }}>ধরন</span>
+              <span style={{ display: 'block', marginBottom: 4, fontWeight: 600 }}>{t('ধরন')}</span>
               <select
                 id="np-type"
                 value={type}
                 onChange={(e) => setType(e.target.value as 'ven' | 'sup')}
                 style={{ width: '100%' }}
               >
-                <option value="ven">ভেন্ডর — কাজ দেয় (আয়)</option>
-                <option value="sup">সাপ্লায়ার — মাল কিনি (খরচ)</option>
+                <option value="ven">{language === 'en' ? 'Vendor — Assigns work (Income)' : 'ভেন্ডর — কাজ দেয় (আয়)'}</option>
+                <option value="sup">{language === 'en' ? 'Supplier — Raw materials (Expense)' : 'সাপ্লায়ার — মাল কিনি (খরচ)'}</option>
               </select>
             </label>
 
             <label className="f" style={{ display: 'block' }}>
-              <span style={{ display: 'block', marginBottom: 4 }}>ঠিকানা</span>
+              <span style={{ display: 'block', marginBottom: 4 }}>{t('ঠিকানা')}</span>
               <input
                 id="np-addr"
                 type="text"
                 value={addr}
                 onChange={(e) => setAddr(e.target.value)}
-                placeholder="ফ্যাক্টরির ঠিকানা"
+                placeholder={language === 'en' ? 'Factory address' : 'ফ্যাক্টরির ঠিকানা'}
                 style={{ width: '100%' }}
               />
             </label>
 
             <label className="f" style={{ display: 'block' }}>
-              <span style={{ display: 'block', marginBottom: 4 }}>যোগাযোগের ব্যক্তি</span>
+              <span style={{ display: 'block', marginBottom: 4 }}>{t('যোগাযোগের ব্যক্তি')}</span>
               <input
                 id="np-contact"
                 type="text"
                 value={contact}
                 onChange={(e) => setContact(e.target.value)}
-                placeholder="নাম ও পদবি"
+                placeholder={language === 'en' ? 'Name and designation' : 'নাম ও পদবি'}
                 style={{ width: '100%' }}
               />
             </label>
 
             <label className="f" style={{ display: 'block' }}>
-              <span style={{ display: 'block', marginBottom: 4 }}>মোবাইল (WhatsApp)</span>
+              <span style={{ display: 'block', marginBottom: 4 }}>{t('মোবাইল নম্বর')}</span>
               <input
                 id="np-phone"
                 type="text"
@@ -467,13 +465,13 @@ export const FactoryPartyPage: React.FC = () => {
             </label>
 
             <label className="f" style={{ display: 'block' }}>
-              <span style={{ display: 'block', marginBottom: 4 }}>ইমেইল</span>
+              <span style={{ display: 'block', marginBottom: 4 }}>{t('ইমেইল')}</span>
               <input
                 id="np-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="ঐচ্ছিক"
+                placeholder={language === 'en' ? 'Optional' : 'ঐচ্ছিক'}
                 style={{ width: '100%' }}
               />
             </label>
@@ -485,41 +483,41 @@ export const FactoryPartyPage: React.FC = () => {
                 type="text"
                 value={bin}
                 onChange={(e) => setBin(e.target.value)}
-                placeholder="ঐচ্ছিক — বিলে ছাপা হবে"
+                placeholder={language === 'en' ? 'Optional — printed on bill' : 'ঐচ্ছিক — বিলে ছাপা হবে'}
                 style={{ width: '100%' }}
               />
             </label>
 
             <label className="f" style={{ display: 'block' }}>
-              <span style={{ display: 'block', marginBottom: 4 }}>ডিফল্ট নিটিং রেট (৳/kg)</span>
+              <span style={{ display: 'block', marginBottom: 4 }}>{language === 'en' ? 'Default Knitting Rate (${tkSymbol}/kg)' : 'ডিফল্ট নিটিং রেট (৳/kg)'}</span>
               <input
                 id="np-rate"
                 type="number"
                 step="0.5"
                 value={rate}
                 onChange={(e) => setRate(e.target.value)}
-                placeholder="যেমন: 14"
+                placeholder={language === 'en' ? 'e.g. 14' : 'যেমন: 14'}
                 style={{ width: '100%' }}
               />
             </label>
 
             <label className="f" style={{ display: 'block' }}>
-              <span style={{ display: 'block', marginBottom: 4 }}>পেমেন্টের শর্ত</span>
+              <span style={{ display: 'block', marginBottom: 4 }}>{t('পেমেন্টের শর্ত')}</span>
               <select
                 id="np-terms"
                 value={terms}
                 onChange={(e) => setTerms(e.target.value)}
                 style={{ width: '100%' }}
               >
-                <option value="বিলের ৩০ দিনের মধ্যে">বিলের ৩০ দিনের মধ্যে</option>
-                <option value="বিলের ৪৫ দিনের মধ্যে">বিলের ৪৫ দিনের মধ্যে</option>
-                <option value="বিলের ৬০ দিনের মধ্যে">বিলের ৬০ দিনের মধ্যে</option>
-                <option value="নগদ">নগদ</option>
+                <option value="বিলের ৩০ দিনের মধ্যে">{t('বিলের ৩০ দিনের মধ্যে')}</option>
+                <option value="বিলের ৪৫ দিনের মধ্যে">{t('বিলের ৪৫ দিনের মধ্যে')}</option>
+                <option value="বিলের ৬০ দিনের মধ্যে">{language === 'en' ? 'Within 60 days of billing' : 'বিলের ৬০ দিনের মধ্যে'}</option>
+                <option value="নগদ">{t('নগদ')}</option>
               </select>
             </label>
 
             <label className="f" style={{ display: 'block' }}>
-              <span style={{ display: 'block', marginBottom: 4 }}>পুরোনো বাকি / প্রারম্ভিক জের (৳)</span>
+              <span style={{ display: 'block', marginBottom: 4 }}>{language === 'en' ? 'Opening Balance / Due (${tkSymbol})' : 'পুরোনো বাকি / প্রারম্ভিক জের (৳)'}</span>
               <input
                 id="np-open"
                 type="number"
@@ -552,29 +550,39 @@ export const FactoryPartyPage: React.FC = () => {
 
           <div className="row" style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <button className="btn pri" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'পার্টি সেভ হচ্ছে...' : 'পার্টি সেভ করুন'}
+              {isSubmitting ? (language === 'en' ? 'Saving party...' : 'পার্টি সেভ হচ্ছে...') : (language === 'en' ? 'Save Party' : 'পার্টি সেভ করুন')}
             </button>
             <span className="small muted" style={{ fontSize: 12 }}>
-              সেভ করলেই অর্ডার, বিল, লেজার আর ইউজার পারমিশনে এই নাম চলে আসবে।
+              {language === 'en'
+                ? 'Upon saving, this name immediately appears in orders, bills, ledgers, and permissions.'
+                : 'সেভ করলেই অর্ডার, বিল, লেজার আর ইউজার পারমিশনে এই নাম চলে আসবে।'}
             </span>
           </div>
         </form>
 
         {/* INFORMATIONAL CARD MATCHING KnitKhata.html */}
         <div className="card">
-          <h3 style={{ marginBottom: 16 }}>নতুন পার্টি এলে কী হয়</h3>
+          <h3 style={{ marginBottom: 16 }}>{language === 'en' ? 'How Party Management Works' : 'নতুন পার্টি এলে কী হয়'}</h3>
           <div className="prose small" style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--text)' }}>
             <p style={{ marginBottom: 12 }}>
-              ধরুন এই সপ্তাহে DEF Knit Composite থেকে প্রথম কাজ এলো। এখানে নাম, ঠিকানা, যোগাযোগ আর রেট দিয়ে একবার সেভ করবেন। এরপর থেকে নতুন অর্ডার খোলার সময় তালিকায় তার নাম পাবেন, আর তার আলাদা লেজার নিজে থেকেই খুলে যাবে।
+              {language === 'en'
+                ? 'When a new client or supplier is onboarded, save their profile here once. They will automatically be available in order creation and automatic ledgers.'
+                : 'ধরুন এই সপ্তাহে DEF Knit Composite থেকে প্রথম কাজ এলো। এখানে নাম, ঠিকানা, যোগাযোগ আর রেট দিয়ে একবার সেভ করবেন। এরপর থেকে নতুন অর্ডার খোলার সময় তালিকায় তার নাম পাবেন, আর তার আলাদা লেজার নিজে থেকেই খুলে যাবে।'}
             </p>
             <p style={{ marginBottom: 12 }}>
-              তাড়াহুড়োয় থাকলে নতুন অর্ডারের ফর্ম থেকেই <b>"+ নতুন পার্টি"</b> চেপে এখানে আসা যায়। শুধু নামটা দিলেই চলবে, বাকি তথ্য পরে ঠিক করা যাবে।
+              {language === 'en'
+                ? 'In a hurry? Create a party on-the-fly directly from the New Order form by clicking "+ New Buyer".'
+                : 'তাড়াহুড়োয় থাকলে নতুন অর্ডারের ফর্ম থেকেই "+ নতুন পার্টি" চেপে এখানে আসা যায়। শুধু নামটা দিলেই চলবে, বাকি তথ্য পরে ঠিক করা যাবে।'}
             </p>
             <p style={{ marginBottom: 12 }}>
-              আগে থেকে কোনো পার্টির কাছে টাকা বাকি থাকলে <b>"পুরোনো বাকি"</b> ঘরে লিখে দিন। লেজার সেখান থেকেই শুরু হবে।
+              {language === 'en'
+                ? 'If a party has previous balances, enter it under "Opening Balance" to initialize their ledger accurately.'
+                : 'আগে থেকে কোনো পার্টির কাছে টাকা বাকি থাকলে "পুরোনো বাকি" ঘরে লিখে দিন। লেজার সেখান থেকেই শুরু হবে।'}
             </p>
             <p style={{ marginBottom: 0 }}>
-              একই নামে দুবার পার্টি খোলা যাবে না, সফটওয়্যার আটকে দেবে।
+              {language === 'en'
+                ? 'Duplicate party names are automatically prevented to maintain clean bookkeeping.'
+                : 'একই নামে দুবার পার্টি খোলা যাবে না, সফটওয়্যার আটকে দেবে।'}
             </p>
           </div>
         </div>

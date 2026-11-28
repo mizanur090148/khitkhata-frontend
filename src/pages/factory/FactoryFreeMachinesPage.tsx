@@ -21,6 +21,9 @@ export const FactoryFreeMachinesPage: React.FC = () => {
     fetchDashboardData,
     broadcastFreeMachines,
     submitQuotation,
+    t,
+    language,
+    tkSymbol,
   } = useApp();
 
   const [isLoading, setIsLoading] = useState(!dashboardData);
@@ -120,8 +123,12 @@ export const FactoryFreeMachinesPage: React.FC = () => {
       }
       addToast({
         type: 'success',
-        title: nextBroadcast ? 'মার্কেটপ্লেসে সম্প্রচার চালু' : 'সম্প্রচার বন্ধ করা হয়েছে',
-        message: `${code} মেশিনটি ভেন্ডরদের খালি মেশিন তালিকায় ${nextBroadcast ? 'সফলভাবে যুক্ত হয়েছে' : 'লুকানো হয়েছে'}।`,
+        title: nextBroadcast
+          ? (language === 'en' ? 'Marketplace Broadcast Enabled' : 'মার্কেটপ্লেসে সম্প্রচার চালু')
+          : (language === 'en' ? 'Broadcast Disabled' : 'সম্প্রচার বন্ধ করা হয়েছে'),
+        message: language === 'en'
+          ? `Machine ${code} ${nextBroadcast ? 'successfully added to' : 'removed from'} vendor free machine broadcast.`
+          : `${code} মেশিনটি ভেন্ডরদের খালি মেশিন তালিকায় ${nextBroadcast ? 'সফলভাবে যুক্ত হয়েছে' : 'লুকানো হয়েছে'}।`,
       });
       fetchDashboardData?.();
     } catch (err: any) {
@@ -175,8 +182,8 @@ export const FactoryFreeMachinesPage: React.FC = () => {
     if (!rateNum || rateNum <= 0) {
       addToast({
         type: 'error',
-        title: 'ভুল ইনপুট',
-        message: 'সঠিক দর (৳/kg) উল্লেখ করুন।',
+        title: language === 'en' ? 'Invalid Input' : 'ভুল ইনপুট',
+        message: language === 'en' ? `Specify valid rate (${tkSymbol}/kg).` : `সঠিক দর (${tkSymbol}/kg) উল্লেখ করুন।`,
       });
       return;
     }
@@ -209,9 +216,11 @@ export const FactoryFreeMachinesPage: React.FC = () => {
       {/* Header */}
       <div className="head" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h2>খালি মেশিন ও সাবকন্ট্রাক্ট</h2>
+          <h2>{language === 'en' ? 'Free Machines & Subcontracting' : 'খালি মেশিন ও সাবকন্ট্রাক্ট'}</h2>
           <p>
-            যে মেশিনগুলো এখন বসে আছে, সেগুলোতে কাজ নেওয়ার জন্য মার্কেটপ্লেসে খালি হিসেবে সম্প্রচার করতে পারেন। ভেন্ডর ও বায়ার এটা দেখে সরাসরি কোটেশন রিকোয়েস্ট পাঠাবে।
+            {language === 'en'
+              ? 'Broadcast idle machines on the marketplace to secure subcontracts from external buyers and vendors directly.'
+              : 'যে মেশিনগুলো এখন বসে আছে, সেগুলোতে কাজ নেওয়ার জন্য মার্কেটপ্লেসে খালি হিসেবে সম্প্রচার করতে পারেন। ভেন্ডর ও বায়ার এটা দেখে সরাসরি কোটেশন রিকোয়েস্ট পাঠাবে।'}
           </p>
         </div>
       </div>
@@ -219,25 +228,27 @@ export const FactoryFreeMachinesPage: React.FC = () => {
       {/* 3 KPI Cards - 100% Dynamic from Database with proper gap after */}
       <div className="kpis" style={{ marginBottom: 28, marginTop: 14 }}>
         <div className="kpi">
-          <span>মোট মেশিন (ক্যাপাসিটি)</span>
+          <span>{language === 'en' ? 'Total Machines (Capacity)' : 'মোট মেশিন (ক্যাপাসিটি)'}</span>
           <b>
             {effectiveMachinesList.length > 0
-              ? `${bnNum(circularCount)}টি সার্কুলার + ${bnNum(flatCount)}টি ফ্ল্যাট`
-              : '০টি সার্কুলার + ০টি ফ্ল্যাট'}
+              ? (language === 'en'
+                  ? `${bnNum(circularCount)} Circular + ${bnNum(flatCount)} Flat`
+                  : `${bnNum(circularCount)}টি সার্কুলার + ${bnNum(flatCount)}টি ফ্ল্যাট`)
+              : (language === 'en' ? '0 Circular + 0 Flat' : '০টি সার্কুলার + ০টি ফ্ল্যাট')}
           </b>
-          <i>মোট {bnNum(effectiveMachinesList.length)}টি নিটিং মেশিন</i>
+          <i>{language === 'en' ? `Total ${bnNum(effectiveMachinesList.length)} knitting machines` : `মোট ${bnNum(effectiveMachinesList.length)}টি নিটিং মেশিন`}</i>
         </div>
         <div className="kpi">
-          <span>এখন খালি / অলস</span>
+          <span>{language === 'en' ? 'Currently Idle / Free' : 'এখন খালি / অলস'}</span>
           <b style={{ color: machines.length > 0 ? 'var(--warn, #d97706)' : 'inherit' }}>
-            {bnNum(machines.length)}টি মেশিন
+            {bnNum(machines.length)} {language === 'en' ? 'Machines' : 'টি মেশিন'}
           </b>
-          <i>বর্তমানে কোনো কাজ বরাদ্দ নেই</i>
+          <i>{language === 'en' ? 'Currently unassigned' : 'বর্তমানে কোনো কাজ বরাদ্দ নেই'}</i>
         </div>
         <div className="kpi">
-          <span>মার্কেটপ্লেসে সম্প্রচারিত</span>
-          <b style={{ color: 'var(--ok, #16a34a)' }}>{bnNum(broadcastCount)}টি মেশিন</b>
-          <i>ভেন্ডর ও বায়ারদের মার্কেটপ্লেসে উন্মুক্ত</i>
+          <span>{language === 'en' ? 'Broadcasted on Marketplace' : 'মার্কেটপ্লেসে সম্প্রচারিত'}</span>
+          <b style={{ color: 'var(--ok, #16a34a)' }}>{bnNum(broadcastCount)} {language === 'en' ? 'Machines' : 'টি মেশিন'}</b>
+          <i>{language === 'en' ? 'Publicly listed for buyers & vendors' : 'ভেন্ডর ও বায়ারদের মার্কেটপ্লেসে উন্মুক্ত'}</i>
         </div>
       </div>
 
@@ -246,7 +257,7 @@ export const FactoryFreeMachinesPage: React.FC = () => {
         {/* Idle Machines Management - Real Database Machines */}
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <h3 style={{ margin: 0 }}>খালি মেশিন সম্প্রচার তালিকা</h3>
+            <h3 style={{ margin: 0 }}>{language === 'en' ? 'Idle Machine Broadcast List' : 'খালি মেশিন সম্প্রচার তালিকা'}</h3>
             <span
               style={{
                 fontSize: '0.74rem',
@@ -257,7 +268,7 @@ export const FactoryFreeMachinesPage: React.FC = () => {
                 borderRadius: 999,
               }}
             >
-              মোট {bnNum(machines.length)}টি
+              {language === 'en' ? `Total ${bnNum(machines.length)}` : `মোট ${bnNum(machines.length)}টি`}
             </span>
           </div>
 
@@ -265,11 +276,11 @@ export const FactoryFreeMachinesPage: React.FC = () => {
             <table>
               <thead>
                 <tr>
-                  <th>মেশিন নং</th>
-                  <th>ব্র্যান্ড ও স্পেক</th>
-                  <th>কবে থেকে খালি</th>
-                  <th className="n">দৈনিক ক্ষমতা</th>
-                  <th style={{ textAlign: 'center' }}>মার্কেটপ্লেসে দেখান</th>
+                  <th>{language === 'en' ? 'Machine No' : 'মেশিন নং'}</th>
+                  <th>{language === 'en' ? 'Brand & Specs' : 'ব্র্যান্ড ও স্পেক'}</th>
+                  <th>{language === 'en' ? 'Free From' : 'কবে থেকে খালি'}</th>
+                  <th className="n">{t('দৈনিক ক্ষমতা')}</th>
+                  <th style={{ textAlign: 'center' }}>{language === 'en' ? 'Show in Marketplace' : 'মার্কেটপ্লেসে দেখান'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -277,14 +288,14 @@ export const FactoryFreeMachinesPage: React.FC = () => {
                   <tr>
                     <td colSpan={5} style={{ textAlign: 'center', padding: '28px', color: 'var(--muted)' }}>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                        <Loader2 size={16} className="animate-spin" /> ডাটাবেজ থেকে খালি মেশিনের তালিকা লোড হচ্ছে...
+                        <Loader2 size={16} className="animate-spin" /> {language === 'en' ? 'Loading idle machines from database...' : 'ডাটাবেজ থেকে খালি মেশিনের তালিকা লোড হচ্ছে...'}
                       </span>
                     </td>
                   </tr>
                 ) : machines.length === 0 ? (
                   <tr>
                     <td colSpan={5} style={{ textAlign: 'center', padding: '24px', color: 'var(--muted)' }}>
-                      বর্তমানে কোনো খালি মেশিন নেই। সব মেশিনে প্রোডাকশন চলছে।
+                      {language === 'en' ? 'No idle machines currently. All machines are active in production.' : 'বর্তমানে কোনো খালি মেশিন নেই। সব মেশিনে প্রোডাকশন চলছে।'}
                     </td>
                   </tr>
                 ) : (
@@ -328,14 +339,16 @@ export const FactoryFreeMachinesPage: React.FC = () => {
             </table>
           </div>
           <p className="small muted" style={{ marginTop: 12 }}>
-            টিক দেওয়া মেশিনগুলো ভেন্ডর ও বায়িং হাউসের নিটখাতা লাইভ মার্কেটপ্লেসে সম্প্রচারিত হয় এবং ডাটাবেজে সংরক্ষিত থাকে।
+            {language === 'en'
+              ? 'Selected machines are broadcast live on the KnitKhata marketplace for vendors and buying houses.'
+              : 'টিক দেওয়া মেশিনগুলো ভেন্ডর ও বায়িং হাউসের নিটখাতা লাইভ মার্কেটপ্লেসে সম্প্রচারিত হয় এবং ডাটাবেজে সংরক্ষিত থাকে।'}
           </p>
         </div>
 
         {/* Incoming Capacity Requests from Vendors / Marketplace */}
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <h3 style={{ margin: 0 }}>ভেন্ডরদের সাবকন্ট্রাক্ট রিকোয়েস্ট</h3>
+            <h3 style={{ margin: 0 }}>{t('ভেন্ডরদের সাবকন্ট্রাক্ট রিকোয়েস্ট')}</h3>
             <span
               style={{
                 fontSize: '0.74rem',
@@ -346,7 +359,7 @@ export const FactoryFreeMachinesPage: React.FC = () => {
                 borderRadius: 999,
               }}
             >
-              লাইভ মার্কেটপ্লেস
+              {language === 'en' ? 'Live Marketplace' : 'লাইভ মার্কেটপ্লেস'}
             </span>
           </div>
 
@@ -354,7 +367,7 @@ export const FactoryFreeMachinesPage: React.FC = () => {
             {isLoading && !dashboardData ? (
               <p className="small muted" style={{ textAlign: 'center', padding: '24px' }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                  <Loader2 size={16} className="animate-spin" /> মার্কেটপ্লেস রিকোয়েস্ট লোড হচ্ছে...
+                  <Loader2 size={16} className="animate-spin" /> {language === 'en' ? 'Loading marketplace requests...' : 'মার্কেটপ্লেস রিকোয়েস্ট লোড হচ্ছে...'}
                 </span>
               </p>
             ) : liveRfqs && liveRfqs.length > 0 ? (
@@ -365,12 +378,12 @@ export const FactoryFreeMachinesPage: React.FC = () => {
                     ? 'ABC Knit Composite'
                     : req.party === 'xyz'
                     ? 'XYZ Fashion Ltd'
-                    : req.title || 'ভেন্ডর রিকোয়েস্ট');
+                    : req.title || (language === 'en' ? 'Vendor Request' : 'ভেন্ডর রিকোয়েস্ট'));
 
                 const fabricDesc = req.fabric || req.yarnSpec || req.fab || 'Single Jersey / Pique';
                 const qtyVal = Number(req.qty_kg || req.reqKg || req.q || 3000);
-                const targetRate = req.target_rate || '৳১৪–১৬/kg';
-                const deadline = req.delivery_date || req.startDate || req.from || 'আসন্ন';
+                const targetRate = req.target_rate || `${tkSymbol}14–16/kg`;
+                const deadline = req.delivery_date || req.startDate || req.from || (language === 'en' ? 'Upcoming' : 'আসন্ন');
 
                 return (
                   <div
@@ -385,18 +398,18 @@ export const FactoryFreeMachinesPage: React.FC = () => {
                     <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
                       <b style={{ fontSize: '0.95rem' }}>{buyerTitle}</b>
                       <span className="pill p-ok">
-                        {req.status === 'New' || !req.status ? 'নতুন চাহিদা' : req.status}
+                        {req.status === 'New' || !req.status ? (language === 'en' ? 'New Demand' : 'নতুন চাহিদা') : req.status}
                       </span>
                     </div>
 
                     <div className="small muted" style={{ marginTop: 4 }}>
-                      টার্গেট রেট: <b>{targetRate}</b> · ডেলিভারি: <b>{deadline}</b>
+                      {language === 'en' ? 'Target Rate:' : 'টার্গেট রেট:'} <b>{targetRate}</b> · {language === 'en' ? 'Delivery:' : 'ডেলিভারি:'} <b>{deadline}</b>
                     </div>
 
                     <p style={{ margin: '8px 0', fontSize: '.9rem', lineHeight: 1.5 }}>
-                      ফেব্রিক: <b>{fabricDesc}</b> · পরিমাণ: <b>{bnNum(qtyVal.toLocaleString('en-IN'))} kg</b>
+                      {language === 'en' ? 'Fabric:' : 'ফেব্রিক:'} <b>{fabricDesc}</b> · {language === 'en' ? 'Qty:' : 'পরিমাণ:'} <b>{bnNum(qtyVal.toLocaleString('en-IN'))} kg</b>
                       <br />
-                      প্রয়োজন: <b>{bnNum(req.n || 2)}টি মেশিন ({req.diaGg || req.spec || '30" × 24G'})</b>
+                      {language === 'en' ? 'Required:' : 'প্রয়োজন:'} <b>{bnNum(req.n || 2)} {language === 'en' ? 'Machines' : 'টি মেশিন'} ({req.diaGg || req.spec || '30" × 24G'})</b>
                     </p>
 
                     <div className="row" style={{ gap: 8, marginTop: 10 }}>
@@ -406,7 +419,7 @@ export const FactoryFreeMachinesPage: React.FC = () => {
                         onClick={() => navigate('/dashboard/fmsg')}
                         style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
                       >
-                        <Send size={13} /> মেসেজে কথা বলুন
+                        <Send size={13} /> {language === 'en' ? 'Chat in Messages' : 'মেসেজে কথা বলুন'}
                       </button>
                       <button
                         type="button"
@@ -414,7 +427,7 @@ export const FactoryFreeMachinesPage: React.FC = () => {
                         onClick={() => handleOpenQuoteModal(req)}
                         style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 600 }}
                       >
-                        <CheckCircle2 size={13} style={{ color: 'var(--ok)' }} /> কোটেশন পাঠান
+                        <CheckCircle2 size={13} style={{ color: 'var(--ok)' }} /> {t('কোটেশন পাঠান')}
                       </button>
                     </div>
                   </div>
@@ -422,7 +435,7 @@ export const FactoryFreeMachinesPage: React.FC = () => {
               })
             ) : (
               <p className="small muted" style={{ textAlign: 'center', padding: '16px' }}>
-                বর্তমানে কোনো ভেন্ডর রিকোয়েস্ট অপেক্ষমাণ নেই।
+                {language === 'en' ? 'No vendor capacity requests currently pending.' : 'বর্তমানে কোনো ভেন্ডর রিকোয়েস্ট অপেক্ষমাণ নেই।'}
               </p>
             )}
           </div>
@@ -454,7 +467,7 @@ export const FactoryFreeMachinesPage: React.FC = () => {
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <h3 style={{ margin: 0, fontSize: '1.2rem' }}>সাবকন্ট্রাক্ট কোটেশন দরপত্র</h3>
+              <h3 style={{ margin: 0, fontSize: '1.2rem' }}>{language === 'en' ? 'Subcontract Quotation Tender' : 'সাবকন্ট্রাক্ট কোটেশন দরপত্র'}</h3>
               <button
                 type="button"
                 onClick={handleCloseQuoteModal}
@@ -465,14 +478,14 @@ export const FactoryFreeMachinesPage: React.FC = () => {
             </div>
 
             <div style={{ background: 'var(--surface2)', padding: '10px 14px', borderRadius: 8, marginBottom: 16, fontSize: '0.86rem' }}>
-              <div>বায়ার: <b>{quoteModalRfq.buyer || quoteModalRfq.title || 'ভেন্ডর'}</b></div>
-              <div>ফেব্রিক: <b>{quoteModalRfq.fabric || quoteModalRfq.yarnSpec || 'Single Jersey'}</b> · পরিমাণ: <b>{bnNum(Number(quoteModalRfq.qty_kg || quoteModalRfq.reqKg || 3000))} kg</b></div>
+              <div>{language === 'en' ? 'Buyer:' : 'বায়ার:'} <b>{quoteModalRfq.buyer || quoteModalRfq.title || (language === 'en' ? 'Vendor' : 'ভেন্ডর')}</b></div>
+              <div>{language === 'en' ? 'Fabric:' : 'ফেব্রিক:'} <b>{quoteModalRfq.fabric || quoteModalRfq.yarnSpec || 'Single Jersey'}</b> · {language === 'en' ? 'Qty:' : 'পরিমাণ:'} <b>{bnNum(Number(quoteModalRfq.qty_kg || quoteModalRfq.reqKg || 3000))} kg</b></div>
             </div>
 
             <form onSubmit={handleSubmitQuote} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, marginBottom: 4 }}>
-                  আপনার প্রস্তাবিত নিটিং রেট (৳ / kg) *
+                  {language === 'en' ? `Your Proposed Knitting Rate (${tkSymbol} / kg) *` : `আপনার প্রস্তাবিত নিটিং রেট (${tkSymbol} / kg) *`}
                 </label>
                 <input
                   type="number"
@@ -495,7 +508,7 @@ export const FactoryFreeMachinesPage: React.FC = () => {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, marginBottom: 4 }}>
-                    সম্ভাব্য সময় (দিন)
+                    {language === 'en' ? 'Estimated Time (Days)' : 'সম্ভাব্য সময় (দিন)'}
                   </label>
                   <input
                     type="number"
@@ -514,7 +527,7 @@ export const FactoryFreeMachinesPage: React.FC = () => {
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, marginBottom: 4 }}>
-                    বরাদ্দ মেশিন সংখ্যা
+                    {language === 'en' ? 'Allocated Machines' : 'বরাদ্দ মেশিন সংখ্যা'}
                   </label>
                   <input
                     type="number"
@@ -535,12 +548,12 @@ export const FactoryFreeMachinesPage: React.FC = () => {
 
               <div>
                 <label style={{ display: 'block', fontSize: '0.84rem', fontWeight: 600, marginBottom: 4 }}>
-                  বিশেষ বার্তা / শর্ত
+                  {language === 'en' ? 'Special Remarks / Terms' : 'বিশেষ বার্তা / শর্ত'}
                 </label>
                 <textarea
                   value={quoteNote}
                   onChange={(e) => setQuoteNote(e.target.value)}
-                  placeholder="যেমন: সুতা পৌঁছানোর পর সাথে সাথে প্রোডাকশন শুরু হবে..."
+                  placeholder={language === 'en' ? 'e.g. Production begins immediately upon yarn arrival...' : 'যেমন: সুতা পৌঁছানোর পর সাথে সাথে প্রোডাকশন শুরু হবে...'}
                   style={{
                     width: '100%',
                     minHeight: 64,
@@ -561,7 +574,7 @@ export const FactoryFreeMachinesPage: React.FC = () => {
                   onClick={handleCloseQuoteModal}
                   disabled={isSubmittingQuote}
                 >
-                  বাতিল
+                  {t('বাতিল')}
                 </button>
                 <button
                   type="submit"
@@ -571,11 +584,11 @@ export const FactoryFreeMachinesPage: React.FC = () => {
                 >
                   {isSubmittingQuote ? (
                     <>
-                      <Loader2 size={14} className="animate-spin" /> পাঠানো হচ্ছে...
+                      <Loader2 size={14} className="animate-spin" /> {language === 'en' ? 'Submitting...' : 'পাঠানো হচ্ছে...'}
                     </>
                   ) : (
                     <>
-                      <Send size={14} /> কোটেশন নিশ্চিত করুন
+                      <Send size={14} /> {language === 'en' ? 'Confirm Quotation' : 'কোটেশন নিশ্চিত করুন'}
                     </>
                   )}
                 </button>

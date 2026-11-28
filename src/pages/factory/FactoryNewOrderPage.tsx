@@ -219,7 +219,7 @@ const createBlankLine = (uid: number, place = 'Body'): OrderLineState => ({
 export const FactoryNewOrderPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { orders, parties, machines, createOrder, createParty, addToast, setSelectedOrderId, fetchParties } = useApp();
+  const { orders, parties, machines, createOrder, createParty, addToast, setSelectedOrderId, fetchParties, t, language, tkSymbol } = useApp();
 
   // Basic Form States - initially empty for fresh new entry
   const [pubDate, setPubDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
@@ -388,8 +388,8 @@ export const FactoryNewOrderPage: React.FC = () => {
 
   // Line Name helper
   const lname = (l: OrderLineState, i: number) =>
-    [l.place, l.fab].filter(Boolean).join(' · ') || `লাইন ${i + 1}`;
-  const unitOf = (l: OrderLineState) => (l && (l.kt === 'f' || (l as any).unit === 'pcs') ? 'পিস' : 'kg');
+    [l.place, l.fab].filter(Boolean).join(' · ') || (language === 'en' ? `Line ${i + 1}` : `লাইন ${i + 1}`);
+  const unitOf = (l: OrderLineState) => (l && (l.kt === 'f' || (l as any).unit === 'pcs') ? (language === 'en' ? 'pcs' : 'পিস') : 'kg');
 
   // Totals Calculation matching noTotals() in KnitKhata.html
   const totalNum = parseFloat(totalQty) || 0;
@@ -400,16 +400,24 @@ export const FactoryNewOrderPage: React.FC = () => {
   let allocSt = '';
   let allocCls = '';
   if (!totalNum) {
-    allocSt = 'মোট অর্ডার কোয়ান্টিটি লিখুন, তারপর ফেব্রিক অনুযায়ী ভাগ করুন।';
+    allocSt = language === 'en'
+      ? 'Enter total order quantity first, then allocate across fabric lines.'
+      : 'মোট অর্ডার কোয়ান্টিটি লিখুন, তারপর ফেব্রিক অনুযায়ী ভাগ করুন।';
     allocCls = 'idle';
   } else if (restNum < 0) {
-    allocSt = `মোট অর্ডারের চেয়ে ${bnNum(-restNum)} kg বেশি দেওয়া হয়েছে। কোনো লাইনের কোয়ান্টিটি কমান।`;
+    allocSt = language === 'en'
+      ? `${bnNum(-restNum)} kg allocated in excess of total order. Please adjust line quantities.`
+      : `মোট অর্ডারের চেয়ে ${bnNum(-restNum)} kg বেশি দেওয়া হয়েছে। কোনো লাইনের কোয়ান্টিটি কমান।`;
     allocCls = 'over';
   } else if (restNum > 0) {
-    allocSt = `আরও ${bnNum(restNum)} kg ভাগ করা বাকি।`;
+    allocSt = language === 'en'
+      ? `${bnNum(restNum)} kg remaining to allocate.`
+      : `আরও ${bnNum(restNum)} kg ভাগ করা বাকি।`;
     allocCls = 'left';
   } else {
-    allocSt = 'পুরো অর্ডার ভাগ করা হয়েছে।';
+    allocSt = language === 'en'
+      ? 'Entire order allocated successfully.'
+      : 'পুরো অর্ডার ভাগ করা হয়েছে।';
     allocCls = 'ok';
   }
 
@@ -443,11 +451,19 @@ export const FactoryNewOrderPage: React.FC = () => {
     const t = Math.round(l.yarns.reduce((a, y) => a + yPct(y, l.yarns), 0) * 10) / 10;
     return t === 100 ? (
       <>
-        সুতার মোট ভাগ: ১০০% ✓{' '}
-        <span className="muted">(লাইক্রা সাধারণত ৫%, খালি রাখলে এটাই ধরা হয়)</span>
+        {language === 'en' ? 'Total Yarn Share: 100% ✓ ' : 'সুতার মোট ভাগ: ১০০% ✓ '}
+        <span className="muted">
+          {language === 'en'
+            ? '(Lycra is typically 5%, default if left blank)'
+            : '(লাইক্রা সাধারণত ৫%, খালি রাখলে এটাই ধরা হয়)'}
+        </span>
       </>
     ) : (
-      <span style={{ color: 'var(--bad)' }}>সুতার মোট ভাগ {t}% · ১০০% হওয়া দরকার</span>
+      <span style={{ color: 'var(--bad)' }}>
+        {language === 'en'
+          ? `Total yarn share ${t}% · Must equal 100%`
+          : `সুতার মোট ভাগ ${t}% · ১০০% হওয়া দরকার`}
+      </span>
     );
   };
 
@@ -630,12 +646,13 @@ export const FactoryNewOrderPage: React.FC = () => {
               window.scrollTo(0, 0);
             }}
           >
-            ← অর্ডার
+            ← {language === 'en' ? 'Orders' : 'অর্ডার'}
           </button>
-          <h2 style={{ marginTop: 8 }}>New Order Entry</h2>
+          <h2 style={{ marginTop: 8 }}>{language === 'en' ? 'New Order Entry' : 'নতুন অর্ডার এন্ট্রি'}</h2>
           <p>
-            একটা অর্ডারে বডি, রিব, কলার, টিপিং-এর মতো একাধিক অংশ থাকলে প্রতিটা আলাদা লাইনে লিখুন।
-            আগে Placement, তারপর ফেব্রিক আর সুতা। লাল তারকা দেওয়া ঘরগুলো লাগবেই।
+            {language === 'en'
+              ? 'If an order has multiple parts (Body, Rib, Collar, Tipping), add each as a separate line. Start with Placement, then fabric and yarn. Fields with an asterisk are required.'
+              : 'একটা অর্ডারে বডি, রিব, কলার, টিপিং-এর মতো একাধিক অংশ থাকলে প্রতিটা আলাদা লাইনে লিখুন। আগে Placement, তারপর ফেব্রিক আর সুতা। লাল তারকা দেওয়া ঘরগুলো লাগবেই।'}
           </p>
         </div>
       </div>
@@ -677,11 +694,11 @@ export const FactoryNewOrderPage: React.FC = () => {
         {/* CARD 1: DATES */}
         <div className="card">
           <h3>
-            <span className="stp">১</span>তারিখ
+            <span className="stp">{language === 'en' ? '1' : '১'}</span>{language === 'en' ? 'Dates' : 'তারিখ'}
           </h3>
           <div className="no-dates">
             <label className="no-f" htmlFor="no-pub">
-              <span>Order Published Date</span>
+              <span>{language === 'en' ? 'Order Published Date' : 'অর্ডার প্রকাশের তারিখ'}</span>
               <input
                 id="no-pub"
                 type="date"
@@ -690,7 +707,7 @@ export const FactoryNewOrderPage: React.FC = () => {
               />
             </label>
             <label className="no-f" htmlFor="no-yrec">
-              <span>Yarn Received Date</span>
+              <span>{language === 'en' ? 'Yarn Received Date' : 'সুতা প্রাপ্তির তারিখ'}</span>
               <input
                 id="no-yrec"
                 type="date"
@@ -699,7 +716,7 @@ export const FactoryNewOrderPage: React.FC = () => {
               />
             </label>
             <label className="no-f" htmlFor="no-del">
-              <span>Fabrics Delivery Date</span>
+              <span>{language === 'en' ? 'Fabrics Delivery Date' : 'কাপড় ডেলিভারির তারিখ'}</span>
               <input
                 id="no-del"
                 type="date"
@@ -713,19 +730,19 @@ export const FactoryNewOrderPage: React.FC = () => {
         {/* CARD 2: ORDER INFORMATION */}
         <div className="card">
           <h3>
-            <span className="stp">২</span>অর্ডারের তথ্য
+            <span className="stp">{language === 'en' ? '2' : '২'}</span>{language === 'en' ? 'Order Information' : 'অর্ডারের তথ্য'}
           </h3>
           <div className="no-grid">
             <div className="no-f" ref={vendorDropdownRef} style={{ position: 'relative' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                 <label htmlFor="no-vendor" style={{ margin: 0, fontWeight: 600, cursor: 'pointer' }}>
-                  Vendor Name <b className="req">*</b>
+                  {language === 'en' ? 'Vendor Name' : 'ভেন্ডরের নাম'} <b className="req">*</b>
                 </label>
                 <button
                   type="button"
                   className="addp"
                   onClick={handleOpenAddPartyModal}
-                  title="নতুন বায়ার / পার্টি তৈরি করুন"
+                  title={language === 'en' ? 'Create new buyer / party' : 'নতুন বায়ার / পার্টি তৈরি করুন'}
                   style={{
                     fontSize: 12,
                     padding: '3px 10px',
@@ -742,7 +759,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                   }}
                 >
                   <UserPlus size={13} />
-                  + নতুন বায়ার
+                  + {language === 'en' ? 'New Buyer' : 'নতুন বায়ার'}
                 </button>
               </div>
 
@@ -751,7 +768,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                 <input
                   id="no-vendor"
                   type="text"
-                  placeholder="ভেন্ডরের নাম লিখুন বা সিলেক্ট করুন..."
+                  placeholder={language === 'en' ? 'Type or select vendor name...' : 'ভেন্ডরের নাম লিখুন বা সিলেক্ট করুন...'}
                   autoComplete="off"
                   value={vendorName}
                   onChange={(e) => {
@@ -788,7 +805,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                         padding: '0 4px',
                         lineHeight: 1,
                       }}
-                      title="মুছে ফেলুন"
+                      title={language === 'en' ? 'Clear' : 'মুছে ফেলুন'}
                     >
                       ×
                     </button>
@@ -807,7 +824,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                       transition: 'transform 0.15s ease',
                     }}
                     tabIndex={-1}
-                    aria-label="টগল ভেন্ডর তালিকা"
+                    aria-label={language === 'en' ? 'Toggle vendor list' : 'টগল ভেন্ডর তালিকা'}
                   >
                     ▼
                   </button>
@@ -845,15 +862,17 @@ export const FactoryNewOrderPage: React.FC = () => {
                       alignItems: 'center',
                     }}
                   >
-                    <span>ভেন্ডর তালিকা (parties table · type: ven)</span>
+                    <span>{language === 'en' ? 'Vendor Directory (parties table · type: ven)' : 'ভেন্ডর তালিকা (parties table · type: ven)'}</span>
                     <span style={{ fontSize: 10, background: 'var(--brand-surface, #e0f2fe)', color: 'var(--primary, #0284c7)', padding: '1px 6px', borderRadius: 4 }}>
-                      {filteredVendors.length}টি ভেন্ডর
+                      {bnNum(filteredVendors.length)} {language === 'en' ? 'vendors' : 'টি ভেন্ডর'}
                     </span>
                   </div>
 
                   {filteredVendors.length === 0 ? (
                     <div style={{ padding: '16px 12px', textAlign: 'center', fontSize: 13, color: 'var(--muted)' }}>
-                      <div style={{ marginBottom: 8 }}>"{vendorName}" নামে কোনো ভেন্ডর পাওয়া যায়নি</div>
+                      <div style={{ marginBottom: 8 }}>
+                        {language === 'en' ? `No vendor found named "${vendorName}"` : `"${vendorName}" নামে কোনো ভেন্ডর পাওয়া যায়নি`}
+                      </div>
                       <button
                         type="button"
                         onClick={handleOpenAddPartyModal}
@@ -868,7 +887,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                           fontWeight: 600,
                         }}
                       >
-                        <UserPlus size={14} /> + নতুন বায়ার হিসেবে যোগ করুন
+                        <UserPlus size={14} /> + {language === 'en' ? 'Add as New Buyer' : 'নতুন বায়ার হিসেবে যোগ করুন'}
                       </button>
                     </div>
                   ) : (
@@ -905,7 +924,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                               {p.name}
                             </div>
                             <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>
-                              {[p.contact || p.contact_person, p.phone, p.addr || p.address].filter(Boolean).filter((x) => x !== '—').join(' · ') || 'ঠিকানা নেই'}
+                              {[p.contact || p.contact_person, p.phone, p.addr || p.address].filter(Boolean).filter((x) => x !== '—').join(' · ') || (language === 'en' ? 'No address' : 'ঠিকানা নেই')}
                             </div>
                           </div>
                           {rate ? (
@@ -920,7 +939,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                                 whiteSpace: 'nowrap',
                               }}
                             >
-                              ৳ {rate}/kg
+                              {tkSymbol} {bnNum(rate)}/kg
                             </span>
                           ) : null}
                         </div>
@@ -933,12 +952,12 @@ export const FactoryNewOrderPage: React.FC = () => {
 
             <label className="no-f" htmlFor="no-id">
               <span>
-                Order No <b className="req">*</b>
+                {language === 'en' ? 'Order No' : 'অর্ডার নং'} <b className="req">*</b>
               </span>
               <input
                 id="no-id"
                 type="text"
-                placeholder="যেমন: SC-2610-020"
+                placeholder={language === 'en' ? 'e.g. SC-2610-020' : 'যেমন: SC-2610-020'}
                 value={orderNo}
                 onChange={(e) => setOrderNo(e.target.value)}
               />
@@ -946,12 +965,12 @@ export const FactoryNewOrderPage: React.FC = () => {
 
             <label className="no-f" htmlFor="no-buyer">
               <span>
-                Buyer Name <b className="req">*</b>
+                {language === 'en' ? 'Buyer Name' : 'বায়ারের নাম'} <b className="req">*</b>
               </span>
               <input
                 id="no-buyer"
                 type="text"
-                placeholder="যেমন: বায়ারের নাম"
+                placeholder={language === 'en' ? 'e.g. Buyer name' : 'যেমন: বায়ারের নাম'}
                 list="no-blist"
                 autoComplete="off"
                 value={buyerName}
@@ -961,13 +980,13 @@ export const FactoryNewOrderPage: React.FC = () => {
 
             <label className="no-f" htmlFor="no-qty">
               <span>
-                Total Order Qty (kg) <b className="req">*</b>
+                {language === 'en' ? 'Total Order Qty (kg)' : 'মোট অর্ডার কোয়ান্টিটি (kg)'} <b className="req">*</b>
               </span>
               <input
                 id="no-qty"
                 type="text"
                 inputMode="decimal"
-                placeholder="যেমন: 5000"
+                placeholder={language === 'en' ? 'e.g. 5000' : 'যেমন: 5000'}
                 value={totalQty}
                 onChange={(e) => setTotalQty(e.target.value)}
               />
@@ -979,7 +998,7 @@ export const FactoryNewOrderPage: React.FC = () => {
         <div className={`card alloc ${allocCls}`} id="alloc">
           <div className="al-top">
             <b>
-              <span className="stp">৩</span>অংশ অনুযায়ী ভাগ
+              <span className="stp">{language === 'en' ? '3' : '৩'}</span>{language === 'en' ? 'Allocation by Part' : 'অংশ অনুযায়ী ভাগ'}
             </b>
             <span className="mono">
               {bnNum(sumNum)} / {totalNum ? bnNum(totalNum) : '—'} kg
@@ -1004,7 +1023,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                   {bnNum(parseFloat(l.qty) || 0)} {unitOf(l)}
                 </b>
                 {l.kt === 'f' && (
-                  <small className="muted"> (ফ্ল্যাট, kg-র হিসাবে নেই)</small>
+                  <small className="muted"> {language === 'en' ? '(flat, excluded from kg)' : '(ফ্ল্যাট, kg-র হিসাবে নেই)'}</small>
                 )}
               </span>
             ))}
@@ -1033,7 +1052,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                 <div className="ln-h">
                   <span className="ln-no">{i + 1}</span>
                   <b className="ln-t" id={`lt${l.uid}`}>
-                    {[l.place, l.fab, l.color].filter(Boolean).join(' · ') || 'নতুন অংশ'}
+                    {[l.place, l.fab, l.color].filter(Boolean).join(' · ') || (language === 'en' ? 'New Part' : 'নতুন অংশ')}
                   </b>
                   <span className="ln-q" id={`lq${l.uid}`}>
                     {l.qty ? `${bnNum(parseFloat(l.qty) || 0)} ${unitOf(l)}` : ''}
@@ -1046,7 +1065,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                         e.stopPropagation();
                         handleDeleteLine(l.uid);
                       }}
-                      aria-label="এই অংশ বাদ দিন"
+                      aria-label={language === 'en' ? 'Remove this part' : 'এই অংশ বাদ দিন'}
                     >
                       ✕
                     </button>
@@ -1055,8 +1074,8 @@ export const FactoryNewOrderPage: React.FC = () => {
 
                 {/* Knitting Type & Fabric Type Segments */}
                 <div className="ktr">
-                  <div className="seg" role="group" aria-label="নিটিংয়ের ধরন">
-                    <span>নিটিং</span>
+                  <div className="seg" role="group" aria-label={language === 'en' ? 'Knitting Type' : 'নিটিংয়ের ধরন'}>
+                    <span>{language === 'en' ? 'Knitting' : 'নিটিং'}</span>
                     <button
                       type="button"
                       className={l.kt !== 'f' ? 'on' : ''}
@@ -1068,7 +1087,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                         );
                       }}
                     >
-                      সার্কুলার
+                      {language === 'en' ? 'Circular' : 'সার্কুলার'}
                     </button>
                     <button
                       type="button"
@@ -1083,12 +1102,12 @@ export const FactoryNewOrderPage: React.FC = () => {
                         );
                       }}
                     >
-                      ফ্ল্যাট (কলার-কাফ)
+                      {language === 'en' ? 'Flat (Collar-Cuff)' : 'ফ্ল্যাট (কলার-কাফ)'}
                     </button>
                   </div>
 
-                  <div className="seg" role="group" aria-label="কাপড়ের ধরন">
-                    <span>কাপড়</span>
+                  <div className="seg" role="group" aria-label={language === 'en' ? 'Fabric Type' : 'কাপড়ের ধরন'}>
+                    <span>{language === 'en' ? 'Fabric' : 'কাপড়'}</span>
                     <button
                       type="button"
                       className={!l.yd ? 'on' : ''}
@@ -1100,7 +1119,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                         );
                       }}
                     >
-                      গ্রে
+                      {language === 'en' ? 'Grey' : 'গ্রে'}
                     </button>
                     <button
                       type="button"
@@ -1113,7 +1132,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                         );
                       }}
                     >
-                      ইয়ার্ন ডাইড (Y/D)
+                      {language === 'en' ? 'Yarn Dyed (Y/D)' : 'ইয়ার্ন ডাইড (Y/D)'}
                     </button>
                   </div>
                 </div>
@@ -1122,12 +1141,12 @@ export const FactoryNewOrderPage: React.FC = () => {
                 <div className="plc">
                   <label className="no-f" htmlFor={`l${l.uid}-place`}>
                     <span>
-                      Placement (কোন অংশ) <b className="req">*</b>
+                      Placement ({language === 'en' ? 'Part' : 'কোন অংশ'}) <b className="req">*</b>
                     </span>
                     <input
                       id={`l${l.uid}-place`}
                       type="text"
-                      placeholder="যেমন: Body, Neck Rib, Cuff"
+                      placeholder={language === 'en' ? 'e.g. Body, Neck Rib, Cuff' : 'যেমন: Body, Neck Rib, Cuff'}
                       list="dl-place"
                       autoComplete="off"
                       value={l.place}
@@ -1142,7 +1161,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                     />
                   </label>
 
-                  <div className="pq" role="group" aria-label="সাধারণ অংশ">
+                  <div className="pq" role="group" aria-label={language === 'en' ? 'Common Placements' : 'সাধারণ অংশ'}>
                     {PQUICK.map((p) => (
                       <button
                         key={p}
@@ -1173,7 +1192,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                       type="text"
                       list="dl-fab"
                       autoComplete="off"
-                      placeholder={`যেমন: ${l.kt === 'f'
+                      placeholder={`${language === 'en' ? 'e.g.' : 'যেমন:'} ${l.kt === 'f'
                           ? /cuff|কাফ/i.test(l.place)
                             ? 'Flat Knit Cuff'
                             : 'Flat Knit Collar'
@@ -1199,13 +1218,13 @@ export const FactoryNewOrderPage: React.FC = () => {
                   </label>
 
                   <label className="no-f" htmlFor={`l${l.uid}-color`}>
-                    <span>{l.yd ? 'Color / Stripe' : 'Color'}</span>
+                    <span>{l.yd ? (language === 'en' ? 'Color / Stripe' : 'রং / স্ট্রাইপ') : (language === 'en' ? 'Color' : 'রং')}</span>
                     <input
                       id={`l${l.uid}-color`}
                       type="text"
                       list="dl-col"
                       autoComplete="off"
-                      placeholder={l.yd ? 'যেমন: Navy + White স্ট্রাইপ' : 'যেমন: Navy Blue'}
+                      placeholder={l.yd ? (language === 'en' ? 'e.g. Navy + White Stripe' : 'যেমন: Navy + White স্ট্রাইপ') : (language === 'en' ? 'e.g. Navy Blue' : 'যেমন: Navy Blue')}
                       value={l.color}
                       onChange={(e) => {
                         const val = e.target.value;
@@ -1220,13 +1239,13 @@ export const FactoryNewOrderPage: React.FC = () => {
 
                   <label className="no-f" htmlFor={`l${l.uid}-qty`}>
                     <span>
-                      {l.kt === 'f' ? 'Qty (পিস)' : 'Qty (kg)'} <b className="req">*</b>
+                      {l.kt === 'f' ? (language === 'en' ? 'Qty (pcs)' : 'Qty (পিস)') : (language === 'en' ? 'Qty (kg)' : 'Qty (kg)')} <b className="req">*</b>
                     </span>
                     <input
                       id={`l${l.uid}-qty`}
                       type="text"
                       inputMode="decimal"
-                      placeholder={l.kt === 'f' ? 'যেমন: 12000' : 'যেমন: 2000'}
+                      placeholder={l.kt === 'f' ? (language === 'en' ? 'e.g. 12000' : 'যেমন: 12000') : (language === 'en' ? 'e.g. 2000' : 'যেমন: 2000')}
                       value={l.qty}
                       onChange={(e) => {
                         const val = e.target.value;
@@ -1242,12 +1261,12 @@ export const FactoryNewOrderPage: React.FC = () => {
 
                 {/* Yarns Section */}
                 <div className="ln-sub">
-                  সুতা <span className="ycnt">{l.yarns.length}টি</span>
+                  {language === 'en' ? 'Yarn' : 'সুতা'} <span className="ycnt">{bnNum(l.yarns.length)} {language === 'en' ? 'items' : 'টি'}</span>
                 </div>
 
                 {l.fab && l.yarns.length < tmpl.length && (
                   <div className="yhint" style={{ fontSize: '0.84rem', color: 'var(--muted)', background: 'var(--surface2)', padding: '6px 10px', borderRadius: 6, margin: '4px 0' }}>
-                    {l.fab}-এ সাধারণত {tmpl.length}টা সুতা লাগে।{' '}
+                    {language === 'en' ? `${l.fab} typically requires ${tmpl.length} yarn items.` : `${l.fab}-এ সাধারণত ${tmpl.length}টা সুতা লাগে।`}{' '}
                     <button
                       type="button"
                       className="linkb"
@@ -1266,7 +1285,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                         );
                       }}
                     >
-                      সুতার ঘরগুলো যোগ করুন
+                      {language === 'en' ? 'Add suggested yarn items' : 'সুতার ঘরগুলো যোগ করুন'}
                     </button>
                   </div>
                 )}
@@ -1283,8 +1302,8 @@ export const FactoryNewOrderPage: React.FC = () => {
                           type="text"
                           placeholder={
                             /lycra|spandex/i.test(y.role)
-                              ? 'যেমন: 20D Spandex'
-                              : 'যেমন: 30/1 Combed Cotton'
+                              ? (language === 'en' ? 'e.g. 20D Spandex' : 'যেমন: 20D Spandex')
+                              : (language === 'en' ? 'e.g. 30/1 Combed Cotton' : 'যেমন: 30/1 Combed Cotton')
                           }
                           value={y.count}
                           onChange={(e) => {
@@ -1306,7 +1325,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                         <input
                           id={`y${l.uid}-${j}-brand`}
                           type="text"
-                          placeholder="যেমন: মিলের নাম"
+                          placeholder={language === 'en' ? 'e.g. Spinning mill name' : 'যেমন: মিলের নাম'}
                           value={y.brand}
                           onChange={(e) => {
                             const val = e.target.value;
@@ -1327,7 +1346,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                         <input
                           id={`y${l.uid}-${j}-lot`}
                           type="text"
-                          placeholder="যেমন: SQ-88415"
+                          placeholder={language === 'en' ? 'e.g. SQ-88415' : 'যেমন: SQ-88415'}
                           value={y.lot}
                           onChange={(e) => {
                             const val = e.target.value;
@@ -1345,11 +1364,11 @@ export const FactoryNewOrderPage: React.FC = () => {
 
                       {l.yd && (
                         <label className="no-f" htmlFor={`y${l.uid}-${j}-col`}>
-                          <span>সুতার রং</span>
+                          <span>{language === 'en' ? 'Yarn Color' : 'সুতার রং'}</span>
                           <input
                             id={`y${l.uid}-${j}-col`}
                             type="text"
-                            placeholder="যেমন: Navy"
+                            placeholder={language === 'en' ? 'e.g. Navy' : 'যেমন: Navy'}
                             value={y.col}
                             onChange={(e) => {
                               const val = e.target.value;
@@ -1367,7 +1386,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                       )}
 
                       <label className="no-f ypct" htmlFor={`y${l.uid}-${j}-pct`}>
-                        <span>কাপড়ে %</span>
+                        <span>{language === 'en' ? '% in Fabric' : 'কাপড়ে %'}</span>
                         <input
                           id={`y${l.uid}-${j}-pct`}
                           type="text"
@@ -1408,7 +1427,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                               })
                             );
                           }}
-                          aria-label="এই সুতা বাদ দিন"
+                          aria-label={language === 'en' ? 'Remove this yarn' : 'এই সুতা বাদ দিন'}
                         >
                           ✕
                         </button>
@@ -1450,20 +1469,20 @@ export const FactoryNewOrderPage: React.FC = () => {
                     );
                   }}
                 >
-                  + আরেকটা সুতা যোগ করুন
+                  + {language === 'en' ? 'Add another yarn' : 'আরেকটা সুতা যোগ করুন'}
                 </button>
 
                 {/* Technical Specifications */}
-                <div className="ln-sub">স্পেসিফিকেশন</div>
+                <div className="ln-sub">{language === 'en' ? 'Specifications' : 'স্পেসিফিকেশন'}</div>
 
                 {l.kt === 'f' ? (
                   <div className="no-grid g3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '12px 16px' }}>
                     <label className="no-f" htmlFor={`l${l.uid}-fsize`}>
-                      <span>সাইজ (সেমি)</span>
+                      <span>{language === 'en' ? 'Size (cm)' : 'সাইজ (সেমি)'}</span>
                       <input
                         id={`l${l.uid}-fsize`}
                         type="text"
-                        placeholder="যেমন: 38 × 8 cm"
+                        placeholder={language === 'en' ? 'e.g. 38 × 8 cm' : 'যেমন: 38 × 8 cm'}
                         value={l.fsize}
                         onChange={(e) => {
                           const val = e.target.value;
@@ -1477,12 +1496,12 @@ export const FactoryNewOrderPage: React.FC = () => {
                     </label>
 
                     <label className="no-f" htmlFor={`l${l.uid}-pcw`}>
-                      <span>প্রতি পিসের ওজন (গ্রাম)</span>
+                      <span>{language === 'en' ? 'Weight per piece (g)' : 'প্রতি পিসের ওজন (গ্রাম)'}</span>
                       <input
                         id={`l${l.uid}-pcw`}
                         type="text"
                         inputMode="decimal"
-                        placeholder="যেমন: 18"
+                        placeholder={language === 'en' ? 'e.g. 18' : 'যেমন: 18'}
                         value={l.pcw}
                         onChange={(e) => {
                           const val = e.target.value;
@@ -1503,7 +1522,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                         id={`l${l.uid}-mg`}
                         type="text"
                         inputMode="decimal"
-                        placeholder="যেমন: 14"
+                        placeholder={language === 'en' ? 'e.g. 14' : 'যেমন: 14'}
                         value={l.mg}
                         onChange={(e) => {
                           const val = e.target.value;
@@ -1517,11 +1536,11 @@ export const FactoryNewOrderPage: React.FC = () => {
                     </label>
 
                     <label className="no-f" htmlFor={`l${l.uid}-fdes`} style={{ gridColumn: 'span 3' }}>
-                      <span>ডিজাইন / টিপিং</span>
+                      <span>{language === 'en' ? 'Design / Tipping' : 'ডিজাইন / টিপিং'}</span>
                       <input
                         id={`l${l.uid}-fdes`}
                         type="text"
-                        placeholder="যেমন: ২টা সাদা স্ট্রাইপ, ৩ মিমি"
+                        placeholder={language === 'en' ? 'e.g. 2 white stripes, 3 mm' : 'যেমন: ২টা সাদা স্ট্রাইপ, ৩ মিমি'}
                         value={l.fdes}
                         onChange={(e) => {
                           const val = e.target.value;
@@ -1542,7 +1561,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                         id={`l${l.uid}-ggsm`}
                         type="text"
                         inputMode="decimal"
-                        placeholder="যেমন: 150"
+                        placeholder={language === 'en' ? 'e.g. 150' : 'যেমন: 150'}
                         value={l.ggsm}
                         onChange={(e) => {
                           const val = e.target.value;
@@ -1561,7 +1580,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                         id={`l${l.uid}-fgsm`}
                         type="text"
                         inputMode="decimal"
-                        placeholder="যেমন: 160"
+                        placeholder={language === 'en' ? 'e.g. 160' : 'যেমন: 160'}
                         value={l.fgsm}
                         onChange={(e) => {
                           const val = e.target.value;
@@ -1579,7 +1598,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                       <input
                         id={`l${l.uid}-sl`}
                         type="text"
-                        placeholder="যেমন: 2.85 mm"
+                        placeholder={language === 'en' ? 'e.g. 2.85 mm' : 'যেমন: 2.85 mm'}
                         value={l.sl}
                         onChange={(e) => {
                           const val = e.target.value;
@@ -1597,7 +1616,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                       <input
                         id={`l${l.uid}-gdia`}
                         type="text"
-                        placeholder="যেমন: 68"
+                        placeholder={language === 'en' ? 'e.g. 68' : 'যেমন: 68'}
                         value={l.gdia}
                         onChange={(e) => {
                           const val = e.target.value;
@@ -1618,7 +1637,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                         id={`l${l.uid}-mdia`}
                         type="text"
                         inputMode="decimal"
-                        placeholder="যেমন: 30"
+                        placeholder={language === 'en' ? 'e.g. 30' : 'যেমন: 30'}
                         value={l.mdia}
                         onChange={(e) => {
                           const val = e.target.value;
@@ -1639,7 +1658,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                         id={`l${l.uid}-mg`}
                         type="text"
                         inputMode="decimal"
-                        placeholder="যেমন: 24"
+                        placeholder={language === 'en' ? 'e.g. 24' : 'যেমন: 24'}
                         value={l.mg}
                         onChange={(e) => {
                           const val = e.target.value;
@@ -1661,10 +1680,12 @@ export const FactoryNewOrderPage: React.FC = () => {
         {/* CARD 4: ASSIGN TO M/C NO (EXACT MATCHING KNITKHATA.HTML) */}
         <div className="card">
           <h3>
-            <span className="stp">৪</span>Assign to M/C No
+            <span className="stp">{language === 'en' ? '4' : '৪'}</span>Assign to M/C No
           </h3>
           <p className="small muted" style={{ margin: '-4px 0 8px' }}>
-            যে অংশটা বাছা আছে, মেশিনে চাপ দিলে সেটা ওই অংশে যাবে। অংশ বদলাতে নিচের রঙিন বাটনে চাপুন।
+            {language === 'en'
+              ? 'Clicking a machine assigns it to the currently selected line. Switch lines using the colored buttons below.'
+              : 'যে অংশটা বাছা আছে, মেশিনে চাপ দিলে সেটা ওই অংশে যাবে। অংশ বদলাতে নিচের রঙিন বাটনে চাপুন।'}
           </p>
 
           <div className="lnpick" id="lnpick">
@@ -1698,12 +1719,12 @@ export const FactoryNewOrderPage: React.FC = () => {
                   disabled={isBusy || isDown}
                   title={
                     isBusy
-                      ? 'অন্য অর্ডারে চলছে'
+                      ? (language === 'en' ? 'Running on another order' : 'অন্য অর্ডারে চলছে')
                       : isDown
-                        ? 'ব্রেকডাউন'
+                        ? (language === 'en' ? 'Breakdown' : 'ব্রেকডাউন')
                         : o !== undefined
-                          ? noLines[o].fab || `লাইন ${o + 1}`
-                          : 'খালি'
+                          ? noLines[o].fab || (language === 'en' ? `Line ${o + 1}` : `লাইন ${o + 1}`)
+                          : (language === 'en' ? 'Free' : 'খালি')
                   }
                   onClick={() => handleToggleMachine(m.id)}
                 >
@@ -1724,7 +1745,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                   </div>
                 ))
             ) : (
-              'কোনো মেশিন বাছাই হয়নি'
+              language === 'en' ? 'No machines selected' : 'কোনো মেশিন বাছাই হয়নি'
             )}
           </div>
         </div>
@@ -1736,7 +1757,7 @@ export const FactoryNewOrderPage: React.FC = () => {
           id="addln"
           onClick={handleAddLine}
         >
-          + আরেকটা অংশ যোগ করুন
+          + {language === 'en' ? 'Add Another Part' : 'আরেকটা অংশ যোগ করুন'}
         </button>
 
         {/* Validation Message */}
@@ -1752,7 +1773,7 @@ export const FactoryNewOrderPage: React.FC = () => {
           type="submit"
           disabled={submitting}
         >
-          {submitting ? 'সংরক্ষণ হচ্ছে...' : 'অর্ডার সেভ করুন'}
+          {submitting ? (language === 'en' ? 'Saving...' : 'সংরক্ষণ হচ্ছে...') : (language === 'en' ? 'Save Order' : 'অর্ডার সেভ করুন')}
         </button>
       </form>
 
@@ -1819,7 +1840,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
                     <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'var(--text, #0f172a)', letterSpacing: '-0.01em' }}>
-                      নতুন বায়ার / পার্টি নিবন্ধন
+                      {language === 'en' ? 'Register New Buyer / Party' : 'নতুন বায়ার / পার্টি নিবন্ধন'}
                     </h3>
                     <span
                       style={{
@@ -1832,7 +1853,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                         letterSpacing: '0.02em',
                       }}
                     >
-                      ইনস্ট্যান্ট লিংক
+                      {language === 'en' ? 'Instant Link' : 'ইনস্ট্যান্ট লিংক'}
                     </span>
                   </div>
                 </div>
@@ -1864,7 +1885,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                   e.currentTarget.style.background = 'rgba(0, 0, 0, 0.05)';
                   e.currentTarget.style.color = 'var(--muted, #64748b)';
                 }}
-                aria-label="বন্ধ করুন"
+                aria-label={language === 'en' ? 'Close' : 'বন্ধ করুন'}
               >
                 <X size={18} />
               </button>
@@ -1904,7 +1925,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                       marginBottom: 6,
                     }}
                   >
-                    বায়ার / প্রতিষ্ঠানের নাম <span style={{ color: '#ef4444' }}>*</span>
+                    {language === 'en' ? 'Buyer / Company Name' : 'বায়ার / প্রতিষ্ঠানের নাম'} <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                     <div style={{ position: 'absolute', left: 12, color: 'var(--muted, #94a3b8)', display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
@@ -1914,7 +1935,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                       type="text"
                       required
                       autoFocus
-                      placeholder="যেমন: ABC Knit Composite Ltd বা মেসার্স রহিম টেক্সটাইল"
+                      placeholder={language === 'en' ? 'e.g. ABC Knit Composite Ltd or Rahim Textiles' : 'যেমন: ABC Knit Composite Ltd বা মেসার্স রহিম টেক্সটাইল'}
                       value={modalPartyName}
                       onChange={(e) => setModalPartyName(e.target.value)}
                       style={{
@@ -1953,7 +1974,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                         marginBottom: 6,
                       }}
                     >
-                      মোবাইল নম্বর
+                      {language === 'en' ? 'Mobile Number' : 'মোবাইল নম্বর'}
                     </label>
                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                       <div style={{ position: 'absolute', left: 12, color: 'var(--muted, #94a3b8)', display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
@@ -1961,7 +1982,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                       </div>
                       <input
                         type="text"
-                        placeholder="যেমন: 01711-000111"
+                        placeholder={language === 'en' ? 'e.g. 01711-000111' : 'যেমন: 01711-000111'}
                         value={modalPartyPhone}
                         onChange={(e) => setModalPartyPhone(e.target.value)}
                         style={{
@@ -1998,7 +2019,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                         marginBottom: 6,
                       }}
                     >
-                      যোগাযোগকারী কর্মকর্তা
+                      {language === 'en' ? 'Contact Person' : 'যোগাযোগকারী কর্মকর্তা'}
                     </label>
                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                       <div style={{ position: 'absolute', left: 12, color: 'var(--muted, #94a3b8)', display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
@@ -2006,7 +2027,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                       </div>
                       <input
                         type="text"
-                        placeholder="যেমন: মো. কামরুল হাসান (মার্চেন্ডাইজার)"
+                        placeholder={language === 'en' ? 'e.g. Md. Kamrul Hasan (Merchandiser)' : 'যেমন: মো. কামরুল হাসান (মার্চেন্ডাইজার)'}
                         value={modalPartyContact}
                         onChange={(e) => setModalPartyContact(e.target.value)}
                         style={{
@@ -2045,7 +2066,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                       marginBottom: 6,
                     }}
                   >
-                    কারখানা বা অফিসের ঠিকানা
+                    {language === 'en' ? 'Factory or Office Address' : 'কারখানা বা অফিসের ঠিকানা'}
                   </label>
                   <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                     <div style={{ position: 'absolute', left: 12, color: 'var(--muted, #94a3b8)', display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
@@ -2053,7 +2074,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                     </div>
                     <input
                       type="text"
-                      placeholder="যেমন: জামগড়া, আশুলিয়া, সাভার, ঢাকা"
+                      placeholder={language === 'en' ? 'e.g. Ashulia, Savar, Dhaka' : 'যেমন: জামগড়া, আশুলিয়া, সাভার, ঢাকা'}
                       value={modalPartyAddress}
                       onChange={(e) => setModalPartyAddress(e.target.value)}
                       style={{
@@ -2093,13 +2114,13 @@ export const FactoryNewOrderPage: React.FC = () => {
                   }}
                 >
                   <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--muted, #64748b)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    বাণিজ্যিক শর্ত ও রেট
+                    {language === 'en' ? 'Commercial Terms & Rates' : 'বাণিজ্যিক শর্ত ও রেট'}
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.4fr 1.1fr', gap: 12 }}>
                     <div>
                       <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text, #1e293b)', marginBottom: 5 }}>
-                        ডিফল্ট রেট (৳/কেজি)
+                        {language === 'en' ? `Default Rate (${tkSymbol}/kg)` : 'ডিফল্ট রেট (৳/কেজি)'}
                       </label>
                       <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                         <span style={{ position: 'absolute', left: 10, color: 'var(--muted, #94a3b8)', fontWeight: 600, fontSize: 14, pointerEvents: 'none' }}>
@@ -2108,7 +2129,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                         <input
                           type="number"
                           step="0.5"
-                          placeholder="২৪.৫০"
+                          placeholder="24.50"
                           value={modalPartyRate}
                           onChange={(e) => setModalPartyRate(e.target.value)}
                           style={{
@@ -2128,7 +2149,7 @@ export const FactoryNewOrderPage: React.FC = () => {
 
                     <div>
                       <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text, #1e293b)', marginBottom: 5 }}>
-                        পেমেন্ট শর্ত
+                        {language === 'en' ? 'Payment Terms' : 'পেমেন্ট শর্ত'}
                       </label>
                       <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                         <div style={{ position: 'absolute', left: 10, color: 'var(--muted, #94a3b8)', pointerEvents: 'none' }}>
@@ -2150,23 +2171,23 @@ export const FactoryNewOrderPage: React.FC = () => {
                             cursor: 'pointer',
                           }}
                         >
-                          <option value="বিলের ৩০ দিনের মধ্যে">বিলের ৩০ দিনের মধ্যে</option>
-                          <option value="বিলের ১৫ দিনের মধ্যে">বিলের ১৫ দিনের মধ্যে</option>
-                          <option value="বিলের ৪৫ দিনের মধ্যে">বিলের ৪৫ দিনের মধ্যে</option>
-                          <option value="নগদ / ক্যাশ">নগদ / ক্যাশ</option>
-                          <option value="সাপ্তাহিক">সাপ্তাহিক</option>
+                          <option value="বিলের ৩০ দিনের মধ্যে">{language === 'en' ? 'Within 30 days of billing' : 'বিলের ৩০ দিনের মধ্যে'}</option>
+                          <option value="বিলের ১৫ দিনের মধ্যে">{language === 'en' ? 'Within 15 days of billing' : 'বিলের ১৫ দিনের মধ্যে'}</option>
+                          <option value="বিলের ৪৫ দিনের মধ্যে">{language === 'en' ? 'Within 45 days of billing' : 'বিলের ৪৫ দিনের মধ্যে'}</option>
+                          <option value="নগদ / ক্যাশ">{language === 'en' ? 'Cash on Delivery' : 'নগদ / ক্যাশ'}</option>
+                          <option value="সাপ্তাহিক">{language === 'en' ? 'Weekly' : 'সাপ্তাহিক'}</option>
                         </select>
                       </div>
                     </div>
 
                     <div>
                       <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text, #1e293b)', marginBottom: 5 }}>
-                        পূর্বের বকেয়া (৳)
+                        {language === 'en' ? `Opening Balance (${tkSymbol})` : 'পূর্বের বকেয়া (৳)'}
                       </label>
                       <input
                         type="number"
                         step="1"
-                        placeholder="০"
+                        placeholder="0"
                         value={modalPartyOpening}
                         onChange={(e) => setModalPartyOpening(e.target.value)}
                         style={{
@@ -2200,7 +2221,7 @@ export const FactoryNewOrderPage: React.FC = () => {
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem', color: 'var(--muted, #64748b)' }}>
                   <Sparkles size={14} style={{ color: 'var(--primary, #0284c7)' }} />
-                  <span>কোনো পেজ রিলোড ছাড়াই সেভ হবে</span>
+                  <span>{language === 'en' ? 'Saves instantly without page reload' : 'কোনো পেজ রিলোড ছাড়াই সেভ হবে'}</span>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -2226,7 +2247,7 @@ export const FactoryNewOrderPage: React.FC = () => {
                       e.currentTarget.style.background = 'transparent';
                     }}
                   >
-                    বাতিল
+                    {language === 'en' ? 'Cancel' : 'বাতিল'}
                   </button>
 
                   <button
@@ -2262,12 +2283,12 @@ export const FactoryNewOrderPage: React.FC = () => {
                             animation: 'spin 0.6s linear infinite',
                           }}
                         />
-                        <span>সংরক্ষণ হচ্ছে...</span>
+                        <span>{language === 'en' ? 'Saving...' : 'সংরক্ষণ হচ্ছে...'}</span>
                       </>
                     ) : (
                       <>
                         <UserPlus size={16} />
-                        <span>বায়ার সংরক্ষণ করুন</span>
+                        <span>{language === 'en' ? 'Save Buyer' : 'বায়ার সংরক্ষণ করুন'}</span>
                       </>
                     )}
                   </button>

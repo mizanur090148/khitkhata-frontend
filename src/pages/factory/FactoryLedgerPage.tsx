@@ -5,7 +5,7 @@ import { bnNum } from '@/utils/formatters';
 
 export const FactoryLedgerPage: React.FC = () => {
   const navigate = useNavigate();
-  const { role, orders, parties, factoryBills, factoryProfile, fetchBills, fetchOrders } = useApp();
+  const { role, orders, parties, factoryBills, factoryProfile, fetchBills, fetchOrders, t, language, tkSymbol } = useApp();
 
   const isVendor = role === 'vendor' || (role as string) === 'ven';
   const [curParty, setCurParty] = useState<string>('abc');
@@ -139,20 +139,21 @@ export const FactoryLedgerPage: React.FC = () => {
     <div style={{ maxWidth: '100%', width: '100%' }}>
       {isVendor && (
         <div className="vbanner" style={{ marginBottom: 16 }}>
-          <b>{factoryProfile?.name || 'রহমান নিটিং ইন্ডাস্ট্রিজ'}</b>-এর খাতায় আপনার হিসাব — কোন অর্ডার, কত সুতা পাঠিয়েছেন, কবে
-          শেষ, কত বিল, কত দিয়েছেন আর কত বাকি। ফ্যাক্টরি যা দেখে, আপনিও ঠিক তাই
-          দেখছেন।
+          <b>{factoryProfile?.name || (language === 'en' ? 'Rahman Knitting Industries' : 'রহমান নিটিং ইন্ডাস্ট্রিজ')}</b>
+          {language === 'en'
+            ? ' — your entire account ledger: orders, yarn sent, completion dates, billing, payments, and balances. You see exactly what the factory sees.'
+            : '-এর খাতায় আপনার হিসাব — কোন অর্ডার, কত সুতা পাঠিয়েছেন, কবে শেষ, কত বিল, কত দিয়েছেন আর কত বাকি। ফ্যাক্টরি যা দেখে, আপনিও ঠিক তাই দেখছেন।'}
         </div>
       )}
 
       {/* Header */}
       <div className="head">
         <div>
-          <h2>{isVendor ? 'আমার হিসাব (লেজার)' : 'পার্টি লেজার'}</h2>
+          <h2>{isVendor ? t('আমার হিসাব (লেজার)') : t('পার্টি লেজার')}</h2>
           <p>
             {isVendor
-              ? `${factoryProfile?.name || 'রহমান নিটিং ইন্ডাস্ট্রিজ'}-এর সাথে আপনার পুরো লেনদেনের খাতা`
-              : 'প্রতিটা ভেন্ডরের আলাদা খাতা — কোন অর্ডার, কত সুতা, কবে শেষ, কত বিল, কত পেলাম'}
+              ? `${t('-এর সাথে আপনার পুরো লেনদেনের খাতা')} ${factoryProfile?.name || (language === 'en' ? 'Rahman Knitting Industries' : 'রহমান নিটিং ইন্ডাস্ট্রিজ')}`
+              : t('প্রতিটা ভেন্ডরের আলাদা খাতা — কোন অর্ডার, কত সুতা, কবে শেষ, কত বিল, কত পেলাম')}
           </p>
         </div>
         <div className="row no-pdf" style={{ gap: 8 }}>
@@ -161,14 +162,14 @@ export const FactoryLedgerPage: React.FC = () => {
             type="button"
             onClick={() => window.print()}
           >
-            প্রিন্ট করুন
+            {t('প্রিন্ট করুন')}
           </button>
           <button
             className="btn pri sm"
             type="button"
             onClick={() => window.print()}
           >
-            PDF নামান
+            {t('PDF নামান')}
           </button>
         </div>
       </div>
@@ -211,27 +212,28 @@ export const FactoryLedgerPage: React.FC = () => {
       {/* 4 KPI Cards */}
       <div className="kpis">
         <div className="kpi">
-          <span>প্রারম্ভিক জের</span>
-          <b>৳ {bnNum(openBalance)} Dr</b>
-          <i>পুরোনো বাকি</i>
+          <span>{t('প্রারম্ভিক জের')}</span>
+          <b>{tkSymbol} {bnNum(openBalance)} Dr</b>
+          <i>{t('পুরোনো বাকি')}</i>
         </div>
         <div className="kpi">
-          <span>মোট বিল</span>
-          <b>৳ {bnNum(totalBilled)}</b>
-          <i>{bnNum(partyBills.length)}টি বিল</i>
-        </div>
-        <div className="kpi">
-          <span>মোট পেয়েছি</span>
-          <b>৳ {bnNum(totalReceived)}</b>
+          <span>{t('মোট বিল')}</span>
+          <b>{tkSymbol} {bnNum(totalBilled)}</b>
           <i>
-            {bnNum(partyBills.reduce((a, b) => a + (b.recv?.length || 0), 0))}টি
-            ভাউচার
+            {bnNum(partyBills.length)} {language === 'en' ? 'Bills' : 'টি বিল'}
           </i>
         </div>
         <div className="kpi">
-          <span>বর্তমান বাকি</span>
-          <b style={{ color: 'var(--bad)' }}>৳ {bnNum(closingBalance)} Dr</b>
-          <i>সমাপনী জের</i>
+          <span>{t('মোট পেয়েছি')}</span>
+          <b>{tkSymbol} {bnNum(totalReceived)}</b>
+          <i>
+            {bnNum(partyBills.reduce((a, b) => a + (b.recv?.length || 0), 0))} {language === 'en' ? 'Vouchers' : 'টি ভাউচার'}
+          </i>
+        </div>
+        <div className="kpi">
+          <span>{t('বর্তমান বাকি')}</span>
+          <b style={{ color: 'var(--bad)' }}>{tkSymbol} {bnNum(closingBalance)} Dr</b>
+          <i>{t('সমাপনী জের')}</i>
         </div>
       </div>
 
@@ -241,13 +243,13 @@ export const FactoryLedgerPage: React.FC = () => {
           className={tab === 'ord' ? 'on' : ''}
           onClick={() => setTab('ord')}
         >
-          অর্ডার ধরে হিসাব
+          {t('অর্ডার ধরে হিসাব')}
         </button>
         <button
           className={tab === 'tx' ? 'on' : ''}
           onClick={() => setTab('tx')}
         >
-          ডেবিট / ক্রেডিট লেজার
+          {t('ডেবিট / ক্রেডিট লেজার')}
         </button>
       </div>
 
@@ -258,20 +260,20 @@ export const FactoryLedgerPage: React.FC = () => {
             <table>
               <thead>
                 <tr>
-                  <th>তারিখ</th>
-                  <th>অর্ডার নং</th>
-                  <th>ফেব্রিক</th>
-                  <th className="n">সুতা পেয়েছি kg</th>
-                  <th className="n">অর্ডার kg</th>
-                  <th className="n">রেট</th>
-                  <th className="n">অর্ডার ভ্যালু ৳</th>
-                  <th>কমপ্লিট</th>
-                  <th className="n">ডেলিভারি kg</th>
-                  <th>বিল নং</th>
-                  <th>বিল জমা</th>
-                  <th className="n">বিল ৳</th>
-                  <th className="n">পেয়েছি ৳</th>
-                  <th className="n">বাকি ৳</th>
+                  <th>{t('তারিখ')}</th>
+                  <th>{t('অর্ডার নং')}</th>
+                  <th>{t('ফেব্রিক')}</th>
+                  <th className="n">{t('সুতা পেয়েছি kg')}</th>
+                  <th className="n">{t('অর্ডার kg')}</th>
+                  <th className="n">{t('রেট')}</th>
+                  <th className="n">{language === 'en' ? `Order Value ${tkSymbol}` : 'অর্ডার ভ্যালু ৳'}</th>
+                  <th>{t('কমপ্লিট')}</th>
+                  <th className="n">{t('ডেলিভারি kg')}</th>
+                  <th>{t('বিল নং')}</th>
+                  <th>{t('বিল জমা')}</th>
+                  <th className="n">{language === 'en' ? `Bill ${tkSymbol}` : 'বিল ৳'}</th>
+                  <th className="n">{language === 'en' ? `Received ${tkSymbol}` : 'পেয়েছি ৳'}</th>
+                  <th className="n">{language === 'en' ? `Due ${tkSymbol}` : 'বাকি ৳'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -285,7 +287,7 @@ export const FactoryLedgerPage: React.FC = () => {
                         color: 'var(--muted)',
                       }}
                     >
-                      কোনো অর্ডার রেকর্ড পাওয়া যায়নি।
+                      {t('কোনো অর্ডার রেকর্ড পাওয়া যায়নি।')}
                     </td>
                   </tr>
                 ) : (
@@ -314,15 +316,15 @@ export const FactoryLedgerPage: React.FC = () => {
                           {r.yarnRecv > 0 ? bnNum(r.yarnRecv) : '—'}
                         </td>
                         <td className="n">{bnNum(o.qty)}</td>
-                        <td className="n">৳{o.rateTk || 30}</td>
-                        <td className="n">৳ {bnNum(r.orderVal)}</td>
+                        <td className="n">{tkSymbol}{o.rateTk || 30}</td>
+                        <td className="n">{tkSymbol} {bnNum(r.orderVal)}</td>
                         <td>
                           {o.completeDate ? (
                             <span className="mono small">{o.completeDate}</span>
                           ) : o.status === 'wait' ? (
-                            <span className="pill p-yarn">সুতার অপেক্ষায়</span>
+                            <span className="pill p-yarn">{t('সুতার অপেক্ষায়')}</span>
                           ) : (
-                            <span className="pill p-acc">চলছে {pct}%</span>
+                            <span className="pill p-acc">{t('চলছে')} {pct}%</span>
                           )}
                         </td>
                         <td className="n">
@@ -332,17 +334,17 @@ export const FactoryLedgerPage: React.FC = () => {
                           {r.b ? (
                             r.b.no
                           ) : o.status === 'done' ? (
-                            <span className="pill p-bad">বিল বাকি</span>
+                            <span className="pill p-bad">{t('বিল বাকি')}</span>
                           ) : (
                             '—'
                           )}
                         </td>
                         <td className="mono small">{r.b ? r.b.date : '—'}</td>
                         <td className="n">
-                          {r.bAmt > 0 ? `৳ ${bnNum(r.bAmt)}` : '—'}
+                          {r.bAmt > 0 ? `${tkSymbol} ${bnNum(r.bAmt)}` : '—'}
                         </td>
                         <td className="n">
-                          {r.rec > 0 ? `৳ ${bnNum(r.rec)}` : '—'}
+                          {r.rec > 0 ? `${tkSymbol} ${bnNum(r.rec)}` : '—'}
                         </td>
                         <td
                           className="n"
@@ -352,26 +354,26 @@ export const FactoryLedgerPage: React.FC = () => {
                               r.bAmt - r.rec > 0 ? 'var(--bad)' : 'inherit',
                           }}
                         >
-                          {r.bAmt > 0 ? `৳ ${bnNum(r.bAmt - r.rec)}` : '—'}
+                          {r.bAmt > 0 ? `${tkSymbol} ${bnNum(r.bAmt - r.rec)}` : '—'}
                         </td>
                       </tr>
                     );
                   })
                 )}
                 <tr className="totrow" style={{ fontWeight: 700, background: 'var(--surface2)' }}>
-                  <td colSpan={3}>মোট</td>
+                  <td colSpan={3}>{t('মোট')}</td>
                   <td className="n">{bnNum(totalYarn)}</td>
                   <td className="n">{bnNum(totalOrderQty)}</td>
                   <td></td>
-                  <td className="n">৳ {bnNum(totalOrderVal)}</td>
+                  <td className="n">{tkSymbol} {bnNum(totalOrderVal)}</td>
                   <td></td>
                   <td className="n">{bnNum(totalDelivKg)}</td>
                   <td></td>
                   <td></td>
-                  <td className="n">৳ {bnNum(totalBAmt)}</td>
-                  <td className="n">৳ {bnNum(totalBRec)}</td>
+                  <td className="n">{tkSymbol} {bnNum(totalBAmt)}</td>
+                  <td className="n">{tkSymbol} {bnNum(totalBRec)}</td>
                   <td className="n" style={{ color: 'var(--bad)' }}>
-                    ৳ {bnNum(totalBDue)}
+                    {tkSymbol} {bnNum(totalBDue)}
                   </td>
                 </tr>
               </tbody>
@@ -387,25 +389,25 @@ export const FactoryLedgerPage: React.FC = () => {
             <table>
               <thead>
                 <tr>
-                  <th>তারিখ</th>
-                  <th>বিবরণ</th>
-                  <th>ভাউচার</th>
-                  <th className="n">ডেবিট ৳</th>
-                  <th className="n">ক্রেডিট ৳</th>
-                  <th className="n">ব্যালেন্স ৳</th>
+                  <th>{t('তারিখ')}</th>
+                  <th>{t('বিবরণ')}</th>
+                  <th>{t('ভাউচার')}</th>
+                  <th className="n">{language === 'en' ? `Debit ${tkSymbol}` : 'ডেবিট ৳'}</th>
+                  <th className="n">{language === 'en' ? `Credit ${tkSymbol}` : 'ক্রেডিট ৳'}</th>
+                  <th className="n">{language === 'en' ? `Balance ${tkSymbol}` : 'ব্যালেন্স ৳'}</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td className="mono small">—</td>
                   <td style={{ fontWeight: 600 }}>
-                    প্রারম্ভিক জের (পুরোনো বাকি)
+                    {t('প্রারম্ভিক জের (পুরোনো বাকি)')}
                   </td>
                   <td></td>
                   <td className="n">—</td>
                   <td className="n">—</td>
                   <td className="n" style={{ fontWeight: 600 }}>
-                    ৳ {bnNum(openBalance)} Dr
+                    {tkSymbol} {bnNum(openBalance)} Dr
                   </td>
                 </tr>
                 {txWithBalance.map((tx, idx) => (
@@ -414,22 +416,22 @@ export const FactoryLedgerPage: React.FC = () => {
                     <td>{tx.desc}</td>
                     <td className="mono small">{tx.voucher}</td>
                     <td className="n">
-                      {tx.dr > 0 ? `৳ ${bnNum(tx.dr)}` : '—'}
+                      {tx.dr > 0 ? `${tkSymbol} ${bnNum(tx.dr)}` : '—'}
                     </td>
                     <td className="n">
-                      {tx.cr > 0 ? `৳ ${bnNum(tx.cr)}` : '—'}
+                      {tx.cr > 0 ? `${tkSymbol} ${bnNum(tx.cr)}` : '—'}
                     </td>
                     <td className="n" style={{ fontWeight: 600 }}>
-                      ৳ {bnNum(tx.bal)} Dr
+                      {tkSymbol} {bnNum(tx.bal)} Dr
                     </td>
                   </tr>
                 ))}
                 <tr className="totrow" style={{ fontWeight: 700, background: 'var(--surface2)' }}>
-                  <td colSpan={3}>মোট / সমাপনী জের</td>
-                  <td className="n">৳ {bnNum(totalBilled)}</td>
-                  <td className="n">৳ {bnNum(totalReceived)}</td>
+                  <td colSpan={3}>{t('মোট / সমাপনী জের')}</td>
+                  <td className="n">{tkSymbol} {bnNum(totalBilled)}</td>
+                  <td className="n">{tkSymbol} {bnNum(totalReceived)}</td>
                   <td className="n" style={{ color: 'var(--bad)' }}>
-                    ৳ {bnNum(closingBalance)} Dr
+                    {tkSymbol} {bnNum(closingBalance)} Dr
                   </td>
                 </tr>
               </tbody>

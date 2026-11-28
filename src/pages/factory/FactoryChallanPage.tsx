@@ -22,6 +22,8 @@ export const FactoryChallanPage: React.FC = () => {
     signChallan,
     addToast,
     openPrintModal,
+    t,
+    language,
   } = useApp();
 
   const isVendor = role === 'vendor' || (role as string) === 'ven';
@@ -189,14 +191,14 @@ export const FactoryChallanPage: React.FC = () => {
   // Status helper
   const chState = (c: any) => {
     if (!c.ven) {
-      return { s: 'warn', t: 'পথে · ভেন্ডরের সাইন বাকি' };
+      return { s: 'warn', t: language === 'en' ? 'In Transit · Awaiting Vendor Sign' : 'পথে · ভেন্ডরের সাইন বাকি' };
     }
     const rollsCount = Array.isArray(c.rolls) ? c.rolls.length : 0;
     const got = c.ven.got !== undefined ? c.ven.got : rollsCount;
     if (got < rollsCount) {
-      return { s: 'bad', t: `গরমিল · ${rollsCount - got}টা রোল কম` };
+      return { s: 'bad', t: language === 'en' ? `Discrepancy · ${rollsCount - got} roll(s) short` : `গরমিল · ${rollsCount - got}টা রোল কম` };
     }
-    return { s: 'ok', t: 'ভেন্ডর বুঝে পেয়েছে' };
+    return { s: 'ok', t: language === 'en' ? 'Received by Vendor' : 'ভেন্ডর বুঝে পেয়েছে' };
   };
 
   // Total kg of a challan dynamically calculated
@@ -318,7 +320,7 @@ export const FactoryChallanPage: React.FC = () => {
     <div style={{ width: '100%', maxWidth: '100%' }}>
       {isVendor && (
         <div className="vbanner">
-          ফ্যাক্টরি যে কাপড় পাঠায়, তার চালান এখানে আসে। মাল নামানোর সময় গুনে সাইন দিন।
+          {language === 'en' ? 'Delivery challans from the factory arrive here. Count rolls upon unloading and provide digital signature.' : 'ফ্যাক্টরি যে কাপড় পাঠায়, তার চালান এখানে আসে। মাল নামানোর সময় গুনে সাইন দিন।'}
         </div>
       )}
 
@@ -341,9 +343,9 @@ export const FactoryChallanPage: React.FC = () => {
               <div className="head">
                 <div>
                   <button className="btn sm" id="chBack" onClick={() => setChOpen(null)}>
-                    ← সব চালান
+                    ← {language === 'en' ? 'All Challans' : 'সব চালান'}
                   </button>
-                  <h2 style={{ marginTop: 8 }}>ডেলিভারি চালান {c.no || c.challan_no}</h2>
+                  <h2 style={{ marginTop: 8 }}>{t('ডেলিভারি চালান')} {c.no || c.challan_no}</h2>
                   <p>
                     {vName(c.v || c.party_code)} · {c.o || c.order_no} · {getChallanDate(c)}
                   </p>
@@ -393,17 +395,17 @@ export const FactoryChallanPage: React.FC = () => {
                       )
                     }
                   >
-                    প্রিন্ট
+                    {language === 'en' ? 'Print' : 'প্রিন্ট'}
                   </button>
                   <button
                     className="btn no-pdf"
                     type="button"
                     onClick={() => {
-                      addToast({ type: 'info', message: 'PDF প্রস্তুত করা হচ্ছে...' });
+                      addToast({ type: 'info', message: language === 'en' ? 'Preparing PDF...' : 'PDF প্রস্তুত করা হচ্ছে...' });
                       window.print();
                     }}
                   >
-                    PDF সেভ
+                    {language === 'en' ? 'Save PDF' : 'PDF সেভ'}
                   </button>
                 </div>
               </div>
@@ -412,11 +414,11 @@ export const FactoryChallanPage: React.FC = () => {
               <div className="dc">
                 <div className="dc-h">
                   <div>
-                    <b>{factoryProfile?.name || 'ফ্যাক্টরি'}</b>
-                    <span>{factoryProfile?.address || factoryProfile?.area || 'কোনাবাড়ি, গাজীপুর'}</span>
+                    <b>{factoryProfile?.name || (language === 'en' ? 'Factory' : 'ফ্যাক্টরি')}</b>
+                    <span>{factoryProfile?.address || factoryProfile?.area || (language === 'en' ? 'Konabari, Gazipur' : 'কোনাবাড়ি, গাজীপুর')}</span>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <em>ডেলিভারি চালান</em>
+                    <em>{t('ডেলিভারি চালান')}</em>
                     <b className="mono">{c.no || c.challan_no}</b>
                     <span>{getChallanFullDate(c)}</span>
                   </div>
@@ -424,21 +426,21 @@ export const FactoryChallanPage: React.FC = () => {
 
                 <div className="jc-g">
                   <div>
-                    <span>প্রাপক</span>
+                    <span>{language === 'en' ? 'Recipient' : 'প্রাপক'}</span>
                     <b>{vName(c.v || c.party_code)}</b>
                   </div>
                   <div>
-                    <span>অর্ডার / বায়ার</span>
+                    <span>{language === 'en' ? 'Order / Buyer' : 'অর্ডার / বায়ার'}</span>
                     <b>
                       {c.o || c.order_no} · {order?.buyer || '—'}
                     </b>
                   </div>
                   <div>
-                    <span>গাড়ি</span>
+                    <span>{language === 'en' ? 'Vehicle' : 'গাড়ি'}</span>
                     <b>{c.veh || c.vehicle_no || '—'}</b>
                   </div>
                   <div>
-                    <span>ড্রাইভার</span>
+                    <span>{language === 'en' ? 'Driver' : 'ড্রাইভার'}</span>
                     <b>
                       {c.drv || c.driver_name || '—'} · {c.ph || c.driver_phone || '—'}
                     </b>
@@ -450,11 +452,11 @@ export const FactoryChallanPage: React.FC = () => {
                     <thead>
                       <tr>
                         <th>#</th>
-                        <th>রোল</th>
-                        <th>অংশ</th>
-                        <th>মেশিন</th>
-                        <th>সুতা লট</th>
-                        <th className="n">ফল্ট</th>
+                        <th>{language === 'en' ? 'Roll' : 'রোল'}</th>
+                        <th>{language === 'en' ? 'Part' : 'অংশ'}</th>
+                        <th>{language === 'en' ? 'Machine' : 'মেশিন'}</th>
+                        <th>{language === 'en' ? 'Yarn Lot' : 'সুতা লট'}</th>
+                        <th className="n">{language === 'en' ? 'Faults' : 'ফল্ট'}</th>
                         <th className="n">kg</th>
                       </tr>
                     </thead>
@@ -508,7 +510,7 @@ export const FactoryChallanPage: React.FC = () => {
                       )}
                       <tr>
                         <td colSpan={6}>
-                          <b>মোট {rollNos.length} রোল</b>
+                          <b>{language === 'en' ? `Total ${bnNum(rollNos.length)} Rolls` : `মোট ${bnNum(rollNos.length)} রোল`}</b>
                         </td>
                         <td className="n">
                           <b>{totalKg > 0 ? totalKg.toFixed(1) : '—'}</b>
@@ -520,8 +522,8 @@ export const FactoryChallanPage: React.FC = () => {
 
                 <div className="dc-sig">
                   <div className="dc-s ok">
-                    <span>পাঠিয়েছে · ফ্যাক্টরি</span>
-                    <b>✍ {c.fac?.by || 'ফ্যাক্টরি ইনচার্জ'}</b>
+                    <span>{language === 'en' ? 'Dispatched · Factory' : 'পাঠিয়েছে · ফ্যাক্টরি'}</span>
+                    <b>✍ {c.fac?.by || (language === 'en' ? 'Factory Incharge' : 'ফ্যাক্টরি ইনচার্জ')}</b>
                     <small>{c.fac?.at || getChallanDate(c)}</small>
                   </div>
                   <div
@@ -529,18 +531,18 @@ export const FactoryChallanPage: React.FC = () => {
                       c.ven ? (c.ven.got < rollNos.length ? 'bad' : 'ok') : ''
                     }`}
                   >
-                    <span>বুঝে নিয়েছে · ভেন্ডর</span>
+                    <span>{language === 'en' ? 'Received · Vendor' : 'বুঝে নিয়েছে · ভেন্ডর'}</span>
                     {c.ven ? (
                       <>
-                        <b>✍ {c.ven.by || 'ভেন্ডর প্রতিনিধি'}</b>
+                        <b>✍ {c.ven.by || (language === 'en' ? 'Vendor Representative' : 'ভেন্ডর প্রতিনিধি')}</b>
                         <small>
-                          {c.ven.at} · পেয়েছে {bnNum(c.ven.got)} / {bnNum(rollNos.length)} রোল
+                          {c.ven.at} · {language === 'en' ? `Received ${bnNum(c.ven.got)} / ${bnNum(rollNos.length)} rolls` : `পেয়েছে ${bnNum(c.ven.got)} / ${bnNum(rollNos.length)} রোল`}
                         </small>
                       </>
                     ) : isVendor ? (
                       <>
                         <label className="no-f" style={{ marginTop: 4 }}>
-                          <span style={{ fontSize: '.78rem' }}>কয়টা রোল পেলেন</span>
+                          <span style={{ fontSize: '.78rem' }}>{language === 'en' ? 'Rolls Received' : 'কয়টা রোল পেলেন'}</span>
                           <input
                             id="chGot"
                             inputMode="numeric"
@@ -555,13 +557,13 @@ export const FactoryChallanPage: React.FC = () => {
                           style={{ marginTop: 6 }}
                           onClick={() => handleVendorSign(c.no || c.challan_no, rollNos.length)}
                         >
-                          গুনে বুঝে পেয়েছি, সাইন দিন
+                          {language === 'en' ? 'Count verified, sign receipt' : 'গুনে বুঝে পেয়েছি, সাইন দিন'}
                         </button>
                       </>
                     ) : (
                       <>
-                        <b className="muted">এখনো সাইন দেয়নি</b>
-                        <small>মাল নামানোর সময় ভেন্ডর অ্যাপ থেকে সাইন দেবে</small>
+                        <b className="muted">{language === 'en' ? 'Signature pending' : 'এখনো সাইন দেয়নি'}</b>
+                        <small>{language === 'en' ? 'Vendor will sign via app during delivery' : 'মাল নামানোর সময় ভেন্ডর অ্যাপ থেকে সাইন দেবে'}</small>
                       </>
                     )}
                   </div>
@@ -575,11 +577,15 @@ export const FactoryChallanPage: React.FC = () => {
         <>
           <div className="head">
             <div>
-              <h2>ডেলিভারি চালান</h2>
+              <h2>{t('ডেলিভারি চালান')}</h2>
               <p>
                 {isVendor
-                  ? 'ফ্যাক্টরি যে কাপড় পাঠায়, তার চালান এখানে আসে। মাল নামানোর সময় গুনে সাইন দিন।'
-                  : 'রোল বেছে বা স্ক্যান করে চালান বানান। ভেন্ডর মাল বুঝে পেয়ে সাইন দিলে চালান বন্ধ হয়।'}
+                  ? (language === 'en'
+                      ? 'Delivery challans from the factory arrive here. Count rolls upon unloading and provide digital signature.'
+                      : 'ফ্যাক্টরি যে কাপড় পাঠায়, তার চালান এখানে আসে। মাল নামানোর সময় গুনে সাইন দিন।')
+                  : (language === 'en'
+                      ? 'Create challans by selecting rolls or scanning. Challan closes upon vendor signature.'
+                      : 'রোল বেছে বা স্ক্যান করে চালান বানান। ভেন্ডর মাল বুঝে পেয়ে সাইন দিলে চালান বন্ধ হয়।')}
               </p>
             </div>
             {!isVendor && (
@@ -591,7 +597,7 @@ export const FactoryChallanPage: React.FC = () => {
                   setChSel(new Set());
                 }}
               >
-                {chNew ? '✕ বন্ধ করুন' : '+ নতুন চালান'}
+                {chNew ? (language === 'en' ? '✕ Close' : '✕ বন্ধ করুন') : (language === 'en' ? '+ New Challan' : '+ নতুন চালান')}
               </button>
             )}
           </div>
@@ -599,10 +605,10 @@ export const FactoryChallanPage: React.FC = () => {
           {/* New Challan Creation Form */}
           {chNew && !isVendor && (
             <form className="card" id="chf" onSubmit={handleCreateChallan} noValidate>
-              <h3>নতুন চালান</h3>
+              <h3>{language === 'en' ? 'New Challan' : 'নতুন চালান'}</h3>
               <div className="no-grid" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 12 }}>
                 <label className="no-f">
-                  <span>ভেন্ডর</span>
+                  <span>{t('ভেন্ডর')}</span>
                   <SearchableSelect
                     id="chV"
                     value={chV}
@@ -616,14 +622,14 @@ export const FactoryChallanPage: React.FC = () => {
                             value: k,
                             label: vName(k),
                           }))
-                        : [{ value: '', label: 'কোনো ভেন্ডর পাওয়া যায়নি' }]
+                        : [{ value: '', label: language === 'en' ? 'No vendors found' : 'কোনো ভেন্ডর পাওয়া যায়নি' }]
                     }
-                    searchPlaceholder="ভেন্ডর খুঁজুন..."
+                    searchPlaceholder={language === 'en' ? 'Search vendor...' : 'ভেন্ডর খুঁজুন...'}
                   />
                 </label>
 
                 <label className="no-f">
-                  <span>অর্ডার</span>
+                  <span>{t('অর্ডার')}</span>
                   <SearchableSelect
                     id="chO"
                     value={chO}
@@ -635,29 +641,29 @@ export const FactoryChallanPage: React.FC = () => {
                       vendorOrders.length
                         ? vendorOrders.map((o) => ({
                             value: o.id,
-                            label: `${o.id} · ${o.fabric || o.buyer || 'অর্ডার'}`,
+                            label: `${o.id} · ${o.fabric || o.buyer || t('অর্ডার')}`,
                           }))
-                        : [{ value: '', label: 'কোনো খোলা অর্ডার নেই' }]
+                        : [{ value: '', label: language === 'en' ? 'No open orders' : 'কোনো খোলা অর্ডার নেই' }]
                     }
-                    searchPlaceholder="অর্ডার খুঁজুন..."
+                    searchPlaceholder={language === 'en' ? 'Search order...' : 'অর্ডার খুঁজুন...'}
                   />
                 </label>
 
                 <label className="no-f">
-                  <span>গাড়ির নম্বর</span>
+                  <span>{language === 'en' ? 'Vehicle No' : 'গাড়ির নম্বর'}</span>
                   <input
                     id="chVeh"
-                    placeholder="যেমন: ঢাকা মেট্রো ন ১৪-২২৫৬"
+                    placeholder={language === 'en' ? 'Dhaka Metro N 14-2256' : 'ঢাকা মেট্রো ন ১৪-২২৫৬'}
                     value={chVeh}
                     onChange={(e) => setChVeh(e.target.value)}
                   />
                 </label>
 
                 <label className="no-f">
-                  <span>ড্রাইভার</span>
+                  <span>{language === 'en' ? 'Driver Name' : 'ড্রাইভারের নাম'}</span>
                   <input
                     id="chDrv"
-                    placeholder="নাম ও ফোন নম্বর"
+                    placeholder={language === 'en' ? 'Name & Phone' : 'নাম ও ফোন নম্বর'}
                     value={chDrv}
                     onChange={(e) => setChDrv(e.target.value)}
                   />
@@ -667,10 +673,10 @@ export const FactoryChallanPage: React.FC = () => {
               {/* Barcode scanner / roll manual entry input */}
               <div className="row" style={{ margin: '14px 0', gap: 8 }}>
                 <label className="no-f" style={{ flex: 1, minWidth: 200 }}>
-                  <span>রোল স্ক্যান করুন বা নম্বর লিখুন</span>
+                  <span>{language === 'en' ? 'Scan Roll QR or Enter Roll Number' : 'রোল স্ক্যান করুন বা নম্বর লিখুন'}</span>
                   <input
                     id="chScan"
-                    placeholder="যেমন: M-03/007"
+                    placeholder={language === 'en' ? 'e.g. M-03/007' : 'যেমন: M-03/007'}
                     autoComplete="off"
                     value={chScan}
                     onChange={(e) => setChScan(e.target.value)}
@@ -689,7 +695,7 @@ export const FactoryChallanPage: React.FC = () => {
                   style={{ alignSelf: 'end' }}
                   onClick={handleScanRoll}
                 >
-                  যোগ করুন
+                  {language === 'en' ? 'Add' : 'যোগ করুন'}
                 </button>
               </div>
 
@@ -721,23 +727,23 @@ export const FactoryChallanPage: React.FC = () => {
                         <span className="mono">{rNo}</span>
                         <small>
                           {rM} · {rKg ? `${rKg.toFixed(1)} kg` : ''}
-                          {faultCount ? ` · ফল্ট ${faultCount}` : ''}
-                          {dis ? ' · QC দ্বিমত, পাঠানো যাবে না' : ''}
+                          {faultCount ? (language === 'en' ? ` · Faults ${faultCount}` : ` · ফল্ট ${faultCount}`) : ''}
+                          {dis ? (language === 'en' ? ' · QC Dispute, cannot dispatch' : ' · QC দ্বিমত, পাঠানো যাবে না') : ''}
                         </small>
                       </label>
                     );
                   })
                 ) : (
-                  <p className="small muted">এই অর্ডারে পাঠানোর মতো কোনো রোল রেডি নেই।</p>
+                  <p className="small muted">{language === 'en' ? 'No rolls ready to dispatch for this order.' : 'এই অর্ডারে পাঠানোর মতো কোনো রোল রেডি নেই।'}</p>
                 )}
               </div>
 
               <div className="row" style={{ margin: '14px 0 0', justifyContent: 'space-between' }}>
                 <span className="small" id="chSum" style={{ fontWeight: 600 }}>
-                  {chSel.size} রোল · {selectedKg.toFixed(1)} kg
+                  {chSel.size} {language === 'en' ? 'rolls' : 'রোল'} · {selectedKg.toFixed(1)} kg
                 </span>
                 <button className="btn pri" type="submit">
-                  চালান তৈরি করে সাইন দিন
+                  {language === 'en' ? 'Create Challan & Sign' : 'চালান তৈরি করে সাইন দিন'}
                 </button>
               </div>
             </form>
@@ -748,14 +754,14 @@ export const FactoryChallanPage: React.FC = () => {
             <table>
               <thead>
                 <tr>
-                  <th>চালান</th>
-                  <th>তারিখ</th>
-                  {!isVendor && <th>ভেন্ডর</th>}
-                  <th>অর্ডার</th>
-                  <th className="n">রোল</th>
+                  <th>{language === 'en' ? 'Challan' : 'চালান'}</th>
+                  <th>{language === 'en' ? 'Date' : 'তারিখ'}</th>
+                  {!isVendor && <th>{language === 'en' ? 'Vendor' : 'ভেন্ডর'}</th>}
+                  <th>{language === 'en' ? 'Order' : 'অর্ডার'}</th>
+                  <th className="n">{language === 'en' ? 'Rolls' : 'রোল'}</th>
                   <th className="n">kg</th>
-                  <th>গাড়ি</th>
-                  <th>অবস্থা</th>
+                  <th>{language === 'en' ? 'Vehicle' : 'গাড়ি'}</th>
+                  <th>{language === 'en' ? 'Status' : 'অবস্থা'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -794,7 +800,7 @@ export const FactoryChallanPage: React.FC = () => {
                 ) : (
                   <tr>
                     <td colSpan={isVendor ? 7 : 8} className="muted" style={{ textAlign: 'center', padding: '24px 0' }}>
-                      এখনো কোনো চালান তৈরি হয়নি।
+                      {language === 'en' ? 'No challans created yet.' : 'এখনো কোনো চালান তৈরি হয়নি।'}
                     </td>
                   </tr>
                 )}

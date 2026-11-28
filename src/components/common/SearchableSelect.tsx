@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ChevronDown, Search, X, Check } from 'lucide-react';
+import { useApp } from '@/context/AppContext';
 
 export interface SearchableOption {
   value: string;
@@ -27,8 +28,8 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   options,
   value,
   onChange,
-  placeholder = 'নির্বাচন করুন',
-  searchPlaceholder = 'খুঁজুন...',
+  placeholder,
+  searchPlaceholder,
   id,
   className = '',
   style,
@@ -37,6 +38,9 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   minWidth,
   maxWidth,
 }) => {
+  const { t } = useApp();
+  const effectivePlaceholder = placeholder || t('-- নির্বাচন করুন --');
+  const effectiveSearchPlaceholder = searchPlaceholder || t('খুঁজুন...');
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -142,7 +146,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
         }}
       >
         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {selectedOption ? selectedOption.label : placeholder}
+          {selectedOption ? selectedOption.label : effectivePlaceholder}
         </span>
         <ChevronDown
           size={14}
@@ -191,7 +195,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder={searchPlaceholder}
+              placeholder={effectiveSearchPlaceholder}
               style={{
                 width: '100%',
                 border: 'none',
@@ -214,7 +218,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                 }}
-                title="ক্লিয়ার"
+                title={t('ক্লিয়ার')}
               >
                 <X size={13} />
               </button>
@@ -225,7 +229,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
           <div style={{ maxHeight: 220, overflowY: 'auto' }}>
             {filteredOptions.length === 0 ? (
               <div style={{ padding: '10px 12px', fontSize: '0.84rem', color: 'var(--muted, #64748b)', textAlign: 'center' }}>
-                কোনো ফলাফল পাওয়া যায়নি
+                {t('কোনো ফলাফল পাওয়া যায়নি')}
               </div>
             ) : (
               filteredOptions.map((opt) => {

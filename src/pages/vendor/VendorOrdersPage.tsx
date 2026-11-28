@@ -5,7 +5,7 @@ import { bnNum } from '@/utils/formatters';
 
 export const VendorOrdersPage: React.FC = () => {
   const navigate = useNavigate();
-  const { orders, fetchOrders, factoryProfile } = useApp();
+  const { orders, fetchOrders, factoryProfile, t, language } = useApp();
   const [filter, setFilter] = useState<'all' | 'run' | 'done'>('all');
 
   useEffect(() => {
@@ -35,34 +35,33 @@ export const VendorOrdersPage: React.FC = () => {
     <div style={{ maxWidth: '100%', width: '100%' }}>
       {/* Vendor Portal Top Banner matching KnitKhata.html */}
       <div className="vbanner" style={{ marginBottom: 16 }}>
-        আপনি <b>মো. কামরুল হাসান</b> হিসেবে লগইন করেছেন — <b>ABC Knit Composite</b>। এখানে শুধু{' '}
-        <b>{factoryProfile?.name || 'রহমান নিটিং ইন্ডাস্ট্রিজ'}</b>-এ চলা আপনাদের অর্ডারগুলো দেখা যাচ্ছে।
+        {language === 'en' ? 'You are logged in as ' : 'আপনি '}<b>{language === 'en' ? 'Md. Kamrul Hasan' : 'মো. কামরুল হাসান'}</b>{language === 'en' ? ' — ' : ' হিসেবে লগইন করেছেন — '}<b>ABC Knit Composite</b>। {language === 'en' ? 'Showing only orders running at ' : 'এখানে শুধু '}<b>{factoryProfile?.name || (language === 'en' ? 'Rahman Knitting Industries' : 'রহমান নিটিং ইন্ডাস্ট্রিজ')}</b>{language === 'en' ? '.' : '-এ চলা আপনাদের অর্ডারগুলো দেখা যাচ্ছে।'}
       </div>
 
       {/* Header */}
       <div className="head">
         <div>
-          <h2>আমার অর্ডার</h2>
-          <p>ফ্যাক্টরির ফ্লোরে কতটুকু বোনা হলো, কতটুকু ডেলিভারি হলো লাইভ ট্র্যাকিং</p>
+          <h2>{t('আমার অর্ডার')}</h2>
+          <p>{t('ফ্যাক্টরির ফ্লোরে কতটুকু বোনা হলো, কতটুকু ডেলিভারি হলো লাইভ ট্র্যাকিং')}</p>
         </div>
       </div>
 
       {/* 3 KPIs */}
       <div className="kpis">
         <div className="kpi">
-          <span>মোট অর্ডার</span>
-          <b>{bnNum(vendorOrders.length)}টি</b>
-          <i>মোট {bnNum(totalKg)} kg</i>
+          <span>{t('মোট অর্ডার')}</span>
+          <b>{bnNum(vendorOrders.length)} {language === 'en' ? 'orders' : 'টি'}</b>
+          <i>{t('মোট')} {bnNum(totalKg)} kg</i>
         </div>
         <div className="kpi">
-          <span>এখন পর্যন্ত বোনা হয়েছে</span>
+          <span>{t('এখন পর্যন্ত বোনা হয়েছে')}</span>
           <b style={{ color: 'var(--ok)' }}>{bnNum(doneKg)} kg</b>
-          <i>{Math.round((doneKg / (totalKg || 1)) * 100)}% সম্পন্ন</i>
+          <i>{bnNum(Math.round((doneKg / (totalKg || 1)) * 100))}% {t('সম্পন্ন')}</i>
         </div>
         <div className="kpi">
-          <span>বোনা বাকি</span>
+          <span>{t('বোনা বাকি')}</span>
           <b>{bnNum(remainingKg)} kg</b>
-          <i>চলমান শিফটে উৎপাদিত হচ্ছে</i>
+          <i>{t('চলমান শিফটে উৎপাদিত হচ্ছে')}</i>
         </div>
       </div>
 
@@ -73,21 +72,21 @@ export const VendorOrdersPage: React.FC = () => {
           className={`btn sm ${filter === 'all' ? 'pri' : ''}`}
           onClick={() => setFilter('all')}
         >
-          সব অর্ডার ({bnNum(vendorOrders.length)})
+          {t('সব অর্ডার')} ({bnNum(vendorOrders.length)})
         </button>
         <button
           type="button"
           className={`btn sm ${filter === 'run' ? 'pri' : ''}`}
           onClick={() => setFilter('run')}
         >
-          চলমান ({bnNum(vendorOrders.filter((o) => o.status === 'run' || o.status === 'Running').length)})
+          {t('চলমান')} ({bnNum(vendorOrders.filter((o) => o.status === 'run' || o.status === 'Running').length)})
         </button>
         <button
           type="button"
           className={`btn sm ${filter === 'done' ? 'pri' : ''}`}
           onClick={() => setFilter('done')}
         >
-          সম্পন্ন ({bnNum(vendorOrders.filter((o) => o.status === 'done' || o.status === 'Completed').length)})
+          {t('সম্পন্ন')} ({bnNum(vendorOrders.filter((o) => o.status === 'done' || o.status === 'Completed').length)})
         </button>
       </div>
 
@@ -97,15 +96,15 @@ export const VendorOrdersPage: React.FC = () => {
           <table>
             <thead>
               <tr>
-                <th>অর্ডার নং</th>
-                <th>বায়ার</th>
-                <th>ফেব্রিক</th>
-                <th>মেশিন বরাদ্দ</th>
-                <th className="n">অর্ডার kg</th>
-                <th className="n">বোনা হয়েছে kg</th>
-                <th style={{ minWidth: 140 }}>অগ্রগতি</th>
-                <th>অবস্থা</th>
-                <th style={{ textAlign: 'right' }}>অ্যাকশন</th>
+                <th>{t('অর্ডার নং')}</th>
+                <th>{t('বায়ার')}</th>
+                <th>{t('ফেব্রিক')}</th>
+                <th>{t('মেশিন বরাদ্দ')}</th>
+                <th className="n">{t('অর্ডার kg')}</th>
+                <th className="n">{t('বোনা হয়েছে kg')}</th>
+                <th style={{ minWidth: 140 }}>{t('অগ্রগতি')}</th>
+                <th>{t('অবস্থা')}</th>
+                <th style={{ textAlign: 'right' }}>{t('অ্যাকশন')}</th>
               </tr>
             </thead>
             <tbody>
@@ -119,7 +118,7 @@ export const VendorOrdersPage: React.FC = () => {
                       color: 'var(--muted)',
                     }}
                   >
-                    কোনো অর্ডার পাওয়া যায়নি।
+                    {language === 'en' ? 'No orders found.' : 'কোনো অর্ডার পাওয়া যায়নি।'}
                   </td>
                 </tr>
               ) : (
@@ -183,11 +182,11 @@ export const VendorOrdersPage: React.FC = () => {
                     </td>
                     <td>
                       {o.status === 'run' || o.status === 'Running' ? (
-                        <span className="pill p-acc">চলছে</span>
+                        <span className="pill p-acc">{t('চলছে')}</span>
                       ) : o.status === 'done' || o.status === 'Completed' ? (
-                        <span className="pill p-ok">সম্পন্ন</span>
+                        <span className="pill p-ok">{t('সম্পন্ন')}</span>
                       ) : (
-                        <span className="pill p-yarn">সুতার অপেক্ষায়</span>
+                        <span className="pill p-yarn">{t('অপেক্ষায়')}</span>
                       )}
                     </td>
                     <td style={{ textAlign: 'right' }}>
@@ -199,7 +198,7 @@ export const VendorOrdersPage: React.FC = () => {
                           navigate(`/dashboard/jobcard/${o.id}`);
                         }}
                       >
-                        জব কার্ড
+                        {t('জব কার্ড')}
                       </button>
                     </td>
                   </tr>
@@ -211,7 +210,7 @@ export const VendorOrdersPage: React.FC = () => {
         </div>
       </div>
       <p className="small muted" style={{ marginTop: 12 }}>
-        রেট, অপারেটরের নাম, অন্য ভেন্ডরের তথ্য — এগুলো ভেন্ডর দেখতে পান না।
+        {language === 'en' ? 'Rates, operator names, and other vendor info are not visible in vendor view.' : 'রেট, অপারেটরের নাম, অন্য ভেন্ডরের তথ্য — এগুলো ভেন্ডর দেখতে পান না।'}
       </p>
     </div>
   );
