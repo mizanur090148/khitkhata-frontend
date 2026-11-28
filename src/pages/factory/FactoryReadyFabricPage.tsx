@@ -4,19 +4,26 @@ import { useApp } from '@/context/AppContext';
 import { qcState, QcItem } from './FactoryQcPage';
 
 export const BN_DIGITS = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
-export const toBn = (n: number | string | undefined | null): string => {
-  if (n === undefined || n === null || n === '') return '০';
+export const toBn = (n: number | string | undefined | null, lang?: 'bn' | 'en'): string => {
+  const currentLang = lang || (typeof window !== 'undefined' ? (localStorage.getItem('knitkhata_lang') as 'bn' | 'en') : null) || 'bn';
+  if (n === undefined || n === null || n === '') return currentLang === 'en' ? '0' : '০';
+  if (currentLang === 'en') return String(n);
   return String(n).replace(/\d/g, (d) => BN_DIGITS[Number(d)]);
 };
 
-export const qU = (v: number | string, u: string): string => `${toBn(v)} ${u}`;
+export const qU = (v: number | string, u: string, lang?: 'bn' | 'en'): string => {
+  const currentLang = lang || (typeof window !== 'undefined' ? (localStorage.getItem('knitkhata_lang') as 'bn' | 'en') : null) || 'bn';
+  const unit = currentLang === 'en' ? (u === 'পিস' ? 'pcs' : u) : u;
+  return `${toBn(v, currentLang)} ${unit}`;
+};
 
-export const sumU = (rs: any[], k: string, lang = 'bn'): string => {
+export const sumU = (rs: any[], k: string, lang?: string): string => {
+  const currentLang = (lang as 'bn' | 'en') || (typeof window !== 'undefined' ? (localStorage.getItem('knitkhata_lang') as 'bn' | 'en') : null) || 'bn';
   const kg = rs.filter((r) => r.u === 'kg').reduce((a, r) => a + (Number(r[k]) || 0), 0);
   const pc = rs.filter((r) => r.u !== 'kg').reduce((a, r) => a + (Number(r[k]) || 0), 0);
   const parts = [
-    kg || !pc ? `${toBn(kg)} kg` : '',
-    pc ? (lang === 'en' ? `${toBn(pc)} pcs` : `${toBn(pc)} পিস`) : '',
+    kg || !pc ? `${toBn(kg, currentLang)} kg` : '',
+    pc ? (currentLang === 'en' ? `${toBn(pc, 'en')} pcs` : `${toBn(pc, 'bn')} পিস`) : '',
   ].filter(Boolean);
   return parts.length > 0 ? parts.join(' / ') : '—';
 };
@@ -46,18 +53,18 @@ function qcStatusFor(
   pq: QcItem[],
   rd: number,
   u: string,
-  lang = 'bn'
+  lang: 'bn' | 'en' = 'bn'
 ): { st: [string, string]; held: number } {
   const dk = dq.reduce((a, q) => a + (Number(q.kg) || 0), 0);
   const pk = pq.reduce((a, q) => a + (Number(q.kg) || 0), 0);
   const totalHeld = dk + pk;
 
   const st: [string, string] = dq.length > 0
-    ? ['p-bad', lang === 'en' ? `QC Dispute · ${dk > 0 ? qU(dk, u) : `${toBn(dq.length)} roll(s)`} held` : `QC দ্বিমত · ${dk > 0 ? qU(dk, u) : `${toBn(dq.length)}টা রোল`} আটকে`]
+    ? ['p-bad', lang === 'en' ? `QC Dispute · ${dk > 0 ? qU(dk, u, lang) : `${toBn(dq.length, lang)} roll(s)`} held` : `QC দ্বিমত · ${dk > 0 ? qU(dk, u) : `${toBn(dq.length)}টা রোল`} আটকে`]
     : pq.length > 0
-    ? ['p-warn', lang === 'en' ? `QC Pending · ${pk > 0 ? qU(pk, u) : `${toBn(pq.length)} roll(s)`} pending` : `QC বাকি · ${pk > 0 ? qU(pk, u) : `${toBn(pq.length)}টা রোল`} দেখা বাকি`]
+    ? ['p-warn', lang === 'en' ? `QC Pending · ${pk > 0 ? qU(pk, u, lang) : `${toBn(pq.length, lang)} roll(s)`} pending` : `QC বাকি · ${pk > 0 ? qU(pk, u) : `${toBn(pq.length)}টা রোল`} দেখা বাকি`]
     : rd > 0
-    ? ['p-ok', lang === 'en' ? `QC Passed · ${qU(rd, u)} ready for delivery` : `QC পাস · ${qU(rd, u)} নেওয়ার জন্য রেডি`]
+    ? ['p-ok', lang === 'en' ? `QC Passed · ${qU(rd, u, lang)} ready for delivery` : `QC পাস · ${qU(rd, u)} নেওয়ার জন্য রেডি`]
     : ['p-idle', lang === 'en' ? 'No ready stock' : 'রেডি স্টক নেই'];
 
   return { st, held: totalHeld };
@@ -288,7 +295,8 @@ export const FactoryReadyFabricPage: React.FC = () => {
     const val = filteredRows
       .filter((r) => r.v === v && r.type === type)
       .reduce((a, r) => a + r.rd, 0);
-    return <td className="n">{val > 0 ? `${toBn(val)} ${u}` : '—'}</td>;
+    const unit = language === 'en' ? (u === 'পিস' ? 'pcs' : u) : u;
+    return <td className="n">{val > 0 ? `${toBn(val, language)} ${unit}` : '—'}</td>;
   };
 
   const handlePrint = () => {
@@ -300,7 +308,9 @@ export const FactoryReadyFabricPage: React.FC = () => {
       {/* Top Banner if Vendor */}
       {isVendorRole && (
         <div className="vbanner" style={{ marginBottom: 16 }}>
-          <b>{factoryProfile?.name || 'ফ্যাক্টরি'}</b>-এ আপনার প্রতিটা অর্ডারের মোট পরিমাণ, কত তৈরি হয়েছে, কত পেয়েছেন, কত রেডি পড়ে আছে আর কত এখনো মেশিনে চলছে।
+          {language === 'en'
+            ? <>Order-wise total quantity, knitted, delivered, ready stock, and currently running on machine at <b>{factoryProfile?.name || 'Factory'}</b>.</>
+            : <><b>{factoryProfile?.name || 'ফ্যাক্টরি'}</b>-এ আপনার প্রতিটা অর্ডারের মোট পরিমাণ, কত তৈরি হয়েছে, কত পেয়েছেন, কত রেডি পড়ে আছে আর কত এখনো মেশিনে চলছে।</>}
         </div>
       )}
 
@@ -323,22 +333,22 @@ export const FactoryReadyFabricPage: React.FC = () => {
       <div className="kpis" style={{ marginTop: 8, marginBottom: 10 }}>
         <div className="kpi">
           <span>{language === 'en' ? 'Grey Fabric Ready' : 'গ্রে কাপড় রেডি'}</span>
-          <b>{toBn(sumByType('grey', 'rd'))} kg</b>
-          <i>{language === 'en' ? 'Remaining ' : 'বাকি '}{toBn(sumByType('grey', 'run'))} kg {language === 'en' ? 'on machine' : 'মেশিনে'}</i>
+          <b>{toBn(sumByType('grey', 'rd'), language)} kg</b>
+          <i>{language === 'en' ? 'Remaining ' : 'বাকি '}{toBn(sumByType('grey', 'run'), language)} kg {language === 'en' ? 'on machine' : 'মেশিনে'}</i>
         </div>
         <div className="kpi" style={{ borderColor: 'var(--yarn)' }}>
           <span>{language === 'en' ? 'Yarn Dyed (Y/D) Ready' : 'ইয়ার্ন ডাইড (Y/D) রেডি'}</span>
-          <b style={{ color: 'var(--yarn)' }}>{toBn(sumByType('yd', 'rd'))} kg</b>
-          <i>{language === 'en' ? 'Remaining ' : 'বাকি '}{toBn(sumByType('yd', 'run'))} kg {language === 'en' ? 'on machine' : 'মেশিনে'}</i>
+          <b style={{ color: 'var(--yarn)' }}>{toBn(sumByType('yd', 'rd'), language)} kg</b>
+          <i>{language === 'en' ? 'Remaining ' : 'বাকি '}{toBn(sumByType('yd', 'run'), language)} kg {language === 'en' ? 'on machine' : 'মেশিনে'}</i>
         </div>
         <div className="kpi" style={{ borderColor: 'var(--accent)' }}>
           <span>{language === 'en' ? 'Flat Knit Ready' : 'ফ্ল্যাট নিট (কলার-কাফ) রেডি'}</span>
-          <b style={{ color: 'var(--accent)' }}>{toBn(sumByType('flat', 'rd'))} {language === 'en' ? 'pcs' : 'পিস'}</b>
-          <i>{language === 'en' ? 'Remaining ' : 'বাকি '}{toBn(sumByType('flat', 'run'))} {language === 'en' ? 'pcs on machine' : 'পিস মেশিনে'}</i>
+          <b style={{ color: 'var(--accent)' }}>{toBn(sumByType('flat', 'rd'), language)} {language === 'en' ? 'pcs' : 'পিস'}</b>
+          <i>{language === 'en' ? 'Remaining ' : 'বাকি '}{toBn(sumByType('flat', 'run'), language)} {language === 'en' ? 'pcs on machine' : 'পিস মেশিনে'}</i>
         </div>
         <div className="kpi" style={{ borderColor: 'var(--bad)' }}>
           <span>{language === 'en' ? 'Held in QC' : 'QC-তে আটকে'}</span>
-          <b style={{ color: 'var(--bad)' }}>{sumU(heldRows, 'held')}</b>
+          <b style={{ color: 'var(--bad)' }}>{sumU(heldRows, 'held', language)}</b>
           <i>{language === 'en' ? 'Dispute or pending' : 'দ্বিমত বা দেখা বাকি'}</i>
         </div>
       </div>
@@ -350,28 +360,28 @@ export const FactoryReadyFabricPage: React.FC = () => {
           className={fabricTypeFilter === 'all' ? 'on' : ''}
           onClick={() => setFabricTypeFilter('all')}
         >
-          {t('সব')} ({toBn(allRows.length)})
+          {language === 'en' ? 'All' : 'সব'} ({toBn(allRows.length, language)})
         </button>
         <button
           type="button"
           className={fabricTypeFilter === 'grey' ? 'on' : ''}
           onClick={() => setFabricTypeFilter('grey')}
         >
-          {language === 'en' ? 'Grey' : 'গ্রে'} ({toBn(allRows.filter((r) => r.type === 'grey').length)})
+          {language === 'en' ? 'Grey' : 'গ্রে'} ({toBn(allRows.filter((r) => r.type === 'grey').length, language)})
         </button>
         <button
           type="button"
           className={fabricTypeFilter === 'yd' ? 'on' : ''}
           onClick={() => setFabricTypeFilter('yd')}
         >
-          {language === 'en' ? `Yarn Dyed (${toBn(allRows.filter((r) => r.type === 'yd').length)})` : `ইয়ার্ন ডাইড (${toBn(allRows.filter((r) => r.type === 'yd').length)})`}
+          {language === 'en' ? 'Yarn Dyed' : 'ইয়ার্ন ডাইড'} ({toBn(allRows.filter((r) => r.type === 'yd').length, language)})
         </button>
         <button
           type="button"
           className={fabricTypeFilter === 'flat' ? 'on' : ''}
           onClick={() => setFabricTypeFilter('flat')}
         >
-          {language === 'en' ? `Flat Knit (${toBn(allRows.filter((r) => r.type === 'flat').length)})` : `ফ্ল্যাট নিট (${toBn(allRows.filter((r) => r.type === 'flat').length)})`}
+          {language === 'en' ? 'Flat Knit' : 'ফ্ল্যাট নিট'} ({toBn(allRows.filter((r) => r.type === 'flat').length, language)})
         </button>
       </div>
 
@@ -431,17 +441,17 @@ export const FactoryReadyFabricPage: React.FC = () => {
                             <td>
                               <b>{p.name}</b>
                             </td>
-                            <td className="n">{sumU(partyRows, 'qty')}</td>
+                            <td className="n">{sumU(partyRows, 'qty', language)}</td>
                             {renderPartyCell(p.code, 'grey', 'kg')}
                             {renderPartyCell(p.code, 'yd', 'kg')}
-                            {renderPartyCell(p.code, 'flat', 'পিস')}
+                            {renderPartyCell(p.code, 'flat', language === 'en' ? 'pcs' : 'পিস')}
                             <td
                               className="n"
                               style={partyHeld ? { color: 'var(--bad)', fontWeight: 600 } : undefined}
                             >
-                              {partyHeld ? sumU(partyRows.filter((r) => r.held > 0), 'held') : '—'}
+                              {partyHeld ? sumU(partyRows.filter((r) => r.held > 0), 'held', language) : '—'}
                             </td>
-                            <td className="n">{sumU(partyRows, 'run')}</td>
+                            <td className="n">{sumU(partyRows, 'run', language)}</td>
                           </tr>
                         );
                       })
@@ -491,13 +501,13 @@ export const FactoryReadyFabricPage: React.FC = () => {
                                 <b>{r.place}</b> {r.badge}
                                 <div className="small muted">{r.fab}</div>
                               </td>
-                              <td className="n">{qU(r.qty, r.u)}</td>
-                              <td className="n">{qU(r.done, r.u)}</td>
-                              <td className="n">{qU(r.dl, r.u)}</td>
+                              <td className="n">{qU(r.qty, r.u, language)}</td>
+                              <td className="n">{qU(r.done, r.u, language)}</td>
+                              <td className="n">{qU(r.dl, r.u, language)}</td>
                               <td className="n">
-                                <b style={r.rd > 0 ? { color: 'var(--ok)' } : undefined}>{qU(r.rd, r.u)}</b>
+                                <b style={r.rd > 0 ? { color: 'var(--ok)' } : undefined}>{qU(r.rd, r.u, language)}</b>
                               </td>
-                              <td className="n">{qU(r.run, r.u)}</td>
+                              <td className="n">{qU(r.run, r.u, language)}</td>
                               <td>
                                 <span className={`pill ${r.st[0]}`}>{r.st[1]}</span>
                               </td>
@@ -510,17 +520,17 @@ export const FactoryReadyFabricPage: React.FC = () => {
                             <td colSpan={2}>
                               {language === 'en' ? 'Total' : 'মোট'} · <span className="mono">{id}</span>
                             </td>
-                            <td className="n">{sumU(rowsForOrder, 'qty')}</td>
-                            <td className="n">{sumU(rowsForOrder, 'done')}</td>
-                            <td className="n">{sumU(rowsForOrder, 'dl')}</td>
+                            <td className="n">{sumU(rowsForOrder, 'qty', language)}</td>
+                            <td className="n">{sumU(rowsForOrder, 'done', language)}</td>
+                            <td className="n">{sumU(rowsForOrder, 'dl', language)}</td>
                             <td className="n">
-                              <b>{sumU(rowsForOrder, 'rd')}</b>
+                              <b>{sumU(rowsForOrder, 'rd', language)}</b>
                             </td>
-                            <td className="n">{sumU(rowsForOrder, 'run')}</td>
+                            <td className="n">{sumU(rowsForOrder, 'run', language)}</td>
                             <td>
                               {rowsForOrder.some((r) => r.held > 0) && (
                                 <span className="small" style={{ color: 'var(--bad)', fontWeight: 600 }}>
-                                  {language === 'en' ? 'QC Held: ' : 'QC-তে আটকে '}{sumU(rowsForOrder.filter((r) => r.held > 0), 'held')}
+                                  {language === 'en' ? 'QC Held: ' : 'QC-তে আটকে '}{sumU(rowsForOrder.filter((r) => r.held > 0), 'held', language)}
                                 </span>
                               )}
                             </td>

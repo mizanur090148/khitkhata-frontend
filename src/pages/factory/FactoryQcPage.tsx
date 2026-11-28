@@ -4,8 +4,10 @@ import { useApp } from '@/context/AppContext';
 import { SearchableSelect } from '@/components/common/SearchableSelect';
 
 export const BN_DIGITS = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
-export const toBn = (n: number | string | undefined | null): string => {
-  if (n === undefined || n === null || n === '') return '০';
+export const toBn = (n: number | string | undefined | null, lang?: 'bn' | 'en'): string => {
+  const currentLang = lang || (typeof window !== 'undefined' ? (localStorage.getItem('knitkhata_lang') as 'bn' | 'en') : null) || 'bn';
+  if (n === undefined || n === null || n === '') return currentLang === 'en' ? '0' : '০';
+  if (currentLang === 'en') return String(n);
   return String(n).replace(/\d/g, (d) => BN_DIGITS[Number(d)]);
 };
 
@@ -661,10 +663,10 @@ export const FactoryQcPage: React.FC = () => {
               </div>
             </div>
             <b style={{ fontFamily: 'var(--f-mono)', fontSize: '1.4rem', fontWeight: 700, margin: '4px 0 1px', color: 'var(--ink)' }}>
-              {toBn(allQcItems.length)} <span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--muted)' }}>{language === 'en' ? 'rolls' : 'রোল'}</span>
+              {toBn(allQcItems.length, language)} <span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--muted)' }}>{language === 'en' ? 'rolls' : 'রোল'}</span>
             </b>
             <i style={{ fontStyle: 'normal', fontSize: '0.74rem', color: 'var(--muted)' }}>
-              {language === 'en' ? 'Mutually passed: ' : 'উভয় পক্ষের পাস: '}<b>{toBn(passCount)}</b>
+              {language === 'en' ? 'Mutually passed: ' : 'উভয় পক্ষের পাস: '}<b>{toBn(passCount, language)}</b>
             </i>
           </button>
         )}
@@ -705,7 +707,7 @@ export const FactoryQcPage: React.FC = () => {
             </div>
           </div>
           <b style={{ fontFamily: 'var(--f-mono)', fontSize: '1.4rem', fontWeight: 700, margin: '4px 0 1px', color: myPend.length > 0 ? 'var(--accent)' : 'var(--ink)' }}>
-            {toBn(myPend.length)}
+            {toBn(myPend.length, language)}
           </b>
           <i style={{ fontStyle: 'normal', fontSize: '0.74rem', color: myPend.length > 0 ? 'var(--warn)' : 'var(--muted)', fontWeight: myPend.length > 0 ? 600 : 400 }}>
             {myPend.length > 0 ? (language === 'en' ? '● Action required' : '● মত দেওয়া বাকি') : (language === 'en' ? 'All cleared' : 'সব সাইন সম্পন্ন')}
@@ -748,7 +750,7 @@ export const FactoryQcPage: React.FC = () => {
             </div>
           </div>
           <b style={{ fontFamily: 'var(--f-mono)', fontSize: '1.4rem', fontWeight: 700, margin: '4px 0 1px', color: 'var(--ink)' }}>
-            {toBn(theirPend.length)}
+            {toBn(theirPend.length, language)}
           </b>
           <i style={{ fontStyle: 'normal', fontSize: '0.74rem', color: 'var(--muted)' }}>
             {language === 'en' ? 'Awaiting inspection' : 'অপর পক্ষের অপেক্ষায়'}
@@ -791,7 +793,7 @@ export const FactoryQcPage: React.FC = () => {
             </div>
           </div>
           <b style={{ fontFamily: 'var(--f-mono)', fontSize: '1.4rem', fontWeight: 700, margin: '4px 0 1px', color: disp.length ? 'var(--bad)' : 'var(--ink)' }}>
-            {toBn(disp.length)}
+            {toBn(disp.length, language)}
           </b>
           <i style={{ fontStyle: 'normal', fontSize: '0.74rem', color: disp.length ? 'var(--bad)' : 'var(--muted)', fontWeight: disp.length ? 600 : 400 }}>
             {disp.length > 0 ? (language === 'en' ? '● Joint review needed' : '● যৌথ পরিদর্শন দরকার') : (language === 'en' ? 'No dispute' : 'কোনো দ্বিমত নেই')}
@@ -812,7 +814,7 @@ export const FactoryQcPage: React.FC = () => {
             transition: 'all 0.15s ease',
             border: qcFilter === 'agree' ? '2px solid var(--ok, #16a34a)' : '1px solid var(--line)',
             background: qcFilter === 'agree' ? 'var(--ok-soft, #dcfce7)' : 'var(--surface, #ffffff)',
-            boxShadow: qcFilter === 'agree' ? '0 4px 12px rgba(22, 163, 74, 0.12)' : 'var(--shadow, none)',
+            boxShadow: qcFilter === 'agree' ? '0 4px 12px rgba(220, 163, 74, 0.12)' : 'var(--shadow, none)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
@@ -834,7 +836,7 @@ export const FactoryQcPage: React.FC = () => {
             </div>
           </div>
           <b style={{ fontFamily: 'var(--f-mono)', fontSize: '1.4rem', fontWeight: 700, margin: '4px 0 1px', color: 'var(--ok)' }}>
-            {toBn(agr.length)}
+            {toBn(agr.length, language)}
           </b>
           <i style={{ fontStyle: 'normal', fontSize: '0.74rem', color: 'var(--muted)' }}>
             {language === 'en' ? 'Mutually signed' : 'উভয়ের সাইন সম্পন্ন'}
@@ -1010,7 +1012,7 @@ export const FactoryQcPage: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.84rem', color: 'var(--muted)' }}>
           <span>
             {language === 'en' ? 'Showing records: ' : 'প্রদর্শিত রেকর্ড: '}
-            <b style={{ color: 'var(--ink)' }}>{toBn(filteredList.length)}</b> {language === 'en' ? 'rolls' : 'টি'}
+            <b style={{ color: 'var(--ink)' }}>{toBn(filteredList.length, language)}</b> {language === 'en' ? 'rolls' : 'টি'}
           </span>
           {qcFilter !== 'all' && (
             <span
@@ -1142,7 +1144,7 @@ export const FactoryQcPage: React.FC = () => {
                       {language === 'en' ? 'Roll' : 'রোল'} <b className="mono">{q.roll}</b>
                     </span>
                     <span>{language === 'en' ? `Machine ${q.m}` : `মেশিন ${q.m}`}</span>
-                    <span>{toBn(q.kg)} kg</span>
+                    <span>{toBn(q.kg, language)} kg</span>
                     <span>
                       {language === 'en' ? 'Reported by: ' : 'জানিয়েছে: '}
                       {q.src === 'ven'
